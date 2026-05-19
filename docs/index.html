@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Market Daily — AI-Curated Financial News for Taiwan Investors</title>
+<meta name="description" content="Get your daily US & Taiwan stock market briefing every morning at 7AM. AI-filtered, fake-news-free, and written like a smart friend texting you.">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #0a0a12;
+    color: #fff;
+    min-height: 100vh;
+  }
+
+  /* Nav */
+  nav {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 20px 40px; border-bottom: 1px solid rgba(255,255,255,0.07);
+  }
+  .logo { font-size: 18px; font-weight: 800; letter-spacing: -0.5px; }
+  .logo span { color: #6366f1; }
+  .nav-badge {
+    background: rgba(99,102,241,0.15); color: #a5b4fc;
+    font-size: 12px; font-weight: 600; padding: 5px 14px;
+    border-radius: 20px; border: 1px solid rgba(99,102,241,0.3);
+  }
+
+  /* Hero */
+  .hero {
+    text-align: center;
+    padding: 100px 24px 60px;
+    background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(99,102,241,0.18) 0%, transparent 70%);
+  }
+  .hero-pill {
+    display: inline-block;
+    background: rgba(99,102,241,0.15);
+    border: 1px solid rgba(99,102,241,0.35);
+    color: #a5b4fc; font-size: 12px; font-weight: 700;
+    padding: 6px 16px; border-radius: 20px;
+    letter-spacing: 1px; text-transform: uppercase;
+    margin-bottom: 28px;
+  }
+  .hero h1 {
+    font-size: clamp(36px, 6vw, 64px);
+    font-weight: 900; letter-spacing: -2px;
+    line-height: 1.1; margin-bottom: 24px;
+  }
+  .hero h1 .gradient {
+    background: linear-gradient(135deg, #6366f1, #a78bfa, #38bdf8);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .hero-sub {
+    font-size: 18px; color: rgba(255,255,255,0.55);
+    max-width: 520px; margin: 0 auto 48px;
+    line-height: 1.7;
+  }
+
+  /* Subscribe form */
+  .subscribe-box {
+    display: flex; gap: 12px; justify-content: center;
+    flex-wrap: wrap; margin-bottom: 20px;
+  }
+  .subscribe-box input[type="email"] {
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.15);
+    color: #fff; font-size: 15px;
+    padding: 14px 20px; border-radius: 10px;
+    width: 300px; outline: none;
+    transition: border 0.2s;
+  }
+  .subscribe-box input[type="email"]::placeholder { color: rgba(255,255,255,0.35); }
+  .subscribe-box input[type="email"]:focus { border-color: #6366f1; }
+  .subscribe-box button {
+    background: #6366f1; color: #fff;
+    font-size: 15px; font-weight: 700;
+    padding: 14px 28px; border-radius: 10px;
+    border: none; cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+    white-space: nowrap;
+  }
+  .subscribe-box button:hover { background: #4f46e5; transform: translateY(-1px); }
+  .subscribe-box button:active { transform: translateY(0); }
+  .subscribe-note { font-size: 12px; color: rgba(255,255,255,0.3); margin-bottom: 16px; }
+  .success-msg {
+    display: none; background: rgba(34,197,94,0.15);
+    border: 1px solid rgba(34,197,94,0.3); color: #86efac;
+    padding: 14px 24px; border-radius: 10px; font-size: 14px;
+    font-weight: 600; margin: 0 auto; max-width: 400px;
+  }
+  .error-msg {
+    display: none; background: rgba(239,68,68,0.15);
+    border: 1px solid rgba(239,68,68,0.3); color: #fca5a5;
+    padding: 14px 24px; border-radius: 10px; font-size: 14px;
+    margin: 0 auto; max-width: 400px;
+  }
+
+  /* Stats */
+  .stats {
+    display: flex; justify-content: center; gap: 48px;
+    padding: 48px 24px; border-top: 1px solid rgba(255,255,255,0.06);
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .stat-item { text-align: center; }
+  .stat-num { font-size: 32px; font-weight: 900; letter-spacing: -1px; color: #a5b4fc; }
+  .stat-label { font-size: 12px; color: rgba(255,255,255,0.4); margin-top: 4px; letter-spacing: 0.5px; }
+
+  /* Features */
+  .features { padding: 80px 24px; max-width: 960px; margin: 0 auto; }
+  .features h2 { text-align: center; font-size: 32px; font-weight: 800; margin-bottom: 48px; letter-spacing: -1px; }
+  .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; }
+  .feature-card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 16px; padding: 28px;
+    transition: border-color 0.2s;
+  }
+  .feature-card:hover { border-color: rgba(99,102,241,0.4); }
+  .feature-icon { font-size: 28px; margin-bottom: 14px; }
+  .feature-title { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+  .feature-desc { font-size: 14px; color: rgba(255,255,255,0.5); line-height: 1.6; }
+
+  /* Preview */
+  .preview { padding: 0 24px 80px; max-width: 680px; margin: 0 auto; }
+  .preview h2 { text-align: center; font-size: 28px; font-weight: 800; margin-bottom: 32px; letter-spacing: -0.5px; }
+  .preview-card {
+    background: #fff; border-radius: 20px;
+    overflow: hidden; box-shadow: 0 40px 80px rgba(0,0,0,0.5);
+  }
+  .preview-header {
+    background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+    color: #fff; padding: 28px;
+  }
+  .preview-date { font-size: 11px; color: rgba(255,255,255,0.5); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; }
+  .preview-title { font-size: 22px; font-weight: 800; }
+  .preview-sub { font-size: 12px; color: rgba(255,255,255,0.4); margin-top: 4px; }
+  .preview-body { padding: 24px; color: #1a1a1a; }
+  .preview-tldr {
+    background: #fffbeb; border-left: 4px solid #f59e0b;
+    padding: 14px 16px; border-radius: 0 10px 10px 0; margin-bottom: 20px;
+  }
+  .preview-tldr-title { font-size: 12px; font-weight: 800; color: #92400e; margin-bottom: 8px; letter-spacing: 0.5px; }
+  .preview-tldr ul { list-style: none; }
+  .preview-tldr li { font-size: 13px; color: #555; padding: 3px 0 3px 14px; position: relative; }
+  .preview-tldr li::before { content: "→"; position: absolute; left: 0; color: #f59e0b; font-weight: 700; }
+  .preview-news-title { font-size: 11px; font-weight: 800; color: #999; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 12px; }
+  .preview-news-item { padding: 10px 0; border-bottom: 1px solid #f5f5f5; }
+  .preview-news-item:last-child { border-bottom: none; }
+  .preview-badge {
+    display: inline-block; font-size: 10px; font-weight: 700;
+    padding: 2px 8px; border-radius: 20px; margin-bottom: 4px;
+  }
+  .preview-badge.v { background: #dcfce7; color: #166534; }
+  .preview-badge.s { background: #fef9c3; color: #854d0e; }
+  .preview-news-text { font-size: 13px; font-weight: 600; color: #111; line-height: 1.4; margin-bottom: 4px; }
+  .preview-news-why { font-size: 12px; color: #666; background: #f0f7ff; padding: 6px 10px; border-radius: 6px; }
+
+  /* CTA bottom */
+  .cta-bottom {
+    text-align: center; padding: 80px 24px;
+    background: radial-gradient(ellipse 60% 80% at 50% 100%, rgba(99,102,241,0.15) 0%, transparent 70%);
+  }
+  .cta-bottom h2 { font-size: 32px; font-weight: 800; letter-spacing: -1px; margin-bottom: 12px; }
+  .cta-bottom p { font-size: 16px; color: rgba(255,255,255,0.45); margin-bottom: 36px; }
+
+  /* Footer */
+  footer {
+    border-top: 1px solid rgba(255,255,255,0.06);
+    padding: 24px 40px; text-align: center;
+    font-size: 12px; color: rgba(255,255,255,0.25);
+    line-height: 1.8;
+  }
+
+  @media (max-width: 600px) {
+    nav { padding: 16px 20px; }
+    .hero { padding: 60px 16px 40px; }
+    .stats { gap: 24px; flex-wrap: wrap; }
+    .subscribe-box input[type="email"] { width: 100%; }
+    .subscribe-box button { width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Nav -->
+<nav>
+  <div class="logo">Market<span>Daily</span></div>
+  <div class="nav-badge">🇹🇼 Taiwan Investors</div>
+</nav>
+
+<!-- Hero -->
+<div class="hero">
+  <div class="hero-pill">🆓 Free · No Spam · Unsubscribe Anytime</div>
+  <h1>Your daily stock market<br><span class="gradient">briefing in 30 seconds</span></h1>
+  <p class="hero-sub">
+    Every morning at 7AM Taiwan time — AI-curated US & Taiwan market news,
+    fake-news filtered, written like a smart friend texting you.
+  </p>
+
+  <div class="subscribe-box">
+    <input type="email" id="email-input" placeholder="your@email.com" />
+    <button onclick="subscribe()">Get It Free →</button>
+  </div>
+  <p class="subscribe-note">Join readers getting smarter about their portfolio every morning.</p>
+  <div class="success-msg" id="success-msg">🎉 You're in! First issue arrives tomorrow at 7AM Taiwan time.</div>
+  <div class="error-msg" id="error-msg">Oops, something went wrong. Please try again.</div>
+</div>
+
+<!-- Stats -->
+<div class="stats">
+  <div class="stat-item">
+    <div class="stat-num">7AM</div>
+    <div class="stat-label">Taiwan Time Daily</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-num">75+</div>
+    <div class="stat-label">News Sources Scanned</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-num">0</div>
+    <div class="stat-label">Fake News Through</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-num">Free</div>
+    <div class="stat-label">Forever (No CC)</div>
+  </div>
+</div>
+
+<!-- Features -->
+<div class="features">
+  <h2>Built for busy people</h2>
+  <div class="features-grid">
+    <div class="feature-card">
+      <div class="feature-icon">☕</div>
+      <div class="feature-title">30-Second Summary</div>
+      <div class="feature-desc">3 bullet points at the top. Catch the most important thing even on your most hectic morning.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🛡️</div>
+      <div class="feature-title">Fake News Filtered</div>
+      <div class="feature-desc">Only news from Reuters, CNBC, Bloomberg, FT and other verified sources. Every story is cross-checked.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">💡</div>
+      <div class="feature-title">"Why It Matters" Explained</div>
+      <div class="feature-desc">Every headline comes with one line explaining how it actually affects your stocks. No more guessing.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🇺🇸 🇹🇼</div>
+      <div class="feature-title">US + Taiwan Markets</div>
+      <div class="feature-desc">S&P500, NASDAQ, TWSE, individual stocks — all in one place. No tab-switching.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🤖</div>
+      <div class="feature-title">AI That Speaks Human</div>
+      <div class="feature-desc">Not a stiff analyst report. Written in plain language, like a knowledgeable friend giving you the rundown.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🎯</div>
+      <div class="feature-title">Daily Verdict</div>
+      <div class="feature-desc">Bullish / Bearish / Neutral — what the AI thinks about today's market, with reasons. Make better decisions.</div>
+    </div>
+  </div>
+</div>
+
+<!-- Preview -->
+<div class="preview">
+  <h2>What it looks like 👇</h2>
+  <div class="preview-card">
+    <div class="preview-header">
+      <div class="preview-date">Tuesday · May 20, 2026</div>
+      <div class="preview-title">📊 Market Daily</div>
+      <div class="preview-sub">AI Curated · Fake-News Filtered · US + Taiwan</div>
+    </div>
+    <div class="preview-body">
+      <div class="preview-tldr">
+        <div class="preview-tldr-title">☕ 30-Second Briefing</div>
+        <ul>
+          <li>Fed signals two rate cuts still on the table — markets loved it (+0.85%)</li>
+          <li>NVIDIA unveiled Blackwell Ultra chip, AI compute 3× faster, stock up 4%</li>
+          <li>TSMC May revenue hits record high, CoWoS packaging still sold out</li>
+        </ul>
+      </div>
+      <div class="preview-news-title">🔥 Top Stories Today</div>
+      <div class="preview-news-item">
+        <div><span class="preview-badge v">✅ Multi-source</span></div>
+        <div class="preview-news-text">Fed official hints two rate cuts still possible this year</div>
+        <div class="preview-news-why">💡 Why it matters: Lower rates = cheaper money = stocks go up. Risk-on mode activated.</div>
+      </div>
+      <div class="preview-news-item">
+        <div><span class="preview-badge v">✅ Multi-source</span></div>
+        <div class="preview-news-text">NVIDIA's Blackwell Ultra delivers 3× AI computing power</div>
+        <div class="preview-news-why">💡 Why it matters: Reinforces NVDA's dominance. Expect upgrades across the AI supply chain — including TSMC.</div>
+      </div>
+      <div class="preview-news-item">
+        <div><span class="preview-badge s">⚠️ Single source</span></div>
+        <div class="preview-news-text">Apple reportedly planning $19.99/mo AI subscription at WWDC</div>
+        <div class="preview-news-why">💡 Why it matters: New revenue stream, but single source — wait for confirmation before acting.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CTA Bottom -->
+<div class="cta-bottom">
+  <h2>Start your mornings smarter</h2>
+  <p>Free forever. Takes 10 seconds to subscribe.</p>
+  <div class="subscribe-box">
+    <input type="email" id="email-input-2" placeholder="your@email.com" />
+    <button onclick="subscribe2()">Subscribe Free →</button>
+  </div>
+  <div class="success-msg" id="success-msg-2" style="margin-top:16px;">🎉 You're in! See you tomorrow at 7AM.</div>
+  <div class="error-msg" id="error-msg-2" style="margin-top:16px;">Oops, something went wrong. Please try again.</div>
+</div>
+
+<!-- Footer -->
+<footer>
+  MarketDaily · AI-curated US & Taiwan financial news<br>
+  ✅ Multi-source verified &nbsp;|&nbsp; ⚠️ Single source — read with caution<br>
+  For informational purposes only. Not financial advice.
+</footer>
+
+<script>
+  const BREVO_API_KEY = "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";
+
+  async function addContact(email) {
+    const resp = await fetch("https://api.brevo.com/v3/contacts", {
+      method: "POST",
+      headers: {
+        "api-key": BREVO_API_KEY,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        email: email,
+        listIds: [2],
+        updateEnabled: true
+      })
+    });
+    return resp.ok || resp.status === 204;
+  }
+
+  async function subscribe() {
+    const email = document.getElementById("email-input").value.trim();
+    if (!email || !email.includes("@")) return;
+    const btn = document.querySelector(".subscribe-box button");
+    btn.textContent = "Subscribing...";
+    btn.disabled = true;
+    const ok = await addContact(email);
+    btn.textContent = "Get It Free →";
+    btn.disabled = false;
+    document.getElementById(ok ? "success-msg" : "error-msg").style.display = "block";
+  }
+
+  async function subscribe2() {
+    const email = document.getElementById("email-input-2").value.trim();
+    if (!email || !email.includes("@")) return;
+    const ok = await addContact(email);
+    document.getElementById(ok ? "success-msg-2" : "error-msg-2").style.display = "block";
+  }
+
+  document.getElementById("email-input").addEventListener("keydown", e => {
+    if (e.key === "Enter") subscribe();
+  });
+  document.getElementById("email-input-2").addEventListener("keydown", e => {
+    if (e.key === "Enter") subscribe2();
+  });
+</script>
+
+</body>
+</html>
