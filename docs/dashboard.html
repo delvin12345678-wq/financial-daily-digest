@@ -160,11 +160,29 @@ nav { background: var(--nav-bg); border-bottom: 1px solid var(--nav-border); dis
     <div class="login-card">
       <div class="login-logo">Market<span>Daily</span></div>
       <div class="login-sub">訂閱者專區 · 輸入你的 Email 進入</div>
-      <div class="login-label">訂閱 Email</div>
-      <input type="email" class="login-input" id="login-email" placeholder="your@email.com" onkeydown="if(event.key==='Enter')doLogin()">
-      <label class="remember-me"><input type="checkbox" id="remember-me"> 記住我的 Email</label>
-      <button class="login-btn" id="login-btn" onclick="doLogin()">進入我的專區 →</button>
-      <div class="login-err" id="login-err"></div>
+
+      <div id="login-form">
+        <div class="login-label">訂閱 Email</div>
+        <input type="email" class="login-input" id="login-email" placeholder="your@email.com">
+        <div class="login-label" style="margin-top:14px;">密碼</div>
+        <input type="password" class="login-input" id="login-password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+        <label class="remember-me"><input type="checkbox" id="remember-me"> 記住我</label>
+        <button class="login-btn" id="login-btn" onclick="doLogin()">進入我的專區 →</button>
+        <div class="login-err" id="login-err"></div>
+      </div>
+
+      <div id="set-password-form" style="display:none;">
+        <div style="font-size:14px;font-weight:700;color:var(--text1);margin-bottom:6px;">設定你的密碼</div>
+        <p style="font-size:13px;color:var(--text3);margin-bottom:14px;line-height:1.6;">這是你第一次登入，請設定一個密碼（至少 6 位）</p>
+        <div class="login-label">新密碼</div>
+        <input type="password" class="login-input" id="new-password" placeholder="至少 6 位">
+        <div class="login-label" style="margin-top:14px;">確認密碼</div>
+        <input type="password" class="login-input" id="confirm-password" placeholder="再輸入一次" onkeydown="if(event.key==='Enter')doSetPassword()">
+        <button class="login-btn" id="set-pwd-btn" onclick="doSetPassword()">設定並進入 →</button>
+        <div class="login-err" id="set-pwd-err"></div>
+        <div style="font-size:12px;color:var(--text3);text-align:center;margin-top:12px;cursor:pointer;" onclick="showLoginForm()">← 返回</div>
+      </div>
+
       <div class="login-hint">尚未訂閱？<a href="index.html" style="color:#6366f1;font-weight:700;">前往訂閱 →</a></div>
     </div>
   </div>
@@ -366,8 +384,11 @@ function updateStats() {
 });
 
 // ── Login ──
+let _pendingEmail = "";
+
 async function doLogin() {
   const email = document.getElementById("login-email").value.trim().toLowerCase();
+  const password = document.getElementById("login-password").value;
   const errEl = document.getElementById("login-err");
   const btn = document.getElementById("login-btn");
   errEl.style.display = "none";
@@ -380,28 +401,81 @@ async function doLogin() {
   try {
     const res = await fetch(WORKER_URL + "/check-subscriber", {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email }),
+      body: JSON.stringify({ email, password }),
     });
     const data = await res.json();
-    if (data.subscribed) {
-      localStorage.setItem("md-email", email);
-      localStorage.setItem("md-plan", data.plan || "free");
-      if (document.getElementById("remember-me").checked) {
-        localStorage.setItem("md-saved-email", email);
-      } else {
-        localStorage.removeItem("md-saved-email");
-      }
-      showDashboard(email, data.plan || "free");
-    } else {
+
+    if (!data.subscribed && !data.needsPasswordSetup) {
       errEl.textContent = "找不到這個 Email 的訂閱記錄，請確認你的訂閱 Email，或前往訂閱。";
-      errEl.style.display = "block";
+      errEl.style.display = "block"; return;
     }
+    if (data.error === "wrong_password") {
+      errEl.textContent = "密碼錯誤，請再試一次"; errEl.style.display = "block"; return;
+    }
+    if (data.needsPasswordEntry) {
+      errEl.textContent = "請輸入密碼"; errEl.style.display = "block"; return;
+    }
+    if (data.needsPasswordSetup) {
+      _pendingEmail = email;
+      document.getElementById("login-form").style.display = "none";
+      document.getElementById("set-password-form").style.display = "block";
+      return;
+    }
+
+    if (document.getElementById("remember-me").checked) {
+      localStorage.setItem("md-saved-email", email);
+      localStorage.setItem("md-saved-pwd", password);
+    } else {
+      localStorage.removeItem("md-saved-email");
+      localStorage.removeItem("md-saved-pwd");
+    }
+    localStorage.setItem("md-email", email);
+    localStorage.setItem("md-plan", data.plan || "free");
+    showDashboard(email, data.plan || "free");
   } catch {
-    errEl.textContent = "網路錯誤，請稍後再試";
-    errEl.style.display = "block";
+    errEl.textContent = "網路錯誤，請稍後再試"; errEl.style.display = "block";
   } finally {
     btn.disabled = false; btn.textContent = "進入我的專區 →";
   }
+}
+
+async function doSetPassword() {
+  const password = document.getElementById("new-password").value;
+  const confirm = document.getElementById("confirm-password").value;
+  const errEl = document.getElementById("set-pwd-err");
+  const btn = document.getElementById("set-pwd-btn");
+  errEl.style.display = "none";
+
+  if (password.length < 6) { errEl.textContent = "密碼至少需要 6 位"; errEl.style.display = "block"; return; }
+  if (password !== confirm) { errEl.textContent = "兩次密碼不一致"; errEl.style.display = "block"; return; }
+
+  btn.disabled = true; btn.textContent = "設定中...";
+  try {
+    const res = await fetch(WORKER_URL + "/set-password", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: _pendingEmail, password }),
+    });
+    const data = await res.json();
+    if (!data.ok) { errEl.textContent = "設定失敗，請稍後再試"; errEl.style.display = "block"; return; }
+
+    if (document.getElementById("remember-me") && document.getElementById("remember-me").checked) {
+      localStorage.setItem("md-saved-email", _pendingEmail);
+      localStorage.setItem("md-saved-pwd", password);
+    }
+    localStorage.setItem("md-email", _pendingEmail);
+    localStorage.setItem("md-plan", data.plan || "free");
+    showDashboard(_pendingEmail, data.plan || "free");
+  } catch {
+    errEl.textContent = "網路錯誤，請稍後再試"; errEl.style.display = "block";
+  } finally {
+    btn.disabled = false; btn.textContent = "設定並進入 →";
+  }
+}
+
+function showLoginForm() {
+  document.getElementById("login-form").style.display = "block";
+  document.getElementById("set-password-form").style.display = "none";
+  document.getElementById("set-pwd-err").style.display = "none";
 }
 
 function doLogout() {
@@ -409,9 +483,13 @@ function doLogout() {
   localStorage.removeItem("md-plan");
   document.getElementById("dashboard").style.display = "none";
   document.getElementById("login-screen").style.display = "flex";
-  const saved = localStorage.getItem("md-saved-email") || "";
-  document.getElementById("login-email").value = saved;
-  document.getElementById("remember-me").checked = !!saved;
+  document.getElementById("login-form").style.display = "block";
+  document.getElementById("set-password-form").style.display = "none";
+  const savedEmail = localStorage.getItem("md-saved-email") || "";
+  const savedPwd = localStorage.getItem("md-saved-pwd") || "";
+  document.getElementById("login-email").value = savedEmail;
+  document.getElementById("login-password").value = savedPwd;
+  document.getElementById("remember-me").checked = !!savedEmail;
 }
 
 async function showDashboard(email, plan) {
@@ -520,9 +598,11 @@ async function init() {
     US_STOCKS = data.us || [];
     TW_STOCKS = data.tw || [];
   } catch {}
-  const saved = localStorage.getItem("md-saved-email") || "";
-  if (saved) {
-    document.getElementById("login-email").value = saved;
+  const savedEmail = localStorage.getItem("md-saved-email") || "";
+  const savedPwd = localStorage.getItem("md-saved-pwd") || "";
+  if (savedEmail) {
+    document.getElementById("login-email").value = savedEmail;
+    document.getElementById("login-password").value = savedPwd;
     document.getElementById("remember-me").checked = true;
   }
   const email = localStorage.getItem("md-email");
