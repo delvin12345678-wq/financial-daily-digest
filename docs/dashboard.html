@@ -102,7 +102,7 @@ nav { background: var(--nav-bg); border-bottom: 1px solid var(--nav-border); dis
 .card-title { font-size: 14px; font-weight: 800; color: var(--text); margin-bottom: 4px; }
 .card-desc { font-size: 12px; color: var(--text3); margin-bottom: 16px; }
 
-.search-wrap { position: relative; margin-bottom: 12px; }
+.search-wrap { position: relative; }
 .search-input { width: 100%; padding: 10px 14px 10px 36px; background: var(--input-bg); border: 1.5px solid var(--input-border); border-radius: 10px; font-size: 13px; color: var(--text); outline: none; transition: border-color 0.2s; }
 .search-input:focus { border-color: #6366f1; }
 .search-input::placeholder { color: var(--text3); }
@@ -118,7 +118,7 @@ nav { background: var(--nav-bg); border-bottom: 1px solid var(--nav-border); dis
 .d-add { font-size: 11px; color: var(--text3); }
 .dropdown-empty { padding: 14px; text-align: center; font-size: 13px; color: var(--text3); }
 
-.tags { display: flex; flex-wrap: wrap; gap: 8px; min-height: 24px; }
+.tags { display: flex; flex-wrap: wrap; gap: 8px; min-height: 24px; margin-bottom: 12px; }
 .tag { background: var(--tag-bg); border: 1.5px solid var(--tag-border); color: var(--tag-text); font-size: 12px; font-weight: 700; padding: 5px 10px 5px 12px; border-radius: 20px; display: inline-flex; align-items: center; gap: 6px; }
 .tag-x { cursor: pointer; opacity: 0.6; transition: opacity 0.15s; }
 .tag-x:hover { opacity: 1; color: #ef4444; }
@@ -226,24 +226,24 @@ nav { background: var(--nav-bg); border-bottom: 1px solid var(--nav-border); dis
     <div class="card">
       <div class="card-title">🇺🇸 美股持倉</div>
       <div class="card-desc">搜尋代號或公司名稱（例如 NVDA、Tesla），點擊加入清單</div>
+      <div class="tags" id="us-tags"><span class="tags-empty">尚未選擇任何美股</span></div>
       <div class="search-wrap">
         <span class="search-icon">🔍</span>
         <input type="text" class="search-input" id="us-search" placeholder="搜尋美股代號或名稱..." autocomplete="off">
         <div class="dropdown" id="us-dropdown"></div>
       </div>
-      <div class="tags" id="us-tags"><span class="tags-empty">尚未選擇任何美股</span></div>
     </div>
 
     <!-- TW Stocks -->
     <div class="card">
       <div class="card-title">🇹🇼 台股持倉</div>
       <div class="card-desc">搜尋代號或公司名稱（例如 2330、台積電），點擊加入清單</div>
+      <div class="tags" id="tw-tags"><span class="tags-empty">尚未選擇任何台股</span></div>
       <div class="search-wrap">
         <span class="search-icon">🔍</span>
         <input type="text" class="search-input" id="tw-search" placeholder="搜尋台股代號或名稱..." autocomplete="off">
         <div class="dropdown" id="tw-dropdown"></div>
       </div>
-      <div class="tags" id="tw-tags"><span class="tags-empty">尚未選擇任何台股</span></div>
     </div>
 
     <button class="save-btn" id="save-btn" onclick="savePreferences()">儲存設定</button>
@@ -282,45 +282,9 @@ function toggleTheme() {
   });
 })();
 
-// ── Stock DBs ──
-const US_STOCKS = [
-  ["AAPL","Apple"],["MSFT","Microsoft"],["NVDA","NVIDIA"],["GOOGL","Google / Alphabet"],
-  ["GOOG","Google Class C"],["META","Meta Platforms"],["AMZN","Amazon"],["TSLA","Tesla"],
-  ["AMD","AMD"],["TSM","台積電 ADR"],["ARM","ARM Holdings"],["AVGO","Broadcom"],
-  ["QCOM","Qualcomm"],["INTC","Intel"],["MU","Micron Technology"],["ASML","ASML"],
-  ["JPM","JPMorgan Chase"],["GS","Goldman Sachs"],["MS","Morgan Stanley"],["BAC","Bank of America"],
-  ["WFC","Wells Fargo"],["BRK-B","Berkshire Hathaway"],["V","Visa"],["MA","Mastercard"],
-  ["PYPL","PayPal"],["SQ","Block (Square)"],["COIN","Coinbase"],["HOOD","Robinhood"],
-  ["NFLX","Netflix"],["DIS","Disney"],["SPOT","Spotify"],["RBLX","Roblox"],
-  ["UBER","Uber"],["LYFT","Lyft"],["ABNB","Airbnb"],["BKNG","Booking Holdings"],
-  ["SBUX","Starbucks"],["MCD","McDonald's"],["NKE","Nike"],["LULU","Lululemon"],
-  ["COST","Costco"],["WMT","Walmart"],["TGT","Target"],
-  ["PG","Procter & Gamble"],["KO","Coca-Cola"],["PEP","PepsiCo"],["JNJ","Johnson & Johnson"],
-  ["PFE","Pfizer"],["MRNA","Moderna"],["ABBV","AbbVie"],["LLY","Eli Lilly"],
-  ["XOM","ExxonMobil"],["CVX","Chevron"],["COP","ConocoPhillips"],
-  ["BA","Boeing"],["CAT","Caterpillar"],["GE","GE Aerospace"],["HON","Honeywell"],
-  ["PLTR","Palantir"],["SNOW","Snowflake"],["CRM","Salesforce"],["NOW","ServiceNow"],
-  ["ORCL","Oracle"],["IBM","IBM"],["DELL","Dell Technologies"],
-  ["MSTR","MicroStrategy"],["RIOT","Riot Platforms"],["MARA","Marathon Digital"],
-  ["SPY","S&P 500 ETF"],["QQQ","Nasdaq 100 ETF"],["SOXL","半導體 3x ETF"],
-  ["SOXX","半導體 ETF"],["VTI","全市場 ETF"],["VOO","Vanguard S&P500 ETF"],
-];
-const TW_STOCKS = [
-  ["2330","台積電"],["2317","鴻海"],["2454","聯發科"],["2308","台達電"],
-  ["2303","聯電"],["2412","中華電信"],["2882","國泰金"],["2886","兆豐金"],
-  ["2881","富邦金"],["6505","台塑化"],["3008","大立光"],["2891","中信金"],
-  ["2002","中鋼"],["1301","台塑"],["1303","南亞"],["1326","台化"],
-  ["2357","華碩"],["2382","廣達"],["2395","研華"],["2376","技嘉"],
-  ["3034","聯詠"],["3711","日月光投控"],["2379","瑞昱"],["2408","南亞科"],
-  ["6669","緯穎"],["2301","光寶科"],["2353","宏碁"],["3045","台灣大"],
-  ["4904","遠傳"],["2474","可成"],["3037","欣興"],
-  ["2337","旺宏"],["2344","華邦電"],["3533","嘉澤"],["6415","矽力-KY"],
-  ["2609","陽明"],["2615","萬海"],["2603","長榮"],["2618","長榮航"],
-  ["2610","華航"],["5880","合庫金"],["2884","玉山金"],["2885","元大金"],
-  ["2887","台新金"],["2888","新光金"],["2892","第一金"],["5876","上海商銀"],
-  ["1216","統一"],["1101","台泥"],["1102","亞泥"],["2207","和泰車"],
-  ["2912","統一超"],["6278","台表科"],["3231","緯創"],["4938","和碩"],["2356","英業達"],
-];
+// ── Stock DBs (loaded from stocks.json) ──
+let US_STOCKS = [];
+let TW_STOCKS = [];
 
 const selected = { us: [], tw: [] };
 const hiIdx = { us: -1, tw: -1 };
@@ -536,12 +500,19 @@ async function savePreferences() {
   finally { btn.disabled = false; btn.textContent = "儲存設定"; }
 }
 
-// Auto-login if session exists
-(function() {
+// Load stocks then auto-login
+async function init() {
+  try {
+    const r = await fetch("stocks.json");
+    const data = await r.json();
+    US_STOCKS = data.us || [];
+    TW_STOCKS = data.tw || [];
+  } catch {}
   const email = localStorage.getItem("md-email");
   const plan = localStorage.getItem("md-plan") || "free";
   if (email) showDashboard(email, plan);
-})();
+}
+init();
 </script>
 </body>
 </html>
