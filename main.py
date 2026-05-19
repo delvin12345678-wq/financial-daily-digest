@@ -67,6 +67,28 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 
 .second-order { margin: 0 28px 20px; padding: 14px 16px; background: #f0f4ff; border-left: 4px solid #6366f1; border-radius: 0 10px 10px 0; font-size: 13px; color: #444; line-height: 1.7; }
 
+.crypto-bar { display: flex; gap: 10px; margin: 0 28px 20px; }
+.crypto-item { flex: 1; padding: 14px 16px; background: #fafafa; border: 1px solid #eee; border-radius: 12px; text-align: center; }
+.crypto-name { font-size: 11px; font-weight: 800; color: #888; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px; }
+.crypto-price { font-size: 18px; font-weight: 800; }
+.crypto-price.up { color: #16a34a; }
+.crypto-price.down { color: #dc2626; }
+.crypto-change { font-size: 12px; color: #888; margin-top: 3px; }
+
+.sector-bar { padding: 0 28px 20px; }
+.sector-item { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid #f5f5f5; }
+.sector-name { font-size: 13px; font-weight: 700; color: #333; min-width: 100px; }
+.sector-move { font-size: 13px; font-weight: 700; min-width: 68px; }
+.sector-move.up { color: #16a34a; }
+.sector-move.down { color: #dc2626; }
+.sector-comment { font-size: 12px; color: #666; flex: 1; }
+
+.earnings-list { padding: 0 28px 20px; }
+.earnings-item { display: flex; align-items: baseline; gap: 10px; padding: 7px 0; border-bottom: 1px solid #f5f5f5; }
+.earnings-ticker { font-size: 14px; font-weight: 800; color: #1a1a2e; min-width: 52px; }
+.earnings-date { font-size: 12px; color: #888; min-width: 78px; }
+.earnings-note { font-size: 13px; color: #555; flex: 1; }
+
 .footer { background: #1a1a2e; color: rgba(255,255,255,0.35); text-align: center; padding: 20px 28px; font-size: 11px; line-height: 2; }
 """
 

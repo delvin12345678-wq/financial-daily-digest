@@ -54,6 +54,32 @@ def _format_market_data(data: dict) -> str:
     if "oil" in ind:
         o = ind["oil"]
         lines.append(f"  WTI 原油: ${o['price']} ({o['change_pct']:+.2f}%)")
+    if "usdtwd" in ind:
+        fx = ind["usdtwd"]
+        lines.append(f"  USD/TWD 匯率: {fx['rate']} ({fx['change_pct']:+.3f}%)")
+
+    crypto = data.get("crypto", {})
+    if crypto:
+        lines.append("\n【加密貨幣】")
+        if "btc" in crypto:
+            b = crypto["btc"]
+            lines.append(f"  BTC: ${b['price']:,.0f} ({b['change_pct']:+.2f}%)")
+        if "eth" in crypto:
+            e = crypto["eth"]
+            lines.append(f"  ETH: ${e['price']:,.0f} ({e['change_pct']:+.2f}%)")
+
+    sectors = data.get("sectors", [])
+    if sectors:
+        lines.append("\n【板塊輪動（S&P 板塊 ETF 今日表現）】")
+        for s in sectors:
+            arrow = "▲" if s["change_pct"] >= 0 else "▼"
+            lines.append(f"  {s['symbol']} {s['name']}: {arrow} {s['change_pct']:+.2f}%")
+
+    earnings = data.get("earnings", [])
+    if earnings:
+        lines.append("\n【即將公布財報】")
+        for e in earnings[:6]:
+            lines.append(f"  {e['symbol']}: {e['date']}")
 
     return "\n".join(lines)
 
@@ -90,8 +116,11 @@ def generate_report(data: dict) -> str:
 
 {market_text}
 
-【今日新聞（已過濾假訊息，精選）】
+【今日美股新聞（已過濾假訊息，精選）】
 {us_news_text}
+
+【今日台股新聞】
+{tw_news_text}
 
 請輸出以下 HTML 結構（直接輸出 HTML，不加 markdown code block）：
 
@@ -101,6 +130,7 @@ def generate_report(data: dict) -> str:
   <li>（最重要的事，一句話）</li>
   <li>（第二重要的事）</li>
   <li>（第三重要的事）</li>
+  <li>（第四重要的事，如有）</li>
 </ul>
 </div>
 
@@ -126,10 +156,41 @@ def generate_report(data: dict) -> str:
     <div class="indicator-value">（金價） / （油價）</div>
     <div class="indicator-sub">（漲跌%）</div>
   </div>
+  <div class="indicator-item">
+    <div class="indicator-label">USD/TWD 匯率</div>
+    <div class="indicator-value">（匯率）</div>
+    <div class="indicator-sub">（台幣升貶）</div>
+  </div>
+</div>
+
+<div class="section-label">₿ 加密貨幣</div>
+<div class="crypto-bar">
+  <div class="crypto-item">
+    <div class="crypto-name">BTC</div>
+    <div class="crypto-price BTCDIR">（價格）</div>
+    <div class="crypto-change">（漲跌%）</div>
+  </div>
+  <div class="crypto-item">
+    <div class="crypto-name">ETH</div>
+    <div class="crypto-price ETHDIR">（價格）</div>
+    <div class="crypto-change">（漲跌%）</div>
+  </div>
 </div>
 
 <div class="section-label">📈 大盤怎麼了</div>
-（用 2-3 句話說大盤狀況，口語化）
+<div class="market-summary">（用 2-3 句話說大盤狀況，口語化，包含台股）</div>
+
+<div class="section-label">🔄 板塊輪動：哪個板塊最強？</div>
+<div class="sector-bar">
+（根據板塊 ETF 資料，列出今日表現前三和後三，用 sector-item 格式，包含 sector-name 和 sector-move up/down）
+例如：
+  <div class="sector-item">
+    <span class="sector-name">XLK 科技</span>
+    <span class="sector-move up">▲ +2.1%</span>
+    <span class="sector-comment">（一句話說為什麼）</span>
+  </div>
+（共 6 個，強弱各三）
+</div>
 
 <div class="section-label">🔥 今天最重要的 5 件事</div>
 <div class="news-card">
@@ -142,7 +203,7 @@ def generate_report(data: dict) -> str:
 
 <div class="section-label">🔗 二階思考：美股如何影響台灣？</div>
 <div class="second-order">
-（根據今天美股動向，分析對台灣供應鏈的傳導影響。例如：NVDA 漲 → CoWoS 封裝需求 → 台積電/日月光受惠。只寫真正有關聯的，沒有就不寫。2-3 條 bullet）
+（根據今天美股動向，分析對台灣供應鏈的傳導影響。例如：NVDA 漲 → CoWoS 封裝需求 → 台積電/日月光受惠。只寫真正有關聯的，沒有就不寫。2-3 條 bullet，繁體中文）
 </div>
 
 <div class="section-label">🏢 你的持股今天怎樣</div>
@@ -152,6 +213,17 @@ def generate_report(data: dict) -> str:
   <div class="stock-comment">（漲/跌原因 + 要不要擔心）</div>
 </div>
 （涵蓋 AAPL MSFT GOOGL AMZN META NVDA TSLA AMD TSM JPM，有數據的才寫）
+
+<div class="section-label">📅 即將公布財報</div>
+<div class="earnings-list">
+（根據財報日曆，列出未來兩週內的財報，格式：
+  <div class="earnings-item">
+    <span class="earnings-ticker">（代號）</span>
+    <span class="earnings-date">（日期）</span>
+    <span class="earnings-note">（一句話：市場預期什麼）</span>
+  </div>
+若無資料則寫「近期無重大財報」）
+</div>
 
 <div class="section-label">🎯 今天的結論</div>
 <div class="verdict SENTIMENT">
@@ -167,6 +239,7 @@ def generate_report(data: dict) -> str:
 - SENTIMENT 換成 bullish / bearish / neutral
 - VIXCLASS 換成 fear（VIX>20）或 neutral（VIX≤20）
 - FGCLASS 換成 fear（分數<45）、neutral（45-55）、greed（>55）
+- BTCDIR/ETHDIR 換成 up（漲）或 down（跌）
 """
 
     payload = {

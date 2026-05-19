@@ -11,8 +11,8 @@ RSS_FEEDS = [
     # 美股財經
     ("reuters.com",     "https://feeds.reuters.com/reuters/businessNews"),
     ("cnbc.com",        "https://www.cnbc.com/id/100003114/device/rss/rss.html"),
-    ("cnbc.com",        "https://www.cnbc.com/id/15839069/device/rss/rss.html"),  # tech
-    ("cnbc.com",        "https://www.cnbc.com/id/20910258/device/rss/rss.html"),  # earnings
+    ("cnbc.com",        "https://www.cnbc.com/id/15839069/device/rss/rss.html"),
+    ("cnbc.com",        "https://www.cnbc.com/id/20910258/device/rss/rss.html"),
     ("marketwatch.com", "https://feeds.marketwatch.com/marketwatch/topstories/"),
     ("marketwatch.com", "https://feeds.marketwatch.com/marketwatch/marketpulse/"),
     ("finance.yahoo.com","https://finance.yahoo.com/news/rssindex"),
@@ -20,6 +20,15 @@ RSS_FEEDS = [
     ("investing.com",   "https://www.investing.com/rss/stock_market_news.rss"),
     ("seekingalpha.com","https://seekingalpha.com/market_currents.xml"),
     ("ft.com",          "https://www.ft.com/?format=rss"),
+]
+
+TW_RSS_FEEDS = [
+    # 台股中文財經
+    ("cnyes.com",       "https://news.cnyes.com/rss/category/tw_stock"),
+    ("cnyes.com",       "https://news.cnyes.com/rss/category/headline"),
+    ("moneydj.com",     "https://www.moneydj.com/KMDJ/RSS/RSSFeed.aspx?svc=NW"),
+    ("cna.com.tw",      "https://feeds.feedburner.com/cnafinance"),
+    ("udn.com",         "https://udn.com/rssfeed/news/2/6638?ch=news"),
 ]
 
 def fetch_rss_news() -> list:
@@ -152,6 +161,32 @@ def fetch_us_news():
     return api_articles + rss_articles + ticker_articles
 
 
+def fetch_tw_rss_news() -> list:
+    articles = []
+    cutoff = datetime.now() - timedelta(hours=36)
+    for domain, url in TW_RSS_FEEDS:
+        try:
+            feed = feedparser.parse(url)
+            for entry in feed.entries[:10]:
+                published = None
+                if hasattr(entry, "published_parsed") and entry.published_parsed:
+                    import time
+                    published = datetime.fromtimestamp(time.mktime(entry.published_parsed))
+                if published and published < cutoff:
+                    continue
+                articles.append({
+                    "title": entry.get("title", ""),
+                    "description": entry.get("summary", "")[:200],
+                    "url": entry.get("link", f"https://{domain}"),
+                    "source": {"name": domain},
+                    "publishedAt": published.isoformat() if published else "",
+                    "lang": "zh",
+                })
+        except Exception:
+            continue
+    return articles
+
+
 def fetch_tw_news():
     yesterday = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
     url = (
@@ -166,9 +201,11 @@ def fetch_tw_news():
     try:
         resp = requests.get(url, timeout=10)
         data = resp.json()
-        return data.get("articles", [])
+        api_articles = data.get("articles", [])
     except Exception:
-        return []
+        api_articles = []
+    tw_rss = fetch_tw_rss_news()
+    return api_articles + tw_rss
 
 
 def fetch_indicators() -> dict:
@@ -191,6 +228,14 @@ def fetch_indicators() -> dict:
         except Exception:
             pass
 
+    try:
+        hist = yf.Ticker("TWD=X").history(period="5d")
+        if len(hist) >= 2:
+            prev, last = hist["Close"].iloc[-2], hist["Close"].iloc[-1]
+            indicators["usdtwd"] = {"rate": round(last, 3), "change_pct": round((last - prev) / prev * 100, 3)}
+    except Exception:
+        pass
+
     if "vix" in indicators:
         vix = indicators["vix"]
         if vix > 30:
@@ -208,6 +253,73 @@ def fetch_indicators() -> dict:
     return indicators
 
 
+def fetch_crypto() -> dict:
+    result = {}
+    for key, symbol in [("btc", "BTC-USD"), ("eth", "ETH-USD")]:
+        try:
+            hist = yf.Ticker(symbol).history(period="5d")
+            if len(hist) >= 2:
+                prev, last = hist["Close"].iloc[-2], hist["Close"].iloc[-1]
+                result[key] = {
+                    "price": round(last, 2),
+                    "change_pct": round((last - prev) / prev * 100, 2)
+                }
+        except Exception:
+            pass
+    return result
+
+
+SECTOR_ETFS = {
+    "XLK": "科技",
+    "XLF": "金融",
+    "XLE": "能源",
+    "XLV": "醫療",
+    "XLY": "非必需消費",
+    "XLC": "通訊",
+    "XLI": "工業",
+    "XLP": "必需消費",
+}
+
+
+def fetch_sector_performance() -> list:
+    sectors = []
+    for symbol, name in SECTOR_ETFS.items():
+        try:
+            hist = yf.Ticker(symbol).history(period="5d")
+            if len(hist) >= 2:
+                prev, last = hist["Close"].iloc[-2], hist["Close"].iloc[-1]
+                change_pct = round((last - prev) / prev * 100, 2)
+                sectors.append({"symbol": symbol, "name": name, "change_pct": change_pct})
+        except Exception:
+            continue
+    sectors.sort(key=lambda x: x["change_pct"], reverse=True)
+    return sectors
+
+
+def fetch_earnings_calendar() -> list:
+    events = []
+    watchlist = ["AAPL", "MSFT", "NVDA", "GOOGL", "META", "AMZN", "TSLA", "AMD", "TSM"]
+    for symbol in watchlist:
+        try:
+            ticker = yf.Ticker(symbol)
+            cal = ticker.calendar
+            if cal is None:
+                continue
+            if isinstance(cal, dict):
+                date_val = cal.get("Earnings Date")
+                if date_val:
+                    if isinstance(date_val, list):
+                        date_val = date_val[0]
+                    events.append({"symbol": symbol, "date": str(date_val)[:10]})
+            elif hasattr(cal, "columns") and "Earnings Date" in cal.columns:
+                date_val = cal["Earnings Date"].iloc[0]
+                events.append({"symbol": symbol, "date": str(date_val)[:10]})
+        except Exception:
+            continue
+    events.sort(key=lambda x: x["date"])
+    return events
+
+
 def fetch_all():
     return {
         "us_market": fetch_us_market(),
@@ -215,5 +327,8 @@ def fetch_all():
         "us_news": fetch_us_news(),
         "tw_news": fetch_tw_news(),
         "indicators": fetch_indicators(),
+        "crypto": fetch_crypto(),
+        "sectors": fetch_sector_performance(),
+        "earnings": fetch_earnings_calendar(),
         "date": datetime.now().strftime("%Y-%m-%d")
     }
