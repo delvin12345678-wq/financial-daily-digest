@@ -1,4 +1,5 @@
 import yfinance as yf
+from yahooquery import Ticker as YQTicker
 import requests
 import feedparser
 from datetime import datetime, timedelta
@@ -6,6 +7,7 @@ from config import (
     NEWS_API_KEY, US_STOCKS, TW_STOCKS, US_INDICES, TW_INDICES,
     NEWS_WHITELIST_DOMAINS, TW_NEWS_WHITELIST_DOMAINS
 )
+from config_loader import get_us_stocks, get_tw_stocks, get_us_feeds, get_tw_feeds, get_domains
 
 RSS_FEEDS = [
     # 美股財經
@@ -34,7 +36,8 @@ TW_RSS_FEEDS = [
 def fetch_rss_news() -> list:
     articles = []
     cutoff = datetime.now() - timedelta(hours=36)
-    for domain, url in RSS_FEEDS:
+    feeds = get_us_feeds() or RSS_FEEDS
+    for domain, url in feeds:
         try:
             feed = feedparser.parse(url)
             for entry in feed.entries[:15]:
@@ -56,77 +59,106 @@ def fetch_rss_news() -> list:
     return articles
 
 
-def fetch_us_market():
-    result = {}
-    for symbol in US_INDICES + US_STOCKS:
-        try:
-            ticker = yf.Ticker(symbol)
-            hist = ticker.history(period="2d")
-            if len(hist) >= 2:
-                prev_close = hist["Close"].iloc[-2]
-                last_close = hist["Close"].iloc[-1]
-                change_pct = (last_close - prev_close) / prev_close * 100
-                result[symbol] = {
-                    "price": round(last_close, 2),
-                    "change_pct": round(change_pct, 2)
+def _batch_prices(symbols: list) -> dict:
+    """Batch fetch via yahooquery — one HTTP call, no rate limit issues"""
+    if not symbols:
+        return {}
+    try:
+        data = YQTicker(symbols).price
+        result = {}
+        for sym in symbols:
+            p = data.get(sym, {})
+            price = p.get("regularMarketPrice")
+            prev = p.get("regularMarketPreviousClose")
+            if price and prev and prev != 0:
+                result[sym] = {
+                    "price": round(float(price), 2),
+                    "change_pct": round((float(price) - float(prev)) / float(prev) * 100, 2),
                 }
-        except Exception:
-            continue
+        return result
+    except Exception:
+        return {}
+
+
+def _get_cached_price(symbol: str) -> dict:
+    return _batch_prices([symbol]).get(symbol, {})
+
+
+# TWSE OpenAPI — 一次取全部台股收盤，官方數據無 rate limit
+_TWSE_CACHE: dict = {}
+_TWSE_CACHE_TIME: datetime = None
+
+def _fetch_twse_all() -> dict:
+    """Return {stock_code: {name, price, change_pct}} for all TWSE listed stocks"""
+    global _TWSE_CACHE, _TWSE_CACHE_TIME
+    now = datetime.now()
+    if _TWSE_CACHE and _TWSE_CACHE_TIME and (now - _TWSE_CACHE_TIME).seconds < 3600:
+        return _TWSE_CACHE
+    try:
+        resp = requests.get(
+            "https://openapi.twse.com.tw/v1/exchangeReport/STOCK_DAY_ALL",
+            timeout=15
+        )
+        data = resp.json()
+        result = {}
+        for row in data:
+            code = row.get("Code", "")
+            if not code.isdigit():
+                continue
+            try:
+                close = float(row["ClosingPrice"])
+                change = float(row["Change"])
+                prev = close - change
+                change_pct = (change / prev * 100) if prev != 0 else 0
+                result[code] = {
+                    "name": row.get("Name", code),
+                    "price": round(close, 2),
+                    "change_pct": round(change_pct, 2),
+                }
+            except (ValueError, ZeroDivisionError):
+                continue
+        _TWSE_CACHE = result
+        _TWSE_CACHE_TIME = now
+        return result
+    except Exception:
+        return _TWSE_CACHE
+
+
+def fetch_us_market():
+    active_stocks = get_us_stocks()
+    symbols = US_INDICES + [s if isinstance(s, str) else s["symbol"] for s in active_stocks]
+    result = {}
+    for sym in symbols:
+        d = _get_cached_price(sym)
+        if d:
+            result[sym] = d
     return result
 
 
 def fetch_tw_market():
+    twse = _fetch_twse_all()
     result = {}
-    try:
-        ticker = yf.Ticker("^TWII")
-        hist = ticker.history(period="2d")
-        if len(hist) >= 2:
-            prev_close = hist["Close"].iloc[-2]
-            last_close = hist["Close"].iloc[-1]
-            change_pct = (last_close - prev_close) / prev_close * 100
-            result["^TWII"] = {
-                "price": round(last_close, 2),
-                "change_pct": round(change_pct, 2)
-            }
-    except Exception:
-        pass
-
-    for stock in TW_STOCKS:
-        try:
-            symbol = f"{stock['symbol']}.TW"
-            ticker = yf.Ticker(symbol)
-            hist = ticker.history(period="2d")
-            if len(hist) >= 2:
-                prev_close = hist["Close"].iloc[-2]
-                last_close = hist["Close"].iloc[-1]
-                change_pct = (last_close - prev_close) / prev_close * 100
-                result[stock["symbol"]] = {
-                    "name": stock["name"],
-                    "price": round(last_close, 2),
-                    "change_pct": round(change_pct, 2)
-                }
-        except Exception:
-            continue
+    d = _get_cached_price("^TWII")
+    if d:
+        result["^TWII"] = d
+    for stock in get_tw_stocks():
+        code = stock["symbol"] if isinstance(stock, dict) else stock
+        if code in twse:
+            result[code] = twse[code]
     return result
 
 
 def fetch_custom_stocks(symbols: list) -> dict:
+    twse = _fetch_twse_all()
     result = {}
-    for symbol in symbols:
-        try:
-            yf_symbol = f"{symbol}.TW" if symbol.isdigit() or (len(symbol) == 4 and symbol.isdigit()) else symbol
-            ticker = yf.Ticker(yf_symbol)
-            hist = ticker.history(period="2d")
-            if len(hist) >= 2:
-                prev_close = hist["Close"].iloc[-2]
-                last_close = hist["Close"].iloc[-1]
-                change_pct = (last_close - prev_close) / prev_close * 100
-                result[symbol] = {
-                    "price": round(last_close, 2),
-                    "change_pct": round(change_pct, 2)
-                }
-        except Exception:
-            continue
+    for sym in symbols:
+        if sym.isdigit() or (len(sym) == 4 and sym.isdigit()):
+            if sym in twse:
+                result[sym] = twse[sym]
+        else:
+            d = _get_cached_price(sym)
+            if d:
+                result[sym] = d
     return result
 
 
@@ -160,7 +192,7 @@ def fetch_ticker_news(extra_symbols: list = None) -> list:
 
 def fetch_us_news(extra_tickers: list = None):
     yesterday = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
-    domains = ",".join(NEWS_WHITELIST_DOMAINS)
+    domains = ",".join(get_domains() or NEWS_WHITELIST_DOMAINS)
     url = (
         f"https://newsapi.org/v2/everything"
         f"?q=stock+market+economy+fed+earnings"
@@ -186,7 +218,8 @@ def fetch_us_news(extra_tickers: list = None):
 def fetch_tw_rss_news() -> list:
     articles = []
     cutoff = datetime.now() - timedelta(hours=36)
-    for domain, url in TW_RSS_FEEDS:
+    feeds = get_tw_feeds() or TW_RSS_FEEDS
+    for domain, url in feeds:
         try:
             feed = feedparser.parse(url)
             for entry in feed.entries[:10]:
@@ -231,63 +264,40 @@ def fetch_tw_news():
 
 
 def fetch_indicators() -> dict:
+    ind_syms = ["^VIX", "^TNX", "GC=F", "CL=F", "TWD=X"]
+    raw = _batch_prices(ind_syms)
     indicators = {}
 
-    for key, symbol in [("vix", "^VIX"), ("us10y", "^TNX")]:
-        try:
-            hist = yf.Ticker(symbol).history(period="5d")
-            if len(hist) >= 1:
-                indicators[key] = round(hist["Close"].iloc[-1], 2)
-        except Exception:
-            pass
-
-    for key, symbol in [("gold", "GC=F"), ("oil", "CL=F")]:
-        try:
-            hist = yf.Ticker(symbol).history(period="5d")
-            if len(hist) >= 2:
-                prev, last = hist["Close"].iloc[-2], hist["Close"].iloc[-1]
-                indicators[key] = {"price": round(last, 2), "change_pct": round((last - prev) / prev * 100, 2)}
-        except Exception:
-            pass
-
-    try:
-        hist = yf.Ticker("TWD=X").history(period="5d")
-        if len(hist) >= 2:
-            prev, last = hist["Close"].iloc[-2], hist["Close"].iloc[-1]
-            indicators["usdtwd"] = {"rate": round(last, 3), "change_pct": round((last - prev) / prev * 100, 3)}
-    except Exception:
-        pass
+    if "^VIX" in raw:
+        indicators["vix"] = raw["^VIX"]["price"]
+    if "^TNX" in raw:
+        indicators["us10y"] = raw["^TNX"]["price"]
+    if "GC=F" in raw:
+        indicators["gold"] = {"price": raw["GC=F"]["price"], "change_pct": raw["GC=F"]["change_pct"]}
+    if "CL=F" in raw:
+        indicators["oil"] = {"price": raw["CL=F"]["price"], "change_pct": raw["CL=F"]["change_pct"]}
+    if "TWD=X" in raw:
+        indicators["usdtwd"] = {"rate": raw["TWD=X"]["price"], "change_pct": raw["TWD=X"]["change_pct"]}
 
     if "vix" in indicators:
         vix = indicators["vix"]
-        if vix > 30:
-            score, rating = 15, "Extreme Fear"
-        elif vix > 25:
-            score, rating = 30, "Fear"
-        elif vix > 20:
-            score, rating = 45, "Neutral"
-        elif vix > 15:
-            score, rating = 65, "Greed"
-        else:
-            score, rating = 80, "Extreme Greed"
+        if vix > 30:   score, rating = 15, "Extreme Fear"
+        elif vix > 25: score, rating = 30, "Fear"
+        elif vix > 20: score, rating = 45, "Neutral"
+        elif vix > 15: score, rating = 65, "Greed"
+        else:          score, rating = 80, "Extreme Greed"
         indicators["fear_greed"] = {"score": score, "rating": rating}
 
     return indicators
 
 
 def fetch_crypto() -> dict:
+    raw = _batch_prices(["BTC-USD", "ETH-USD"])
     result = {}
-    for key, symbol in [("btc", "BTC-USD"), ("eth", "ETH-USD")]:
-        try:
-            hist = yf.Ticker(symbol).history(period="5d")
-            if len(hist) >= 2:
-                prev, last = hist["Close"].iloc[-2], hist["Close"].iloc[-1]
-                result[key] = {
-                    "price": round(last, 2),
-                    "change_pct": round((last - prev) / prev * 100, 2)
-                }
-        except Exception:
-            pass
+    if "BTC-USD" in raw:
+        result["btc"] = raw["BTC-USD"]
+    if "ETH-USD" in raw:
+        result["eth"] = raw["ETH-USD"]
     return result
 
 
@@ -305,15 +315,10 @@ SECTOR_ETFS = {
 
 def fetch_sector_performance() -> list:
     sectors = []
+    raw = _batch_prices(list(SECTOR_ETFS.keys()))
     for symbol, name in SECTOR_ETFS.items():
-        try:
-            hist = yf.Ticker(symbol).history(period="5d")
-            if len(hist) >= 2:
-                prev, last = hist["Close"].iloc[-2], hist["Close"].iloc[-1]
-                change_pct = round((last - prev) / prev * 100, 2)
-                sectors.append({"symbol": symbol, "name": name, "change_pct": change_pct})
-        except Exception:
-            continue
+        if symbol in raw:
+            sectors.append({"symbol": symbol, "name": name, "change_pct": raw[symbol]["change_pct"]})
     sectors.sort(key=lambda x: x["change_pct"], reverse=True)
     return sectors
 

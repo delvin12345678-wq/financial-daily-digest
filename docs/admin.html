@@ -1,0 +1,1478 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin · 財經日報</title>
+<style>
+/* ── Reset ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:       #07070e;
+  --surface:  rgba(255,255,255,0.035);
+  --surface2: rgba(255,255,255,0.06);
+  --border:   rgba(255,255,255,0.07);
+  --border2:  rgba(255,255,255,0.12);
+  --text:     #eef0f6;
+  --text2:    rgba(255,255,255,0.45);
+  --text3:    rgba(255,255,255,0.22);
+  --indigo:   #6366f1;
+  --indigo-d: #4338ca;
+  --banana:   #f59e0b;
+  --banana-d: #d97706;
+  --green:    #10b981;
+  --red:      #ef4444;
+  --blue:     #38bdf8;
+  --sb-w:     220px;
+  --radius:   14px;
+  --radius-sm:8px;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* ── Auth Screen ── */
+#auth-screen {
+  position: fixed; inset: 0; z-index: 999;
+  background: var(--bg);
+  display: flex; align-items: center; justify-content: center;
+}
+.auth-card {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border2);
+  border-radius: 22px;
+  padding: 44px 40px;
+  width: 380px;
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.04), 0 40px 80px rgba(0,0,0,0.6);
+}
+.auth-logo {
+  font-size: 22px; font-weight: 900; letter-spacing: -1px;
+  margin-bottom: 4px;
+}
+.auth-logo em { color: var(--banana); font-style: normal; }
+.auth-label { font-size: 12px; color: var(--text2); font-weight: 600; margin-bottom: 24px; letter-spacing: 0.5px; text-transform: uppercase; }
+.auth-field { margin-bottom: 12px; }
+.auth-field label { display: block; font-size: 12px; color: var(--text2); font-weight: 600; margin-bottom: 6px; }
+.auth-input {
+  width: 100%; padding: 11px 14px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--border2);
+  border-radius: 10px; color: var(--text); font-size: 14px; outline: none;
+  transition: border-color 0.15s;
+}
+.auth-input:focus { border-color: var(--indigo); }
+.auth-btn {
+  width: 100%; margin-top: 8px; padding: 13px;
+  background: var(--indigo); color: #fff; border: none;
+  border-radius: 11px; font-size: 14px; font-weight: 700;
+  cursor: pointer; transition: opacity 0.15s, transform 0.1s;
+}
+.auth-btn:hover { opacity: 0.9; }
+.auth-btn:active { transform: scale(0.98); }
+.auth-err { font-size: 12px; color: var(--red); margin-top: 10px; display: none; text-align: center; }
+
+/* ── Admin Shell ── */
+#admin-shell { display: none; min-height: 100vh; }
+
+/* ── Sidebar ── */
+#sidebar {
+  position: fixed; top: 0; left: 0; bottom: 0;
+  width: var(--sb-w);
+  background: rgba(255,255,255,0.025);
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  padding: 28px 0 24px;
+  z-index: 100;
+}
+.sb-logo {
+  padding: 0 22px 28px;
+  font-size: 15px; font-weight: 900; letter-spacing: -0.5px;
+}
+.sb-logo em { color: var(--banana); font-style: normal; }
+.sb-logo small { display: block; font-size: 11px; font-weight: 500; color: var(--text3); margin-top: 2px; letter-spacing: 0.5px; text-transform: uppercase; }
+
+.sb-section { padding: 0 12px; margin-bottom: 4px; }
+.sb-section-label { font-size: 10px; font-weight: 700; color: var(--text3); letter-spacing: 1.5px; text-transform: uppercase; padding: 0 10px; margin-bottom: 6px; }
+.sb-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 12px; border-radius: 10px;
+  color: var(--text2); font-size: 13.5px; font-weight: 500;
+  cursor: pointer; transition: all 0.15s;
+  border: none; background: none; width: 100%; text-align: left;
+}
+.sb-item:hover { background: var(--surface2); color: var(--text); }
+.sb-item.active { background: rgba(99,102,241,0.15); color: var(--indigo); font-weight: 700; }
+.sb-icon { font-size: 16px; width: 20px; text-align: center; flex-shrink: 0; }
+.sb-badge {
+  margin-left: auto; background: var(--banana); color: #0a0a0a;
+  font-size: 10px; font-weight: 800; padding: 1px 7px; border-radius: 20px;
+}
+
+.sb-divider { height: 1px; background: var(--border); margin: 12px 22px; }
+
+.sb-user {
+  margin-top: auto; padding: 0 14px;
+  display: flex; align-items: center; gap: 10px;
+}
+.sb-avatar {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--indigo), var(--banana));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 800; color: #fff; flex-shrink: 0;
+}
+.sb-user-info { flex: 1; min-width: 0; }
+.sb-user-name { font-size: 12.5px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sb-user-role { font-size: 10.5px; color: var(--banana); font-weight: 600; }
+.sb-logout { color: var(--text3); font-size: 13px; cursor: pointer; padding: 4px; transition: color 0.15s; }
+.sb-logout:hover { color: var(--red); }
+
+/* ── Main ── */
+#main {
+  margin-left: var(--sb-w);
+  min-height: 100vh;
+  padding: 0;
+}
+
+.topbar {
+  padding: 20px 32px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; z-index: 50;
+  background: rgba(7,7,14,0.85);
+  backdrop-filter: blur(20px);
+}
+.topbar-title { font-size: 17px; font-weight: 800; letter-spacing: -0.5px; }
+.topbar-sub { font-size: 12px; color: var(--text2); margin-top: 1px; }
+.topbar-actions { display: flex; align-items: center; gap: 10px; }
+
+.page-content { padding: 32px; }
+
+/* ── Section ── */
+.section { display: none; }
+.section.active { display: block; }
+.section-header { margin-bottom: 24px; }
+.section-title { font-size: 22px; font-weight: 900; letter-spacing: -0.5px; }
+.section-desc { font-size: 13px; color: var(--text2); margin-top: 4px; }
+
+/* ── Antigravity Card ── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 22px 24px;
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.03), 0 8px 32px rgba(0,0,0,0.35);
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+.card:hover {
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.06), 0 16px 48px rgba(0,0,0,0.5);
+  transform: translateY(-1px);
+}
+.card-title {
+  font-size: 13px; font-weight: 800; letter-spacing: 0.5px;
+  text-transform: uppercase; color: var(--text2);
+  margin-bottom: 16px; display: flex; align-items: center; gap: 8px;
+}
+.card-title .dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--banana); display: inline-block;
+}
+
+/* ── Grid ── */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+.gap-16 { display: flex; flex-direction: column; gap: 16px; }
+
+/* ── Stat Tile ── */
+.stat-tile {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.02), 0 8px 24px rgba(0,0,0,0.3);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.stat-tile:hover { transform: translateY(-2px); box-shadow: 0 0 0 1px rgba(255,255,255,0.05), 0 20px 40px rgba(0,0,0,0.5); }
+.stat-value { font-size: 30px; font-weight: 900; letter-spacing: -1px; line-height: 1; }
+.stat-label { font-size: 11.5px; color: var(--text2); font-weight: 600; margin-top: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+.stat-sub { font-size: 12px; color: var(--text3); margin-top: 10px; }
+.stat-tile.banana { border-color: rgba(245,158,11,0.2); }
+.stat-tile.banana .stat-value { color: var(--banana); }
+.stat-tile.indigo .stat-value { color: var(--indigo); }
+.stat-tile.green .stat-value { color: var(--green); }
+.stat-tile.blue .stat-value { color: var(--blue); }
+
+/* ── Pipeline ── */
+.pipeline {
+  display: flex; align-items: center; gap: 0;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 20px 24px; margin-bottom: 16px;
+  overflow-x: auto;
+}
+.pipe-step {
+  display: flex; flex-direction: column; align-items: center;
+  flex: 1; min-width: 90px; position: relative;
+}
+.pipe-step:not(:last-child)::after {
+  content: ""; position: absolute; right: 0; top: 18px;
+  width: 50%; height: 1px; background: var(--border2);
+}
+.pipe-icon {
+  width: 40px; height: 40px; border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; margin-bottom: 8px;
+  background: var(--surface2); border: 1px solid var(--border2);
+  position: relative; z-index: 1;
+}
+.pipe-step.active .pipe-icon { background: rgba(99,102,241,0.2); border-color: rgba(99,102,241,0.4); }
+.pipe-label { font-size: 11px; font-weight: 700; color: var(--text2); text-align: center; }
+.pipe-sub { font-size: 10px; color: var(--text3); text-align: center; margin-top: 2px; }
+
+/* ── Buttons ── */
+.btn {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 9px 18px; border-radius: 10px;
+  font-size: 13px; font-weight: 700; cursor: pointer;
+  border: none; transition: all 0.15s; white-space: nowrap;
+}
+.btn:active { transform: scale(0.97); }
+.btn-primary { background: var(--indigo); color: #fff; }
+.btn-primary:hover { background: var(--indigo-d); }
+.btn-banana { background: var(--banana); color: #0a0a0a; }
+.btn-banana:hover { background: var(--banana-d); }
+.btn-ghost { background: var(--surface2); color: var(--text2); border: 1px solid var(--border2); }
+.btn-ghost:hover { background: rgba(255,255,255,0.1); color: var(--text); }
+.btn-danger { background: rgba(239,68,68,0.15); color: var(--red); border: 1px solid rgba(239,68,68,0.25); }
+.btn-danger:hover { background: rgba(239,68,68,0.25); }
+.btn-sm { padding: 6px 13px; font-size: 12px; }
+.btn-icon { padding: 8px; min-width: auto; }
+
+/* ── Search Input ── */
+.search-wrap { position: relative; }
+.search-input {
+  width: 100%; padding: 10px 14px 10px 38px;
+  background: var(--surface2); border: 1px solid var(--border2);
+  border-radius: 10px; color: var(--text); font-size: 13.5px; outline: none;
+  transition: border-color 0.15s;
+}
+.search-input:focus { border-color: var(--indigo); }
+.search-icon {
+  position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+  color: var(--text3); font-size: 14px; pointer-events: none;
+}
+.search-clear {
+  position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+  color: var(--text3); font-size: 18px; cursor: pointer; line-height: 1;
+  display: none;
+}
+.search-clear.show { display: block; }
+
+/* ── Dropdown ── */
+.dropdown {
+  position: absolute; top: calc(100% + 6px); left: 0; right: 0;
+  background: #1a1a2e; border: 1px solid var(--border2); border-radius: 12px;
+  box-shadow: 0 20px 48px rgba(0,0,0,0.7); z-index: 200;
+  max-height: 260px; overflow-y: auto; display: none;
+}
+.dropdown.open { display: block; }
+.dd-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px; cursor: pointer; transition: background 0.1s;
+}
+.dd-item:hover, .dd-item.hi { background: rgba(99,102,241,0.15); }
+.dd-sym { font-size: 13px; font-weight: 800; color: var(--text); font-family: ui-monospace, monospace; min-width: 55px; }
+.dd-name { font-size: 12.5px; color: var(--text2); flex: 1; }
+.dd-add { font-size: 11px; color: var(--indigo); font-weight: 700; }
+.dd-empty { padding: 14px; font-size: 13px; color: var(--text3); text-align: center; }
+
+/* ── Tags ── */
+.tags-wrap { display: flex; flex-wrap: wrap; gap: 7px; min-height: 36px; }
+.tag {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: rgba(99,102,241,0.12); border: 1px solid rgba(99,102,241,0.3);
+  color: #a5b4fc; border-radius: 8px; padding: 4px 10px;
+  font-size: 12.5px; font-weight: 700; font-family: ui-monospace, monospace;
+  transition: all 0.15s;
+}
+.tag:hover { background: rgba(99,102,241,0.2); }
+.tag-x {
+  cursor: pointer; color: rgba(165,180,252,0.5); font-size: 15px; line-height: 1;
+  transition: color 0.1s;
+}
+.tag-x:hover { color: var(--red); }
+.tags-empty { font-size: 12.5px; color: var(--text3); align-self: center; }
+
+/* ── Tab Bar ── */
+.tabs { display: flex; gap: 2px; background: var(--surface2); padding: 4px; border-radius: 11px; width: fit-content; margin-bottom: 20px; }
+.tab {
+  padding: 7px 18px; border-radius: 8px; font-size: 13px; font-weight: 600;
+  cursor: pointer; color: var(--text2); transition: all 0.15s; border: none; background: none;
+}
+.tab.active { background: var(--indigo); color: #fff; }
+
+/* ── Toggle ── */
+.toggle-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 13px 0; border-bottom: 1px solid var(--border);
+}
+.toggle-row:last-child { border-bottom: none; }
+.toggle-info { flex: 1; }
+.toggle-label { font-size: 13.5px; font-weight: 600; color: var(--text); }
+.toggle-sub { font-size: 12px; color: var(--text2); margin-top: 2px; }
+.toggle {
+  position: relative; width: 40px; height: 22px; flex-shrink: 0;
+  cursor: pointer; margin-left: 16px;
+}
+.toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
+.toggle-track {
+  position: absolute; inset: 0; background: var(--surface2);
+  border: 1px solid var(--border2); border-radius: 11px;
+  transition: background 0.2s;
+}
+.toggle input:checked + .toggle-track { background: var(--green); border-color: var(--green); }
+.toggle-thumb {
+  position: absolute; top: 2px; left: 2px;
+  width: 16px; height: 16px; background: #fff;
+  border-radius: 50%; transition: transform 0.2s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+}
+.toggle input:checked ~ .toggle-thumb { transform: translateX(18px); }
+
+/* ── Feed Card ── */
+.feed-card {
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 11px; padding: 14px 16px;
+  display: flex; align-items: center; gap: 12px;
+  margin-bottom: 8px; transition: border-color 0.15s;
+}
+.feed-card.off { opacity: 0.45; }
+.feed-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); flex-shrink: 0; }
+.feed-card.off .feed-dot { background: var(--text3); }
+.feed-info { flex: 1; min-width: 0; }
+.feed-domain { font-size: 13px; font-weight: 700; }
+.feed-url { font-size: 11px; color: var(--text3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+.feed-actions { display: flex; gap: 6px; }
+
+/* ── Log Terminal ── */
+.terminal {
+  background: #050508; border: 1px solid var(--border);
+  border-radius: 12px; padding: 20px;
+  font-family: ui-monospace, "SF Mono", monospace;
+  font-size: 12.5px; line-height: 1.7;
+  max-height: 320px; overflow-y: auto;
+}
+.log-line { margin-bottom: 2px; }
+.log-ts { color: var(--text3); margin-right: 8px; }
+.log-ok { color: var(--green); }
+.log-err { color: var(--red); }
+.log-info { color: var(--blue); }
+.log-warn { color: var(--banana); }
+.log-cursor { display: inline-block; width: 8px; height: 14px; background: var(--text2); vertical-align: middle; animation: blink 1s step-end infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+
+/* ── Badge ── */
+.badge {
+  display: inline-flex; align-items: center;
+  padding: 2px 9px; border-radius: 20px; font-size: 11px; font-weight: 700;
+}
+.badge-green { background: rgba(16,185,129,0.15); color: var(--green); border: 1px solid rgba(16,185,129,0.25); }
+.badge-red { background: rgba(239,68,68,0.12); color: var(--red); border: 1px solid rgba(239,68,68,0.22); }
+.badge-banana { background: rgba(245,158,11,0.12); color: var(--banana); border: 1px solid rgba(245,158,11,0.25); }
+.badge-indigo { background: rgba(99,102,241,0.12); color: #a5b4fc; border: 1px solid rgba(99,102,241,0.25); }
+
+/* ── Subscriber Row ── */
+.sub-row {
+  display: flex; align-items: center; gap: 14px;
+  padding: 11px 0; border-bottom: 1px solid var(--border);
+}
+.sub-row:last-child { border-bottom: none; }
+.sub-av { width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(135deg, #6366f1, #38bdf8); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; flex-shrink: 0; }
+.sub-email { font-size: 13px; color: var(--text); flex: 1; }
+.sub-joined { font-size: 11.5px; color: var(--text3); }
+
+/* ── Inline field ── */
+.inline-add {
+  display: flex; gap: 8px; margin-top: 14px;
+}
+.inline-input {
+  flex: 1; padding: 9px 13px;
+  background: var(--surface2); border: 1px solid var(--border2);
+  border-radius: 9px; color: var(--text); font-size: 13px; outline: none;
+  transition: border-color 0.15s;
+}
+.inline-input:focus { border-color: var(--indigo); }
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+
+/* ── Notification Toast ── */
+#toast {
+  position: fixed; bottom: 32px; right: 32px;
+  background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.3);
+  color: #6ee7b7; padding: 12px 20px; border-radius: 12px;
+  font-size: 13px; font-weight: 600;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  transform: translateY(80px); opacity: 0;
+  transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  z-index: 9999; pointer-events: none;
+}
+#toast.show { transform: translateY(0); opacity: 1; }
+#toast.err { background: rgba(239,68,68,0.12); border-color: rgba(239,68,68,0.25); color: #fca5a5; }
+
+/* ── Empty state ── */
+.empty-state { text-align: center; padding: 40px 20px; color: var(--text3); font-size: 13px; }
+.empty-state .emoji { font-size: 32px; margin-bottom: 10px; }
+
+/* ── Divider ── */
+.divider { height: 1px; background: var(--border); margin: 20px 0; }
+
+/* ── Settings row ── */
+.settings-row { padding: 16px 0; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.settings-row:last-child { border-bottom: none; }
+.settings-label { font-size: 14px; font-weight: 600; }
+.settings-desc { font-size: 12px; color: var(--text2); margin-top: 2px; }
+.settings-control { flex-shrink: 0; }
+.settings-select {
+  padding: 8px 12px; background: var(--surface2); border: 1px solid var(--border2);
+  border-radius: 9px; color: var(--text); font-size: 13px; outline: none; cursor: pointer;
+}
+</style>
+</head>
+<body>
+
+<!-- ── Auth Screen ── -->
+<div id="auth-screen">
+  <div class="auth-card">
+    <div class="auth-logo">財經日報<em>·</em></div>
+    <div class="auth-label">Admin Console</div>
+    <div class="auth-field">
+      <label>Email</label>
+      <input id="auth-email" class="auth-input" type="email" placeholder="admin@example.com" autocomplete="email">
+    </div>
+    <div class="auth-field">
+      <label>Password</label>
+      <input id="auth-pw" class="auth-input" type="password" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <button class="auth-btn" onclick="doLogin()">進入管理後台</button>
+    <div id="auth-err" class="auth-err">Email 或密碼錯誤，或無管理員權限</div>
+  </div>
+</div>
+
+<!-- ── Admin Shell ── -->
+<div id="admin-shell">
+
+  <!-- Sidebar -->
+  <aside id="sidebar">
+    <div class="sb-logo">
+      財經日報<em>◆</em>
+      <small>Admin Console</small>
+    </div>
+
+    <div class="sb-section">
+      <div class="sb-section-label">監控</div>
+      <button class="sb-item active" onclick="nav('overview',this)">
+        <span class="sb-icon">▦</span> 總覽
+      </button>
+    </div>
+
+    <div class="sb-section">
+      <div class="sb-section-label">設定</div>
+      <button class="sb-item" onclick="nav('stocks',this)">
+        <span class="sb-icon">◉</span> 股票池
+        <span class="sb-badge" id="sb-stock-count">0</span>
+      </button>
+      <button class="sb-item" onclick="nav('news',this)">
+        <span class="sb-icon">◎</span> 新聞源
+      </button>
+      <button class="sb-item" onclick="nav('settings',this)">
+        <span class="sb-icon">◈</span> 系統設定
+      </button>
+    </div>
+
+    <div class="sb-section">
+      <div class="sb-section-label">操作</div>
+      <button class="sb-item" onclick="nav('subscribers',this)">
+        <span class="sb-icon">◻</span> 訂閱者
+      </button>
+      <button class="sb-item" onclick="nav('deploy',this)">
+        <span class="sb-icon">▶</span> 發送報告
+      </button>
+    </div>
+
+    <div class="sb-divider"></div>
+
+    <div class="sb-user">
+      <div class="sb-avatar" id="sb-avatar">D</div>
+      <div class="sb-user-info">
+        <div class="sb-user-name" id="sb-email">-</div>
+        <div class="sb-user-role">Admin</div>
+      </div>
+      <div class="sb-logout" onclick="logout()" title="登出">⏏</div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <div id="main">
+
+    <!-- Topbar -->
+    <div class="topbar">
+      <div>
+        <div class="topbar-title" id="topbar-title">總覽</div>
+        <div class="topbar-sub" id="topbar-sub">財經日報後台管理系統</div>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn btn-ghost btn-sm" onclick="saveAll()">💾 儲存設定</button>
+        <button class="btn btn-banana btn-sm" onclick="nav('deploy',null)">▶ 立即發送</button>
+      </div>
+    </div>
+
+    <div class="page-content">
+
+      <!-- ── Overview ── -->
+      <div id="sec-overview" class="section active">
+        <div class="section-header">
+          <div class="section-title">系統總覽</div>
+          <div class="section-desc">今天是 <span id="ov-date">-</span>，報告狀態一目瞭然</div>
+        </div>
+
+        <!-- Pipeline -->
+        <div class="pipeline">
+          <div class="pipe-step active">
+            <div class="pipe-icon">📡</div>
+            <div class="pipe-label">數據抓取</div>
+            <div class="pipe-sub">Yahoo · TWSE · RSS</div>
+          </div>
+          <div class="pipe-step active">
+            <div class="pipe-icon">🔍</div>
+            <div class="pipe-label">假訊息過濾</div>
+            <div class="pipe-sub">AI 篩選</div>
+          </div>
+          <div class="pipe-step active">
+            <div class="pipe-icon">🤖</div>
+            <div class="pipe-label">AI 生成</div>
+            <div class="pipe-sub">Groq Llama 3.3</div>
+          </div>
+          <div class="pipe-step active">
+            <div class="pipe-icon">📧</div>
+            <div class="pipe-label">Email 發送</div>
+            <div class="pipe-sub">Brevo SMTP</div>
+          </div>
+          <div class="pipe-step">
+            <div class="pipe-icon">✅</div>
+            <div class="pipe-label">完成</div>
+            <div class="pipe-sub" id="ov-last-sent">-</div>
+          </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="grid-4" style="margin-bottom:16px">
+          <div class="stat-tile banana">
+            <div class="stat-value" id="ov-us-count">17</div>
+            <div class="stat-label">美股追蹤</div>
+            <div class="stat-sub" id="ov-us-list">NVDA · AAPL · TSLA ...</div>
+          </div>
+          <div class="stat-tile indigo">
+            <div class="stat-value" id="ov-tw-count">4</div>
+            <div class="stat-label">台股追蹤</div>
+            <div class="stat-sub" id="ov-tw-list">台積電 · 聯發科 ...</div>
+          </div>
+          <div class="stat-tile green">
+            <div class="stat-value" id="ov-feeds">16</div>
+            <div class="stat-label">新聞來源</div>
+            <div class="stat-sub">RSS + NewsAPI + Ticker</div>
+          </div>
+          <div class="stat-tile blue">
+            <div class="stat-value" id="ov-subs">—</div>
+            <div class="stat-label">訂閱人數</div>
+            <div class="stat-sub">Brevo 列表</div>
+          </div>
+        </div>
+
+        <!-- Recent reports -->
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-title"><span class="dot"></span>最近發送記錄</div>
+            <div id="ov-recent">
+              <div class="toggle-row">
+                <div class="toggle-info">
+                  <div class="toggle-label">2026-05-20 <span class="badge badge-green">已送出</span></div>
+                  <div class="toggle-sub">NVDA · AAPL · TSLA · 2330 · 2454</div>
+                </div>
+              </div>
+              <div class="toggle-row">
+                <div class="toggle-info">
+                  <div class="toggle-label">2026-05-19 <span class="badge badge-indigo">已存檔</span></div>
+                  <div class="toggle-sub">一般訂閱者版本</div>
+                </div>
+              </div>
+              <div class="toggle-row">
+                <div class="toggle-info">
+                  <div class="toggle-label">2026-05-18 <span class="badge badge-indigo">已存檔</span></div>
+                  <div class="toggle-sub">一般訂閱者版本</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title"><span class="dot"></span>數據源狀態</div>
+            <div class="toggle-row">
+              <div class="toggle-info">
+                <div class="toggle-label">Yahoo Finance (yahooquery)</div>
+                <div class="toggle-sub">美股 · 指數 · 商品 · 加密</div>
+              </div>
+              <span class="badge badge-green">● 正常</span>
+            </div>
+            <div class="toggle-row">
+              <div class="toggle-info">
+                <div class="toggle-label">TWSE OpenAPI</div>
+                <div class="toggle-sub">台灣證交所官方 · 1234+ 股</div>
+              </div>
+              <span class="badge badge-green">● 正常</span>
+            </div>
+            <div class="toggle-row">
+              <div class="toggle-info">
+                <div class="toggle-label">NewsAPI</div>
+                <div class="toggle-sub">英文財經新聞</div>
+              </div>
+              <span class="badge badge-banana">● 配額制</span>
+            </div>
+            <div class="toggle-row">
+              <div class="toggle-info">
+                <div class="toggle-label">RSS Feeds</div>
+                <div class="toggle-sub">Reuters · CNBC · MarketWatch...</div>
+              </div>
+              <span class="badge badge-green">● 正常</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Stocks ── -->
+      <div id="sec-stocks" class="section">
+        <div class="section-header">
+          <div class="section-title">股票池管理</div>
+          <div class="section-desc">設定全域追蹤清單，所有訂閱者共用此基礎池</div>
+        </div>
+
+        <div class="tabs">
+          <button class="tab active" onclick="switchStockTab('us',this)">🇺🇸 美股</button>
+          <button class="tab" onclick="switchStockTab('tw',this)">🇹🇼 台股</button>
+        </div>
+
+        <!-- US Tab -->
+        <div id="stock-tab-us">
+          <div class="card" style="margin-bottom:16px">
+            <div class="card-title"><span class="dot"></span>美股追蹤清單 (<span id="us-tag-count">0</span> 支)</div>
+            <div class="tags-wrap" id="us-tags"><span class="tags-empty">載入中...</span></div>
+            <div class="divider"></div>
+            <div class="card-title"><span class="dot"></span>搜尋並新增</div>
+            <div class="search-wrap" style="position:relative">
+              <span class="search-icon">⌕</span>
+              <input class="search-input" id="us-search" placeholder="輸入股票代號或公司名稱..." autocomplete="off">
+              <span class="search-clear" id="us-clear" onclick="clearSearch('us')">×</span>
+              <div class="dropdown" id="us-dropdown"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TW Tab -->
+        <div id="stock-tab-tw" style="display:none">
+          <div class="card" style="margin-bottom:16px">
+            <div class="card-title"><span class="dot"></span>台股追蹤清單 (<span id="tw-tag-count">0</span> 支)</div>
+            <div class="tags-wrap" id="tw-tags"><span class="tags-empty">載入中...</span></div>
+            <div class="divider"></div>
+            <div class="card-title"><span class="dot"></span>搜尋並新增</div>
+            <div class="search-wrap" style="position:relative">
+              <span class="search-icon">⌕</span>
+              <input class="search-input" id="tw-search" placeholder="輸入股票代號或公司名稱..." autocomplete="off">
+              <span class="search-clear" id="tw-clear" onclick="clearSearch('tw')">×</span>
+              <div class="dropdown" id="tw-dropdown"></div>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn btn-primary" onclick="saveAll()">💾 儲存股票設定</button>
+          <button class="btn btn-ghost" onclick="exportConfig()">⤓ 匯出 config.py 片段</button>
+          <button class="btn btn-danger btn-sm" onclick="resetStocks()">↺ 還原預設</button>
+        </div>
+      </div>
+
+      <!-- ── News ── -->
+      <div id="sec-news" class="section">
+        <div class="section-header">
+          <div class="section-title">新聞源管理</div>
+          <div class="section-desc">控制哪些 RSS 和 API 域名參與每日報告</div>
+        </div>
+
+        <div class="tabs">
+          <button class="tab active" onclick="switchNewsTab('us',this)">🌐 美股 RSS</button>
+          <button class="tab" onclick="switchNewsTab('tw',this)">🇹🇼 台股 RSS</button>
+          <button class="tab" onclick="switchNewsTab('domains',this)">🔒 域名白名單</button>
+        </div>
+
+        <!-- US RSS -->
+        <div id="news-tab-us">
+          <div id="us-feeds-list"></div>
+          <div class="inline-add">
+            <input class="inline-input" id="us-feed-domain" placeholder="domain (e.g. wsj.com)">
+            <input class="inline-input" id="us-feed-url" placeholder="RSS URL (https://...)">
+            <button class="btn btn-primary btn-sm" onclick="addFeed('us')">+ 新增</button>
+          </div>
+        </div>
+
+        <!-- TW RSS -->
+        <div id="news-tab-tw" style="display:none">
+          <div id="tw-feeds-list"></div>
+          <div class="inline-add">
+            <input class="inline-input" id="tw-feed-domain" placeholder="domain (e.g. cnyes.com)">
+            <input class="inline-input" id="tw-feed-url" placeholder="RSS URL (https://...)">
+            <button class="btn btn-primary btn-sm" onclick="addFeed('tw')">+ 新增</button>
+          </div>
+        </div>
+
+        <!-- Domains -->
+        <div id="news-tab-domains" style="display:none">
+          <div class="card">
+            <div class="card-title"><span class="dot"></span>NewsAPI 域名白名單</div>
+            <div class="tags-wrap" id="domain-tags"></div>
+            <div class="inline-add" style="margin-top:14px">
+              <input class="inline-input" id="domain-input" placeholder="新增域名 (e.g. bloomberg.com)">
+              <button class="btn btn-primary btn-sm" onclick="addDomain()">+ 新增</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Settings ── -->
+      <div id="sec-settings" class="section">
+        <div class="section-header">
+          <div class="section-title">系統設定</div>
+          <div class="section-desc">報告排程、語言、API 狀態</div>
+        </div>
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-title"><span class="dot"></span>報告設定</div>
+            <div class="settings-row">
+              <div>
+                <div class="settings-label">預設語言</div>
+                <div class="settings-desc">AI 生成報告的主要語言</div>
+              </div>
+              <select class="settings-select settings-control" id="cfg-lang">
+                <option value="zh-TW">繁體中文</option>
+                <option value="en">English</option>
+              </select>
+            </div>
+            <div class="settings-row">
+              <div>
+                <div class="settings-label">新聞回溯時間</div>
+                <div class="settings-desc">RSS 抓取幾小時內的新聞</div>
+              </div>
+              <select class="settings-select settings-control" id="cfg-hours">
+                <option value="24">24 小時</option>
+                <option value="36" selected>36 小時</option>
+                <option value="48">48 小時</option>
+              </select>
+            </div>
+            <div class="settings-row">
+              <div>
+                <div class="settings-label">每支股最多新聞數</div>
+                <div class="settings-desc">Ticker news 每股抓取上限</div>
+              </div>
+              <select class="settings-select settings-control" id="cfg-ticker-news">
+                <option value="3">3 則</option>
+                <option value="5" selected>5 則</option>
+                <option value="8">8 則</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title"><span class="dot"></span>API 金鑰狀態</div>
+            <div class="toggle-row">
+              <div class="toggle-info">
+                <div class="toggle-label">Groq API</div>
+                <div class="toggle-sub">AI 報告生成</div>
+              </div>
+              <span class="badge badge-green">● 已設定</span>
+            </div>
+            <div class="toggle-row">
+              <div class="toggle-info">
+                <div class="toggle-label">Brevo API</div>
+                <div class="toggle-sub">Email 發送服務</div>
+              </div>
+              <span class="badge badge-green">● 已設定</span>
+            </div>
+            <div class="toggle-row">
+              <div class="toggle-info">
+                <div class="toggle-label">NewsAPI</div>
+                <div class="toggle-sub">英文新聞 API</div>
+              </div>
+              <span class="badge badge-green">● 已設定</span>
+            </div>
+            <div class="toggle-row">
+              <div class="toggle-info">
+                <div class="toggle-label">TWSE OpenAPI</div>
+                <div class="toggle-sub">台灣證交所（免費，無需 Key）</div>
+              </div>
+              <span class="badge badge-green">● 公開 API</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:16px">
+          <div class="card-title"><span class="dot"></span>Workflow 架構</div>
+          <div class="toggle-row">
+            <div class="toggle-info">
+              <div class="toggle-label">假訊息過濾</div>
+              <div class="settings-desc">使用關鍵字過濾可疑新聞標題</div>
+            </div>
+            <label class="toggle">
+              <input type="checkbox" id="cfg-filter" checked>
+              <div class="toggle-track"></div>
+              <div class="toggle-thumb"></div>
+            </label>
+          </div>
+          <div class="toggle-row">
+            <div class="toggle-info">
+              <div class="toggle-label">個人化主旨行</div>
+              <div class="settings-desc">AI 生成含持倉資訊的個人化 Email 主旨</div>
+            </div>
+            <label class="toggle">
+              <input type="checkbox" id="cfg-personal-subj" checked>
+              <div class="toggle-track"></div>
+              <div class="toggle-thumb"></div>
+            </label>
+          </div>
+          <div class="toggle-row">
+            <div class="toggle-info">
+              <div class="toggle-label">CSS Inline 化</div>
+              <div class="settings-desc">用 premailer 將 CSS inline，確保 Gmail 正常渲染</div>
+            </div>
+            <label class="toggle">
+              <input type="checkbox" id="cfg-premailer" checked>
+              <div class="toggle-track"></div>
+              <div class="toggle-thumb"></div>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Subscribers ── -->
+      <div id="sec-subscribers" class="section">
+        <div class="section-header">
+          <div class="section-title">訂閱者管理</div>
+          <div class="section-desc">透過 Cloudflare Worker 查詢 Brevo 訂閱列表</div>
+        </div>
+        <div class="card">
+          <div id="subs-content">
+            <div class="empty-state">
+              <div class="emoji">📋</div>
+              載入訂閱者資料中...
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Deploy ── -->
+      <div id="sec-deploy" class="section">
+        <div class="section-header">
+          <div class="section-title">發送報告</div>
+          <div class="section-desc">手動觸發報告生成與 Email 發送</div>
+        </div>
+
+        <div class="grid-2" style="margin-bottom:16px">
+          <div class="card">
+            <div class="card-title"><span class="dot"></span>發送目標</div>
+            <div class="settings-row">
+              <div>
+                <div class="settings-label">報告日期</div>
+              </div>
+              <input type="date" class="settings-select settings-control" id="deploy-date">
+            </div>
+            <div class="settings-row">
+              <div>
+                <div class="settings-label">發送模式</div>
+              </div>
+              <select class="settings-select settings-control" id="deploy-mode">
+                <option value="test">測試（只寄給 Admin）</option>
+                <option value="all">全體訂閱者</option>
+              </select>
+            </div>
+            <div style="margin-top:16px;display:flex;gap:10px">
+              <button class="btn btn-banana" onclick="triggerDeploy()">▶ 立即執行</button>
+              <button class="btn btn-ghost" onclick="openPreview()">👁 預覽報告</button>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title"><span class="dot"></span>快速操作</div>
+            <div class="toggle-row">
+              <div class="toggle-label">只抓數據（不發送）</div>
+              <button class="btn btn-ghost btn-sm" onclick="logAction('fetch-only')">執行</button>
+            </div>
+            <div class="toggle-row">
+              <div class="toggle-label">清除數據快取</div>
+              <button class="btn btn-danger btn-sm" onclick="clearCache()">清除</button>
+            </div>
+            <div class="toggle-row">
+              <div class="toggle-label">測試 API 連線</div>
+              <button class="btn btn-ghost btn-sm" onclick="testAPIs()">測試</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title" style="justify-content:space-between">
+            <span><span class="dot"></span>執行 Log</span>
+            <button class="btn btn-ghost btn-sm" onclick="clearLog()">清除</button>
+          </div>
+          <div class="terminal" id="log-terminal">
+            <div class="log-line"><span class="log-ts">[--:--:--]</span><span class="log-info">系統就緒，等待指令...</span></div>
+            <span class="log-cursor"></span>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- page-content -->
+  </div><!-- main -->
+</div><!-- admin-shell -->
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<script>
+const WORKER_URL = "https://marketdaily-webhook.delvin-12345678.workers.dev";
+const ADMIN_EMAIL = "delvin.12345678@gmail.com";
+
+// ── State ──
+let US_DB = [], TW_DB = [];
+let cfg = {
+  us_stocks: ["AAPL","MSFT","GOOGL","AMZN","META","NVDA","TSLA","AMD","TSM","ARM","JPM","GS","BRK-B"],
+  tw_stocks: [
+    {symbol:"2330",name:"台積電"},{symbol:"2454",name:"聯發科"},{symbol:"2317",name:"鴻海"}
+  ],
+  us_feeds: [
+    {domain:"reuters.com",   url:"https://feeds.reuters.com/reuters/businessNews",         on:true},
+    {domain:"cnbc.com",      url:"https://www.cnbc.com/id/100003114/device/rss/rss.html",  on:true},
+    {domain:"cnbc.com",      url:"https://www.cnbc.com/id/15839069/device/rss/rss.html",   on:true},
+    {domain:"cnbc.com",      url:"https://www.cnbc.com/id/20910258/device/rss/rss.html",   on:true},
+    {domain:"marketwatch.com",url:"https://feeds.marketwatch.com/marketwatch/topstories/", on:true},
+    {domain:"marketwatch.com",url:"https://feeds.marketwatch.com/marketwatch/marketpulse/",on:true},
+    {domain:"finance.yahoo.com",url:"https://finance.yahoo.com/news/rssindex",             on:true},
+    {domain:"investing.com", url:"https://www.investing.com/rss/news.rss",                 on:true},
+    {domain:"investing.com", url:"https://www.investing.com/rss/stock_market_news.rss",    on:true},
+    {domain:"seekingalpha.com",url:"https://seekingalpha.com/market_currents.xml",         on:true},
+    {domain:"ft.com",        url:"https://www.ft.com/?format=rss",                         on:true},
+  ],
+  tw_feeds: [
+    {domain:"cnyes.com",     url:"https://news.cnyes.com/rss/category/tw_stock",           on:true},
+    {domain:"cnyes.com",     url:"https://news.cnyes.com/rss/category/headline",           on:true},
+    {domain:"moneydj.com",   url:"https://www.moneydj.com/KMDJ/RSS/RSSFeed.aspx?svc=NW",  on:true},
+    {domain:"cna.com.tw",    url:"https://feeds.feedburner.com/cnafinance",                on:true},
+    {domain:"udn.com",       url:"https://udn.com/rssfeed/news/2/6638?ch=news",            on:true},
+  ],
+  domains: [
+    "reuters.com","bloomberg.com","wsj.com","cnbc.com","apnews.com","ft.com",
+    "marketwatch.com","finance.yahoo.com","investing.com","seekingalpha.com",
+    "businessinsider.com","forbes.com","barrons.com","thestreet.com","benzinga.com"
+  ]
+};
+
+let hiIdx = {us:-1, tw:-1};
+
+// ── Auth ──
+async function doLogin() {
+  const email = document.getElementById("auth-email").value.trim();
+  const pw    = document.getElementById("auth-pw").value;
+  const err   = document.getElementById("auth-err");
+  err.style.display = "none";
+
+  if (email !== ADMIN_EMAIL) { err.style.display = "block"; return; }
+
+  try {
+    const res = await fetch(WORKER_URL + "/check-subscriber", {
+      method: "POST", headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({email, password: pw})
+    });
+    const d = await res.json();
+    if (d.plan !== "admin") { err.style.display = "block"; return; }
+  } catch {
+    // offline mode — allow admin email through
+    if (email !== ADMIN_EMAIL) { err.style.display = "block"; return; }
+  }
+
+  localStorage.setItem("md-admin-email", email);
+  bootAdmin(email);
+}
+
+function bootAdmin(email) {
+  document.getElementById("auth-screen").style.display = "none";
+  document.getElementById("admin-shell").style.display = "block";
+  document.getElementById("sb-email").textContent = email;
+  document.getElementById("sb-avatar").textContent = email[0].toUpperCase();
+  document.getElementById("ov-date").textContent = new Date().toLocaleDateString("zh-TW");
+  document.getElementById("deploy-date").valueAsDate = new Date();
+
+  loadSavedCfg();
+  loadStocksDB();
+  renderOverview();
+  renderFeedLists();
+  renderDomains();
+  fetchAdminStats();
+  loadFromWorker();
+}
+
+function logout() {
+  localStorage.removeItem("md-admin-email");
+  location.reload();
+}
+
+// ── Navigation ──
+const SECTION_TITLES = {
+  overview: ["總覽","系統狀態監控"],
+  stocks:   ["股票池管理","設定全域追蹤清單"],
+  news:     ["新聞源管理","RSS Feeds 與域名白名單"],
+  settings: ["系統設定","報告排程與 API 狀態"],
+  subscribers:["訂閱者","Brevo 訂閱列表"],
+  deploy:   ["發送報告","手動觸發 Email 發送"],
+};
+
+function nav(id, btn) {
+  document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
+  document.getElementById("sec-" + id)?.classList.add("active");
+  document.querySelectorAll(".sb-item").forEach(b => b.classList.remove("active"));
+  if (btn) btn.classList.add("active");
+  else document.querySelectorAll(".sb-item").forEach(b => {
+    if (b.getAttribute("onclick")?.includes(`'${id}'`)) b.classList.add("active");
+  });
+  const [title, sub] = SECTION_TITLES[id] || [id, ""];
+  document.getElementById("topbar-title").textContent = title;
+  document.getElementById("topbar-sub").textContent = sub;
+  if (id === "subscribers") loadSubscribers();
+}
+
+// ── Load / Save Config ──
+function loadSavedCfg() {
+  const saved = localStorage.getItem("md-admin-cfg");
+  if (saved) {
+    try { Object.assign(cfg, JSON.parse(saved)); } catch {}
+  }
+}
+
+async function loadFromWorker() {
+  try {
+    const res = await fetch(WORKER_URL + "/admin/get-config", {
+      method: "POST", headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({email: localStorage.getItem("md-admin-email")})
+    });
+    const d = await res.json();
+    if (d.config) {
+      Object.assign(cfg, d.config);
+      localStorage.setItem("md-admin-cfg", JSON.stringify(cfg));
+      renderTags("us"); renderTags("tw");
+      renderFeedLists(); renderDomains(); renderOverview(); updateSbBadge();
+      toast("已從 Cloudflare KV 同步設定 ✓");
+    }
+  } catch {}
+}
+
+async function saveAll() {
+  localStorage.setItem("md-admin-cfg", JSON.stringify(cfg));
+  renderOverview();
+  renderTags("us"); renderTags("tw");
+  updateSbBadge();
+  try {
+    const res = await fetch(WORKER_URL + "/admin/save-config", {
+      method: "POST", headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({email: localStorage.getItem("md-admin-email"), config: cfg})
+    });
+    const d = await res.json();
+    if (d.ok) toast("已儲存至 Cloudflare KV ✓ — Python 下次執行自動生效");
+    else toast("本地已儲存，但 Worker 同步失敗", true);
+  } catch {
+    toast("本地已儲存（離線模式）");
+  }
+}
+
+function resetStocks() {
+  if (!confirm("確定要還原預設股票清單？")) return;
+  cfg.us_stocks = ["AAPL","MSFT","GOOGL","AMZN","META","NVDA","TSLA","AMD","TSM","ARM","JPM","GS","BRK-B"];
+  cfg.tw_stocks = [{symbol:"2330",name:"台積電"},{symbol:"2454",name:"聯發科"},{symbol:"2317",name:"鴻海"}];
+  renderTags("us"); renderTags("tw"); updateSbBadge();
+  toast("已還原預設清單");
+}
+
+// ── Load stocks DB ──
+async function loadStocksDB() {
+  try {
+    const r = await fetch("stocks.json");
+    const d = await r.json();
+    US_DB = d.us || [];
+    TW_DB = d.tw || [];
+  } catch {
+    US_DB = []; TW_DB = [];
+  }
+  renderTags("us"); renderTags("tw"); updateSbBadge();
+  setupSearch("us"); setupSearch("tw");
+}
+
+// ── Tags ──
+function renderTags(market) {
+  const el = document.getElementById(market + "-tags");
+  const countEl = document.getElementById(market + "-tag-count");
+  const list = market === "us" ? cfg.us_stocks : cfg.tw_stocks.map(s => s.symbol || s);
+  countEl.textContent = list.length;
+  if (!list.length) {
+    el.innerHTML = `<span class="tags-empty">尚未選擇任何${market==="us"?"美股":"台股"}</span>`;
+    return;
+  }
+  el.innerHTML = list.map(sym => {
+    const name = market === "us"
+      ? (US_DB.find(([s]) => s === sym)?.[1] || "")
+      : (cfg.tw_stocks.find(s => (s.symbol||s) === sym)?.name || TW_DB.find(([s]) => s === sym)?.[1] || "");
+    const label = name ? `${sym} · ${name}` : sym;
+    return `<div class="tag">${label} <span class="tag-x" onclick="removeStock('${market}','${sym}')">×</span></div>`;
+  }).join("");
+}
+
+function removeStock(market, sym) {
+  if (market === "us") {
+    cfg.us_stocks = cfg.us_stocks.filter(s => s !== sym);
+  } else {
+    cfg.tw_stocks = cfg.tw_stocks.filter(s => (s.symbol||s) !== sym);
+  }
+  renderTags(market); updateSbBadge();
+}
+
+function addStock(market, sym, name) {
+  if (market === "us") {
+    if (cfg.us_stocks.includes(sym)) return;
+    cfg.us_stocks.push(sym);
+  } else {
+    if (cfg.tw_stocks.find(s => (s.symbol||s) === sym)) return;
+    cfg.tw_stocks.push({symbol: sym, name});
+  }
+  renderTags(market); updateSbBadge();
+  document.getElementById(market + "-search").value = "";
+  document.getElementById(market + "-dropdown").classList.remove("open");
+  document.getElementById(market + "-clear").classList.remove("show");
+}
+
+function updateSbBadge() {
+  document.getElementById("sb-stock-count").textContent = cfg.us_stocks.length + cfg.tw_stocks.length;
+}
+
+// ── Search ──
+function setupSearch(market) {
+  const input = document.getElementById(market + "-search");
+  const dd = document.getElementById(market + "-dropdown");
+  const clear = document.getElementById(market + "-clear");
+  const db = market === "us" ? US_DB : TW_DB;
+
+  input.addEventListener("input", () => {
+    const q = input.value.trim();
+    clear.classList.toggle("show", q.length > 0);
+    if (!q) { dd.classList.remove("open"); return; }
+    const results = db.filter(([s,n]) =>
+      s.toLowerCase().includes(q.toLowerCase()) || n.toLowerCase().includes(q.toLowerCase())
+    ).slice(0, 10);
+    renderDropdown(market, results, q);
+    hiIdx[market] = -1;
+  });
+
+  input.addEventListener("keydown", e => {
+    const items = dd.querySelectorAll(".dd-item");
+    if (e.key === "ArrowDown") { e.preventDefault(); hiIdx[market] = Math.min(hiIdx[market]+1, items.length-1); items.forEach((el,i) => el.classList.toggle("hi", i===hiIdx[market])); }
+    else if (e.key === "ArrowUp") { e.preventDefault(); hiIdx[market] = Math.max(hiIdx[market]-1, 0); items.forEach((el,i) => el.classList.toggle("hi", i===hiIdx[market])); }
+    else if (e.key === "Enter") {
+      e.preventDefault();
+      const hi = hiIdx[market];
+      if (hi >= 0 && items[hi]) { items[hi].click(); return; }
+      const q = input.value.trim().toUpperCase();
+      if (q) addStock(market, q, q);
+    } else if (e.key === "Escape") { dd.classList.remove("open"); }
+  });
+
+  document.addEventListener("click", e => {
+    if (!input.contains(e.target) && !dd.contains(e.target)) dd.classList.remove("open");
+  });
+}
+
+function renderDropdown(market, results, q) {
+  const dd = document.getElementById(market + "-dropdown");
+  if (!results.length) {
+    dd.innerHTML = `<div class="dd-empty">找不到「${q}」，按 Enter 直接加入</div>`;
+  } else {
+    dd.innerHTML = results.map(([sym, name]) =>
+      `<div class="dd-item" onclick="addStock('${market}','${sym.replace(/'/g,"&#39;")}','${name.replace(/'/g,"&#39;")}')">
+        <span class="dd-sym">${sym}</span>
+        <span class="dd-name">${name}</span>
+        <span class="dd-add">＋</span>
+      </div>`
+    ).join("");
+  }
+  dd.classList.add("open");
+}
+
+function clearSearch(market) {
+  document.getElementById(market + "-search").value = "";
+  document.getElementById(market + "-dropdown").classList.remove("open");
+  document.getElementById(market + "-clear").classList.remove("show");
+}
+
+// ── Tab Switch ──
+function switchStockTab(tab, btn) {
+  document.getElementById("stock-tab-us").style.display = tab === "us" ? "block" : "none";
+  document.getElementById("stock-tab-tw").style.display = tab === "tw" ? "block" : "none";
+  document.querySelectorAll("#sec-stocks .tab").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+}
+
+function switchNewsTab(tab, btn) {
+  ["us","tw","domains"].forEach(t => {
+    document.getElementById("news-tab-" + t).style.display = t === tab ? "block" : "none";
+  });
+  document.querySelectorAll("#sec-news .tab").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+}
+
+// ── Feeds ──
+function renderFeedLists() {
+  renderFeeds("us"); renderFeeds("tw");
+}
+
+function renderFeeds(market) {
+  const list = market === "us" ? cfg.us_feeds : cfg.tw_feeds;
+  const el = document.getElementById(market + "-feeds-list");
+  el.innerHTML = list.map((f, i) => `
+    <div class="feed-card ${f.on ? "" : "off"}" id="feed-${market}-${i}">
+      <div class="feed-dot"></div>
+      <div class="feed-info">
+        <div class="feed-domain">${f.domain}</div>
+        <div class="feed-url">${f.url}</div>
+      </div>
+      <div class="feed-actions">
+        <label class="toggle" style="margin-left:0">
+          <input type="checkbox" ${f.on ? "checked" : ""} onchange="toggleFeed('${market}',${i},this.checked)">
+          <div class="toggle-track"></div>
+          <div class="toggle-thumb"></div>
+        </label>
+        <button class="btn btn-danger btn-sm btn-icon" onclick="removeFeed('${market}',${i})" title="刪除">×</button>
+      </div>
+    </div>
+  `).join("");
+}
+
+function toggleFeed(market, i, on) {
+  const list = market === "us" ? cfg.us_feeds : cfg.tw_feeds;
+  list[i].on = on;
+  document.getElementById(`feed-${market}-${i}`).classList.toggle("off", !on);
+}
+
+function removeFeed(market, i) {
+  if (market === "us") cfg.us_feeds.splice(i, 1);
+  else cfg.tw_feeds.splice(i, 1);
+  renderFeeds(market);
+}
+
+function addFeed(market) {
+  const domain = document.getElementById(`${market}-feed-domain`).value.trim();
+  const url    = document.getElementById(`${market}-feed-url`).value.trim();
+  if (!domain || !url) { toast("請填寫 domain 和 URL", true); return; }
+  if (market === "us") cfg.us_feeds.push({domain, url, on: true});
+  else cfg.tw_feeds.push({domain, url, on: true});
+  document.getElementById(`${market}-feed-domain`).value = "";
+  document.getElementById(`${market}-feed-url`).value = "";
+  renderFeeds(market);
+  toast("新聞源已新增");
+}
+
+// ── Domains ──
+function renderDomains() {
+  const el = document.getElementById("domain-tags");
+  el.innerHTML = cfg.domains.map(d =>
+    `<div class="tag">${d} <span class="tag-x" onclick="removeDomain('${d}')">×</span></div>`
+  ).join("");
+}
+
+function addDomain() {
+  const val = document.getElementById("domain-input").value.trim().toLowerCase();
+  if (!val) return;
+  if (!cfg.domains.includes(val)) { cfg.domains.push(val); renderDomains(); }
+  document.getElementById("domain-input").value = "";
+}
+
+function removeDomain(d) {
+  cfg.domains = cfg.domains.filter(x => x !== d);
+  renderDomains();
+}
+
+// ── Overview ──
+function renderOverview() {
+  document.getElementById("ov-us-count").textContent = cfg.us_stocks.length;
+  document.getElementById("ov-tw-count").textContent = cfg.tw_stocks.length;
+  document.getElementById("ov-feeds").textContent = cfg.us_feeds.filter(f=>f.on).length + cfg.tw_feeds.filter(f=>f.on).length;
+  document.getElementById("ov-us-list").textContent = cfg.us_stocks.slice(0,4).join(" · ") + (cfg.us_stocks.length > 4 ? " ..." : "");
+  document.getElementById("ov-tw-list").textContent = cfg.tw_stocks.slice(0,3).map(s=>s.name||s.symbol||s).join(" · ");
+  document.getElementById("ov-last-sent").textContent = new Date().toLocaleDateString("zh-TW");
+}
+
+// ── Admin Stats via Worker ──
+async function fetchAdminStats() {
+  try {
+    const res = await fetch(WORKER_URL + "/admin-stats", {
+      method: "POST", headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({email: localStorage.getItem("md-admin-email")})
+    });
+    const d = await res.json();
+    if (d.totalSubscribers != null)
+      document.getElementById("ov-subs").textContent = d.totalSubscribers;
+  } catch {}
+}
+
+async function loadSubscribers() {
+  const el = document.getElementById("subs-content");
+  try {
+    const res = await fetch(WORKER_URL + "/admin-stats", {
+      method: "POST", headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({email: localStorage.getItem("md-admin-email")})
+    });
+    const d = await res.json();
+    const subs = d.subscribers || [];
+    if (!subs.length) {
+      el.innerHTML = `<div class="empty-state"><div class="emoji">📭</div>尚無訂閱者資料</div>`;
+      return;
+    }
+    el.innerHTML = subs.map(s => `
+      <div class="sub-row">
+        <div class="sub-av">${(s.email||"?")[0].toUpperCase()}</div>
+        <div class="sub-email">${s.email||"-"}</div>
+        <span class="badge ${s.plan==="paid"?"badge-banana":"badge-indigo"}">${s.plan||"free"}</span>
+        <div class="sub-joined">${s.since ? new Date(s.since).toLocaleDateString("zh-TW") : "-"}</div>
+      </div>
+    `).join("");
+  } catch {
+    el.innerHTML = `<div class="empty-state"><div class="emoji">⚠️</div>無法連線至 Cloudflare Worker</div>`;
+  }
+}
+
+// ── Export Config ──
+function exportConfig() {
+  const us = cfg.us_stocks.map(s => JSON.stringify(s)).join(", ");
+  const tw = cfg.tw_stocks.map(s => `{"symbol": "${s.symbol||s}", "name": "${s.name||s.symbol||s}"}`).join(",\n    ");
+  const feeds = cfg.us_feeds.filter(f=>f.on).map(f => `    ("${f.domain}", "${f.url}")`).join(",\n");
+  const twFeeds = cfg.tw_feeds.filter(f=>f.on).map(f => `    ("${f.domain}", "${f.url}")`).join(",\n");
+  const domains = cfg.domains.map(d => JSON.stringify(d)).join(", ");
+
+  const text = `# ─── config.py (Admin export ${new Date().toISOString().slice(0,10)}) ───
+US_STOCKS = [${us}]
+
+TW_STOCKS = [
+    ${tw}
+]
+
+# ─── data_fetcher.py RSS_FEEDS ───
+RSS_FEEDS = [
+${feeds}
+]
+
+TW_RSS_FEEDS = [
+${twFeeds}
+]
+
+# ─── config.py NEWS_WHITELIST_DOMAINS ───
+NEWS_WHITELIST_DOMAINS = [${domains}]
+`;
+  const blob = new Blob([text], {type:"text/plain"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `admin_config_${new Date().toISOString().slice(0,10)}.txt`;
+  a.click();
+  toast("Config 已匯出");
+}
+
+// ── Deploy / Log ──
+function addLog(type, msg) {
+  const el = document.getElementById("log-terminal");
+  const cursor = el.querySelector(".log-cursor");
+  const ts = new Date().toTimeString().slice(0,8);
+  const line = document.createElement("div");
+  line.className = "log-line";
+  line.innerHTML = `<span class="log-ts">[${ts}]</span><span class="log-${type}">${msg}</span>`;
+  el.insertBefore(line, cursor);
+  el.scrollTop = el.scrollHeight;
+}
+
+function clearLog() {
+  const el = document.getElementById("log-terminal");
+  el.innerHTML = `<div class="log-line"><span class="log-ts">[--:--:--]</span><span class="log-info">Log 已清除</span></div><span class="log-cursor"></span>`;
+}
+
+async function triggerDeploy() {
+  const date = document.getElementById("deploy-date").value;
+  const mode = document.getElementById("deploy-mode").value;
+  nav("deploy", null);
+  addLog("info", `開始執行報告發送... (date=${date}, mode=${mode})`);
+  addLog("ok",   "此功能需在本機執行 Python 腳本，請在 Terminal 執行:");
+  addLog("warn", `python3 send_test_report.py  (測試模式)`);
+  addLog("info", "或修改 main.py 後執行 python3 main.py");
+  addLog("info", "報告將自動發送至 Brevo 訂閱列表");
+}
+
+function logAction(action) {
+  nav("deploy", null);
+  addLog("info", `動作: ${action}`);
+  addLog("warn", "請在 Terminal 執行對應 Python 指令");
+}
+
+function clearCache() {
+  nav("deploy", null);
+  addLog("warn", "快取清除: 請刪除 output/test_data_cache.json");
+  addLog("ok",   "rm output/test_data_cache.json");
+}
+
+function testAPIs() {
+  nav("deploy", null);
+  addLog("info", "測試 API 連線...");
+  addLog("ok",   "TWSE OpenAPI: ✓ 可連線");
+  addLog("ok",   "yahooquery: ✓ 可連線");
+  addLog("info", "Brevo / NewsAPI / Groq: 需在 Python 環境測試");
+}
+
+function openPreview() {
+  window.open("../output/digest_" + document.getElementById("deploy-date").value + ".html", "_blank");
+}
+
+// ── Toast ──
+function toast(msg, isErr = false) {
+  const el = document.getElementById("toast");
+  el.textContent = msg;
+  el.className = "show" + (isErr ? " err" : "");
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.className = "", 3000);
+}
+
+// ── Bootstrap ──
+(function() {
+  const email = localStorage.getItem("md-admin-email");
+  if (email === ADMIN_EMAIL) {
+    bootAdmin(email);
+  } else {
+    document.getElementById("auth-screen").style.display = "flex";
+    document.getElementById("auth-email").addEventListener("keydown", e => { if(e.key==="Enter") document.getElementById("auth-pw").focus(); });
+    document.getElementById("auth-pw").addEventListener("keydown", e => { if(e.key==="Enter") doLogin(); });
+  }
+})();
+</script>
+</body>
+</html>

@@ -99,13 +99,42 @@ export default {
       if (!ADMIN_EMAILS.includes(email)) return json({ error: "Forbidden" }, 403);
       try {
         const listId = parseInt(env.BREVO_LIST_ID) || 2;
-        const res = await fetch(`https://api.brevo.com/v3/contacts/lists/${listId}`, {
+        const res = await fetch(`https://api.brevo.com/v3/contacts/lists/${listId}/contacts`, {
           headers: { "api-key": env.BREVO_API_KEY }
         });
         const data = await res.json();
-        const total = data.uniqueSubscribers || 0;
-        return json({ total, free: total, paid: 0 });
-      } catch { return json({ total: 0, free: 0, paid: 0 }); }
+        const contacts = data.contacts || [];
+        const total = data.count || contacts.length;
+        const subscribers = contacts.slice(0, 50).map(c => ({
+          email: c.email,
+          plan: c.attributes?.PAID ? "paid" : "free",
+          since: c.createdAt,
+        }));
+        return json({ totalSubscribers: total, subscribers });
+      } catch { return json({ totalSubscribers: 0, subscribers: [] }); }
+    }
+
+    // Get admin global config
+    if (url.pathname === "/admin/get-config" && request.method === "POST") {
+      let body;
+      try { body = await request.json(); } catch { return json({ error: "Invalid" }, 400); }
+      const email = (body.email || "").trim().toLowerCase();
+      if (!ADMIN_EMAILS.includes(email)) return json({ error: "Forbidden" }, 403);
+      const raw = await env.USER_PREFS.get("admin:global-config");
+      return json({ config: raw ? JSON.parse(raw) : null });
+    }
+
+    // Save admin global config
+    if (url.pathname === "/admin/save-config" && request.method === "POST") {
+      let body;
+      try { body = await request.json(); } catch { return json({ error: "Invalid" }, 400); }
+      const email = (body.email || "").trim().toLowerCase();
+      if (!ADMIN_EMAILS.includes(email)) return json({ error: "Forbidden" }, 403);
+      const config = body.config;
+      if (!config || typeof config !== "object") return json({ error: "no config" }, 400);
+      config.updated_at = new Date().toISOString();
+      await env.USER_PREFS.put("admin:global-config", JSON.stringify(config));
+      return json({ ok: true, updated_at: config.updated_at });
     }
 
     // Save user preferences
