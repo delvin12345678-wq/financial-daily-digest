@@ -572,7 +572,7 @@
     }
   };
 
-  let currentLang = "en";
+  let currentLang = localStorage.getItem("md-lang") || "en";
 
   function applyLang(lang) {
     const t = i18n[lang];
@@ -594,6 +594,7 @@
 
   function toggleLang() {
     currentLang = currentLang === "en" ? "zh" : "en";
+    localStorage.setItem("md-lang", currentLang);
     applyLang(currentLang);
   }
 
@@ -651,6 +652,7 @@
     if (ci) ci.addEventListener("keydown", e => { if (e.key === "Enter") subscribe(); });
     const ei = document.getElementById("invite-email-input");
     if (ei) ei.addEventListener("keydown", e => { if (e.key === "Enter") subscribe(); });
+    if (currentLang !== "en") applyLang(currentLang);
   });
 </script>
 
