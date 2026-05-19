@@ -228,7 +228,10 @@ async function sendWelcomeEmail(email, apiKey, isPaid = false) {
 
   <div style="background:#1a1a2e;padding:16px 28px;text-align:center;font-size:11px;color:rgba(255,255,255,0.3);line-height:2;">
     財經日報 · AI 精選 · 假訊息過濾<br>
-    本報告為 AI 生成，僅供參考，不構成投資建議
+    本報告為 AI 生成，僅供參考，不構成投資建議<br><br>
+    <a href="https://marketdaily.github.io/financial-daily-digest/" style="color:#6366f1;text-decoration:none;font-weight:700;">🌐 marketdaily.github.io/financial-daily-digest</a>
+    &nbsp;·&nbsp;
+    <a href="https://marketdaily.github.io/financial-daily-digest/dashboard.html" style="color:#a5b4fc;text-decoration:none;">⚙️ 我的專區</a>
   </div>
 </div>
 </body>

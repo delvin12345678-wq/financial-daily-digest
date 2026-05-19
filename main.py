@@ -123,7 +123,9 @@ def save_local(date: str, html_report: str):
   <div class="footer">
     財經日報 · AI 精選 · 假訊息過濾<br>
     ✅ 多源確認 = 2個以上白名單媒體報導 &nbsp;|&nbsp; ⚠️ 單一來源 = 請自行查證<br>
-    本報告為 AI 生成，僅供參考，不構成投資建議
+    本報告為 AI 生成，僅供參考，不構成投資建議<br><br>
+    <a href="https://marketdaily.github.io/financial-daily-digest/" style="color:#6366f1;text-decoration:none;font-weight:700;">🌐 marketdaily.github.io/financial-daily-digest</a> &nbsp;·&nbsp;
+    <a href="https://marketdaily.github.io/financial-daily-digest/dashboard.html" style="color:#a5b4fc;text-decoration:none;">⚙️ 我的專區</a>
   </div>
 </div>
 </body>
