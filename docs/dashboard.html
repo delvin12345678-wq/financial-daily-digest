@@ -347,8 +347,10 @@ function updateStats() {
 
 ["us","tw"].forEach(market => {
   const input = document.getElementById(`${market}-search`);
-  const db = market === "us" ? US_STOCKS : TW_STOCKS;
-  input.addEventListener("input", () => renderDD(market, search(input.value.trim(), db), input.value.trim()));
+  input.addEventListener("input", () => {
+    const db = market === "us" ? US_STOCKS : TW_STOCKS;
+    renderDD(market, search(input.value.trim(), db), input.value.trim());
+  });
   input.addEventListener("keydown", e => {
     const dd = document.getElementById(`${market}-dropdown`);
     const items = dd.querySelectorAll(".dropdown-item");
