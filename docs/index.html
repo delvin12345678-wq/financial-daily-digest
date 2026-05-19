@@ -287,7 +287,11 @@
       <input type="email" id="hero-email" placeholder="your@email.com" data-i18n-placeholder="placeholder_email" onkeydown="if(event.key==='Enter')checkEmail()">
       <button onclick="checkEmail()" id="hero-check-btn" data-i18n="hero_btn_check">繼續 →</button>
     </div>
-    <p class="subscribe-note" data-i18n="sub_note_netflix">已訂閱？輸入你的 Email 直接登入</p>
+    <label style="display:inline-flex;align-items:center;gap:7px;font-size:13px;color:rgba(255,255,255,0.4);cursor:pointer;margin-top:10px;user-select:none;">
+      <input type="checkbox" id="hero-remember" style="width:15px;height:15px;accent-color:#6366f1;cursor:pointer;">
+      <span data-i18n="remember_email">記住我的 Email</span>
+    </label>
+    <p class="subscribe-note" style="margin-top:8px;" data-i18n="sub_note_netflix">已訂閱？輸入你的 Email 直接登入</p>
     <div class="error-msg" id="error-email-msg" style="display:none;" data-i18n="error_email">Please enter a valid email address.</div>
   </div>
 
@@ -520,6 +524,7 @@
       choose_plan: "Choose your plan",
       btn_use_invite: "Use Invite Code →",
       sub_note_netflix: "Already subscribed? Enter your email to sign in.",
+      remember_email: "Remember my email",
       btn_sub2: "Subscribe Free →",
       success2: "🎉 You're in! See you tomorrow at 7AM.",
       error2: "Oops, something went wrong. Please try again.",
@@ -601,6 +606,7 @@
       choose_plan: "選擇你的方案",
       btn_use_invite: "使用邀請碼 →",
       sub_note_netflix: "已訂閱？輸入你的 Email 直接登入",
+      remember_email: "記住我的 Email",
       btn_sub2: "免費訂閱 →",
       success2: "🎉 訂閱成功！明天早上 7 點見。",
       error2: "出了點問題，請再試一次。",
@@ -686,6 +692,12 @@
       });
       const data = await res.json();
 
+      if (document.getElementById("hero-remember").checked) {
+        localStorage.setItem("md-hero-email", email);
+      } else {
+        localStorage.removeItem("md-hero-email");
+      }
+
       if (data.subscribed || data.needsPasswordSetup) {
         document.getElementById("email-step").style.display = "none";
         document.getElementById("wb-email").textContent = email;
@@ -755,6 +767,11 @@
   }
 
   document.addEventListener("DOMContentLoaded", () => {
+    const savedHeroEmail = localStorage.getItem("md-hero-email");
+    if (savedHeroEmail) {
+      document.getElementById("hero-email").value = savedHeroEmail;
+      document.getElementById("hero-remember").checked = true;
+    }
     if (currentLang !== "en") applyLang(currentLang);
   });
 </script>
