@@ -67,6 +67,8 @@ nav { background: var(--nav-bg); border-bottom: 1px solid var(--nav-border); dis
 .login-btn { width: 100%; padding: 13px; background: linear-gradient(135deg, #6366f1, #4338ca); color: #fff; border: none; border-radius: 12px; font-size: 14px; font-weight: 700; cursor: pointer; transition: opacity 0.2s; }
 .login-btn:hover { opacity: 0.9; }
 .login-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.remember-me { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text2); margin: 10px 0; cursor: pointer; user-select: none; }
+.remember-me input[type="checkbox"] { width: 16px; height: 16px; accent-color: #6366f1; cursor: pointer; }
 .login-err { font-size: 13px; color: #ef4444; margin-top: 12px; display: none; }
 .login-hint { font-size: 12px; color: var(--text3); margin-top: 16px; line-height: 1.7; }
 
@@ -160,6 +162,7 @@ nav { background: var(--nav-bg); border-bottom: 1px solid var(--nav-border); dis
       <div class="login-sub">訂閱者專區 · 輸入你的 Email 進入</div>
       <div class="login-label">訂閱 Email</div>
       <input type="email" class="login-input" id="login-email" placeholder="your@email.com" onkeydown="if(event.key==='Enter')doLogin()">
+      <label class="remember-me"><input type="checkbox" id="remember-me"> 記住我的 Email</label>
       <button class="login-btn" id="login-btn" onclick="doLogin()">進入我的專區 →</button>
       <div class="login-err" id="login-err"></div>
       <div class="login-hint">尚未訂閱？<a href="index.html" style="color:#6366f1;font-weight:700;">前往訂閱 →</a></div>
@@ -383,6 +386,11 @@ async function doLogin() {
     if (data.subscribed) {
       localStorage.setItem("md-email", email);
       localStorage.setItem("md-plan", data.plan || "free");
+      if (document.getElementById("remember-me").checked) {
+        localStorage.setItem("md-saved-email", email);
+      } else {
+        localStorage.removeItem("md-saved-email");
+      }
       showDashboard(email, data.plan || "free");
     } else {
       errEl.textContent = "找不到這個 Email 的訂閱記錄，請確認你的訂閱 Email，或前往訂閱。";
@@ -401,7 +409,9 @@ function doLogout() {
   localStorage.removeItem("md-plan");
   document.getElementById("dashboard").style.display = "none";
   document.getElementById("login-screen").style.display = "flex";
-  document.getElementById("login-email").value = "";
+  const saved = localStorage.getItem("md-saved-email") || "";
+  document.getElementById("login-email").value = saved;
+  document.getElementById("remember-me").checked = !!saved;
 }
 
 async function showDashboard(email, plan) {
@@ -510,6 +520,11 @@ async function init() {
     US_STOCKS = data.us || [];
     TW_STOCKS = data.tw || [];
   } catch {}
+  const saved = localStorage.getItem("md-saved-email") || "";
+  if (saved) {
+    document.getElementById("login-email").value = saved;
+    document.getElementById("remember-me").checked = true;
+  }
   const email = localStorage.getItem("md-email");
   const plan = localStorage.getItem("md-plan") || "free";
   if (email) showDashboard(email, plan);
