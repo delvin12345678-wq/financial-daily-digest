@@ -171,11 +171,49 @@ def fetch_tw_news():
         return []
 
 
+def fetch_indicators() -> dict:
+    indicators = {}
+
+    for key, symbol in [("vix", "^VIX"), ("us10y", "^TNX")]:
+        try:
+            hist = yf.Ticker(symbol).history(period="5d")
+            if len(hist) >= 1:
+                indicators[key] = round(hist["Close"].iloc[-1], 2)
+        except Exception:
+            pass
+
+    for key, symbol in [("gold", "GC=F"), ("oil", "CL=F")]:
+        try:
+            hist = yf.Ticker(symbol).history(period="5d")
+            if len(hist) >= 2:
+                prev, last = hist["Close"].iloc[-2], hist["Close"].iloc[-1]
+                indicators[key] = {"price": round(last, 2), "change_pct": round((last - prev) / prev * 100, 2)}
+        except Exception:
+            pass
+
+    if "vix" in indicators:
+        vix = indicators["vix"]
+        if vix > 30:
+            score, rating = 15, "Extreme Fear"
+        elif vix > 25:
+            score, rating = 30, "Fear"
+        elif vix > 20:
+            score, rating = 45, "Neutral"
+        elif vix > 15:
+            score, rating = 65, "Greed"
+        else:
+            score, rating = 80, "Extreme Greed"
+        indicators["fear_greed"] = {"score": score, "rating": rating}
+
+    return indicators
+
+
 def fetch_all():
     return {
         "us_market": fetch_us_market(),
         "tw_market": fetch_tw_market(),
         "us_news": fetch_us_news(),
         "tw_news": fetch_tw_news(),
+        "indicators": fetch_indicators(),
         "date": datetime.now().strftime("%Y-%m-%d")
     }

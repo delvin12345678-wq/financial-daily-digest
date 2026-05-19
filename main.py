@@ -56,6 +56,17 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .watch-item { font-size: 13px; color: #444; padding: 5px 0; border-bottom: 1px dashed #e5e7eb; }
 .watch-item:last-child { border-bottom: none; }
 
+.indicator-bar { display: flex; gap: 10px; margin: 0 28px 20px; flex-wrap: wrap; }
+.indicator-item { flex: 1; min-width: 110px; padding: 12px 14px; background: #fafafa; border: 1px solid #eee; border-radius: 12px; text-align: center; }
+.indicator-label { font-size: 10px; font-weight: 800; color: #888; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px; }
+.indicator-value { font-size: 17px; font-weight: 800; color: #1a1a2e; }
+.indicator-sub { font-size: 11px; color: #888; margin-top: 2px; }
+.indicator-fear { color: #dc2626; }
+.indicator-greed { color: #16a34a; }
+.indicator-neutral { color: #f59e0b; }
+
+.second-order { margin: 0 28px 20px; padding: 14px 16px; background: #f0f4ff; border-left: 4px solid #6366f1; border-radius: 0 10px 10px 0; font-size: 13px; color: #444; line-height: 1.7; }
+
 .footer { background: #1a1a2e; color: rgba(255,255,255,0.35); text-align: center; padding: 20px 28px; font-size: 11px; line-height: 2; }
 """
 

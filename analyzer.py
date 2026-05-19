@@ -8,6 +8,7 @@ def _format_market_data(data: dict) -> str:
     lines = []
     us = data.get("us_market", {})
     tw = data.get("tw_market", {})
+    ind = data.get("indicators", {})
 
     index_names = {
         "^GSPC": "S&P500", "^IXIC": "NASDAQ", "^DJI": "道瓊",
@@ -37,6 +38,23 @@ def _format_market_data(data: dict) -> str:
         if sym != "^TWII":
             lines.append(f"  {d.get('name', sym)}: {d['price']} ({d['change_pct']:+.2f}%)")
 
+    lines.append("\n【風險指標】")
+    if "vix" in ind:
+        vix = ind["vix"]
+        level = "極度恐慌" if vix > 30 else "警戒" if vix > 20 else "平靜"
+        lines.append(f"  VIX 恐慌指數: {vix} ({level})")
+    if "fear_greed" in ind:
+        fg = ind["fear_greed"]
+        lines.append(f"  CNN 恐貪指數: {fg['score']}/100 ({fg['rating']})")
+    if "us10y" in ind:
+        lines.append(f"  美國10年債殖利率: {ind['us10y']}%")
+    if "gold" in ind:
+        g = ind["gold"]
+        lines.append(f"  黃金: ${g['price']} ({g['change_pct']:+.2f}%)")
+    if "oil" in ind:
+        o = ind["oil"]
+        lines.append(f"  WTI 原油: ${o['price']} ({o['change_pct']:+.2f}%)")
+
     return "\n".join(lines)
 
 
@@ -56,32 +74,26 @@ def generate_report(data: dict) -> str:
     tw_news_text = _format_news(data.get("tw_news", []))
     date = data.get("date", "")
 
-    prompt = f"""你是一個很懂財經、但說話很生活化的朋友。你的讀者是台灣上班族，每天早上 7 點看你的日報，他們沒時間讀長文，但想快速知道「今天股市有什麼大事、我手上的股票怎麼了」。
+    prompt = f"""你是一個很懂財經、但說話很生活化的朋友。你的讀者是台灣上班族，每天早上 7 點看你的日報。
 
-寫作風格：
+【無幻覺原則】
+- 所有內容只能基於以下提供的真實數據和新聞，不得憑空補充或使用訓練資料臆測
+- 如果某項資訊不足，就說「今日數據不足」，不要捏造
+
+【寫作風格】
 - 像聰明的朋友在傳訊息，不是在寫分析報告
-- 可以用 emoji，但不要氾濫
-- 數字要具體（不要說「大幅上漲」，要說「漲了 3.2%」）
-- 每個重點用一兩句話說清楚，不廢話
-- 偶爾可以加一點幽默感或生活化比喻，但不要過頭
-- 繁體中文，可以夾帶少量英文股票代號
+- 數字要具體（不說「大幅上漲」，要說「漲了 3.2%」）
+- 每個重點一兩句話說清楚，不廢話
+- 繁體中文，可夾帶英文股票代號
 
 日期：{date}
 
 {market_text}
 
-【今日新聞（已過濾假訊息，75 則中精選）】
+【今日新聞（已過濾假訊息，精選）】
 {us_news_text}
 
-優先挑選最可能影響股市的事件：
-- Fed 官員發言 / 利率動向
-- 重大財報與超預期數據
-- AI / 科技產品重大消息
-- 地緣政治 / 貿易戰
-- CPI、就業、GDP 等總經數據
-- 個股大漲大跌原因
-
-請輸出以下 HTML 結構（直接輸出 HTML，不加 markdown code block，不加 ```html）：
+請輸出以下 HTML 結構（直接輸出 HTML，不加 markdown code block）：
 
 <div class="tldr">
 <div class="tldr-title">☕ 30 秒看完今天重點</div>
@@ -92,42 +104,69 @@ def generate_report(data: dict) -> str:
 </ul>
 </div>
 
+<div class="section-label">🌡️ 市場情緒儀表板</div>
+<div class="indicator-bar">
+  <div class="indicator-item">
+    <div class="indicator-label">VIX 恐慌指數</div>
+    <div class="indicator-value indicator-VIXCLASS">（VIX數值）</div>
+    <div class="indicator-sub">（平靜 / 警戒 / 極度恐慌）</div>
+  </div>
+  <div class="indicator-item">
+    <div class="indicator-label">恐貪指數</div>
+    <div class="indicator-value indicator-FGCLASS">（分數/100）</div>
+    <div class="indicator-sub">（Fear / Neutral / Greed）</div>
+  </div>
+  <div class="indicator-item">
+    <div class="indicator-label">美國10年債</div>
+    <div class="indicator-value">（殖利率%）</div>
+    <div class="indicator-sub">（升息預期參考）</div>
+  </div>
+  <div class="indicator-item">
+    <div class="indicator-label">黃金 / 原油</div>
+    <div class="indicator-value">（金價） / （油價）</div>
+    <div class="indicator-sub">（漲跌%）</div>
+  </div>
+</div>
+
 <div class="section-label">📈 大盤怎麼了</div>
-（用 2-3 句話說大盤狀況，口語化。例如：「昨天整體偏樂觀，S&P500 漲了 0.8%，主要是因為...」）
+（用 2-3 句話說大盤狀況，口語化）
 
 <div class="section-label">🔥 今天最重要的 5 件事</div>
-（每件事格式如下，挑最可能影響股市的）
 <div class="news-card">
   <div class="news-tag verified">✅ 多源確認</div>
   <div class="news-headline">（標題，口語化改寫，不超過 25 字）</div>
-  <div class="news-why">💡 為什麼重要：（一句話說清楚這對股市的影響）</div>
-  <a class="read-more" href="（該新聞的 URL）" target="_blank">閱讀原文 →</a>
+  <div class="news-why">💡 為什麼重要：（這對股市的影響）</div>
+  <a class="read-more" href="（URL）" target="_blank">閱讀原文 →</a>
 </div>
-（重複 5 次，⚠️ 單一來源的用 <div class="news-tag single">⚠️ 單一來源</div>）
+（重複 5 次，單一來源用 <div class="news-tag single">⚠️ 單一來源</div>）
+
+<div class="section-label">🔗 二階思考：美股如何影響台灣？</div>
+<div class="second-order">
+（根據今天美股動向，分析對台灣供應鏈的傳導影響。例如：NVDA 漲 → CoWoS 封裝需求 → 台積電/日月光受惠。只寫真正有關聯的，沒有就不寫。2-3 條 bullet）
+</div>
 
 <div class="section-label">🏢 你的持股今天怎樣</div>
-（每檔股票格式）
 <div class="stock-card">
   <span class="ticker">NVDA</span>
   <span class="stock-move up">▲ +4.2%</span>
-  <div class="stock-comment">（一句話：漲/跌原因 + 要不要擔心）</div>
+  <div class="stock-comment">（漲/跌原因 + 要不要擔心）</div>
 </div>
 （涵蓋 AAPL MSFT GOOGL AMZN META NVDA TSLA AMD TSM JPM，有數據的才寫）
 
-<div class="section-label">🌍 大環境訊號</div>
-（2-3 個 bullet，只挑真正重要的總經信號，口語化）
-
 <div class="section-label">🎯 今天的結論</div>
 <div class="verdict SENTIMENT">
-  <div class="verdict-emoji">（根據情緒選：📈 偏多 / 📉 偏空 / 😐 觀望）</div>
-  <div class="verdict-text">（2-3 句話，口語說出今天市場情緒 + 普通人應該注意什麼）</div>
+  <div class="verdict-emoji">（📈 偏多 / 📉 偏空 / 😐 觀望）</div>
+  <div class="verdict-text">（2-3 句話，今天市場情緒 + 普通人應該注意什麼）</div>
 </div>
 <div class="watch-list">
   <div class="watch-title">📌 本週還要注意</div>
   （2-4 個即將發生的重要事件，格式：日期 · 事件名稱）
 </div>
 
-注意：SENTIMENT 請換成實際情緒的 CSS class（bullish / bearish / neutral）
+注意：
+- SENTIMENT 換成 bullish / bearish / neutral
+- VIXCLASS 換成 fear（VIX>20）或 neutral（VIX≤20）
+- FGCLASS 換成 fear（分數<45）、neutral（45-55）、greed（>55）
 """
 
     payload = {
