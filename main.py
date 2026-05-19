@@ -5,6 +5,59 @@ from analyzer import generate_report
 from publisher import publish_to_brevo
 
 
+CSS = """
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f0f2f5; color: #1a1a1a; }
+.wrapper { max-width: 640px; margin: 0 auto; background: #fff; }
+
+.header { background: linear-gradient(135deg, #0f0c29, #302b63, #24243e); color: #fff; padding: 32px 28px 24px; }
+.header-meta { font-size: 11px; color: rgba(255,255,255,0.5); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 10px; }
+.header h1 { font-size: 24px; font-weight: 800; letter-spacing: -0.5px; }
+.header-tagline { font-size: 12px; color: rgba(255,255,255,0.45); margin-top: 6px; }
+
+.tldr { background: #fffbeb; border-left: 4px solid #f59e0b; margin: 20px 28px; padding: 16px 18px; border-radius: 0 10px 10px 0; }
+.tldr-title { font-size: 13px; font-weight: 800; color: #92400e; margin-bottom: 10px; letter-spacing: 0.5px; }
+.tldr ul { list-style: none; }
+.tldr ul li { font-size: 14px; color: #444; padding: 4px 0; padding-left: 16px; position: relative; line-height: 1.5; }
+.tldr ul li::before { content: "→"; position: absolute; left: 0; color: #f59e0b; font-weight: 700; }
+
+.section-label { font-size: 11px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: #888; padding: 24px 28px 12px; }
+
+.market-summary { padding: 0 28px 20px; font-size: 14px; color: #444; line-height: 1.7; }
+
+.news-card { margin: 0 28px 12px; padding: 14px 16px; border: 1px solid #eee; border-radius: 12px; background: #fafafa; }
+.news-tag { display: inline-block; font-size: 10px; font-weight: 700; padding: 3px 10px; border-radius: 20px; margin-bottom: 8px; }
+.news-tag.verified { background: #dcfce7; color: #166534; }
+.news-tag.single { background: #fef9c3; color: #854d0e; }
+.news-headline { font-size: 15px; font-weight: 700; color: #111; line-height: 1.4; margin-bottom: 8px; }
+.news-why { font-size: 13px; color: #555; line-height: 1.5; background: #f0f7ff; padding: 8px 12px; border-radius: 8px; }
+
+.stock-card { display: flex; align-items: flex-start; gap: 12px; margin: 0 28px 10px; padding: 12px 16px; border-radius: 12px; background: #fafafa; border: 1px solid #eee; }
+.ticker { font-size: 14px; font-weight: 800; color: #1a1a2e; min-width: 52px; padding-top: 2px; }
+.stock-move { font-size: 14px; font-weight: 700; min-width: 72px; padding-top: 2px; }
+.stock-move.up { color: #16a34a; }
+.stock-move.down { color: #dc2626; }
+.stock-comment { font-size: 13px; color: #555; line-height: 1.5; flex: 1; }
+
+.macro-list { padding: 0 28px 20px; }
+.macro-item { font-size: 14px; color: #444; padding: 6px 0; border-bottom: 1px solid #f5f5f5; line-height: 1.6; }
+
+.verdict { margin: 0 28px 16px; padding: 20px; border-radius: 14px; }
+.verdict.bullish { background: #f0fdf4; border: 1.5px solid #86efac; }
+.verdict.bearish { background: #fef2f2; border: 1.5px solid #fca5a5; }
+.verdict.neutral  { background: #f8fafc; border: 1.5px solid #cbd5e1; }
+.verdict-emoji { font-size: 28px; margin-bottom: 10px; }
+.verdict-text { font-size: 14px; color: #333; line-height: 1.7; }
+
+.watch-list { margin: 0 28px 28px; padding: 16px; background: #f8fafc; border-radius: 12px; }
+.watch-title { font-size: 12px; font-weight: 700; color: #666; margin-bottom: 10px; letter-spacing: 1px; }
+.watch-item { font-size: 13px; color: #444; padding: 5px 0; border-bottom: 1px dashed #e5e7eb; }
+.watch-item:last-child { border-bottom: none; }
+
+.footer { background: #1a1a2e; color: rgba(255,255,255,0.35); text-align: center; padding: 20px 28px; font-size: 11px; line-height: 2; }
+"""
+
+
 def save_local(date: str, html_report: str):
     os.makedirs("output", exist_ok=True)
     path = f"output/digest_{date}.html"
@@ -15,14 +68,22 @@ def save_local(date: str, html_report: str):
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>財經日報 {date}</title>
-<style>
-  body {{ font-family: -apple-system, sans-serif; max-width: 700px; margin: 40px auto; padding: 0 20px; color: #222; }}
-  h2 {{ color: #1a1a2e; border-bottom: 2px solid #e0e0e0; padding-bottom: 6px; }}
-</style>
+<style>{CSS}</style>
 </head>
 <body>
-<h1>📊 財經日報 {date}</h1>
-{html_report}
+<div class="wrapper">
+  <div class="header">
+    <div class="header-meta">{date}</div>
+    <h1>📊 財經日報</h1>
+    <div class="header-tagline">AI 精選 · 假訊息過濾 · 美股 + 台股</div>
+  </div>
+  {html_report}
+  <div class="footer">
+    財經日報 · AI 精選 · 假訊息過濾<br>
+    ✅ 多源確認 = 2個以上白名單媒體報導 &nbsp;|&nbsp; ⚠️ 單一來源 = 請自行查證<br>
+    本報告為 AI 生成，僅供參考，不構成投資建議
+  </div>
+</div>
 </body>
 </html>""")
     print(f"   本地預覽已儲存：{path}")

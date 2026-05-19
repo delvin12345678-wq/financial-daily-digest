@@ -26,8 +26,7 @@ def publish_to_brevo(date: str, html_content: str) -> bool:
         "sender": {"name": SENDER_NAME, "email": SENDER_EMAIL},
         "type": "classic",
         "htmlContent": html_content,
-        "recipients": {"listIds": [list_id]},
-        "scheduledAt": None
+        "recipients": {"listIds": [list_id]}
     }
     try:
         resp = requests.post(BREVO_SEND_URL, json=payload, headers=headers, timeout=30)
