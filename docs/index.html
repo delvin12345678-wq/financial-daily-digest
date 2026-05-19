@@ -22,11 +22,22 @@
   }
   .logo { font-size: 18px; font-weight: 800; letter-spacing: -0.5px; }
   .logo span { color: #6366f1; }
+  .nav-right { display: flex; align-items: center; gap: 12px; }
   .nav-badge {
     background: rgba(99,102,241,0.15); color: #a5b4fc;
     font-size: 12px; font-weight: 600; padding: 5px 14px;
     border-radius: 20px; border: 1px solid rgba(99,102,241,0.3);
   }
+  .lang-btn {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15);
+    color: rgba(255,255,255,0.7);
+    font-size: 13px; font-weight: 700;
+    padding: 5px 14px; border-radius: 20px;
+    cursor: pointer; transition: all 0.2s;
+    letter-spacing: 0.5px;
+  }
+  .lang-btn:hover { background: rgba(99,102,241,0.2); border-color: rgba(99,102,241,0.4); color: #fff; }
 
   /* Hero */
   .hero {
@@ -188,117 +199,120 @@
 <!-- Nav -->
 <nav>
   <div class="logo">Market<span>Daily</span></div>
-  <div class="nav-badge">🇹🇼 Taiwan Investors</div>
+  <div class="nav-right">
+    <div class="nav-badge" data-i18n="nav_badge">🇹🇼 Taiwan Investors</div>
+    <button class="lang-btn" id="lang-toggle" onclick="toggleLang()">中文</button>
+  </div>
 </nav>
 
 <!-- Hero -->
 <div class="hero">
-  <div class="hero-pill">🆓 Free · No Spam · Unsubscribe Anytime</div>
-  <h1>Your daily stock market<br><span class="gradient">briefing in 30 seconds</span></h1>
-  <p class="hero-sub">
+  <div class="hero-pill" data-i18n="pill">🆓 Free · No Spam · Unsubscribe Anytime</div>
+  <h1 data-i18n-html="hero_h1">Your daily stock market<br><span class="gradient">briefing in 30 seconds</span></h1>
+  <p class="hero-sub" data-i18n="hero_sub">
     Every morning at 7AM Taiwan time — AI-curated US & Taiwan market news,
     fake-news filtered, written like a smart friend texting you.
   </p>
 
   <div class="subscribe-box">
     <input type="email" id="email-input" placeholder="your@email.com" />
-    <button onclick="subscribe()">Get It Free →</button>
+    <button onclick="subscribe()" data-i18n="btn_sub1">Get It Free →</button>
   </div>
-  <p class="subscribe-note">Join readers getting smarter about their portfolio every morning.</p>
-  <div class="success-msg" id="success-msg">🎉 You're in! First issue arrives tomorrow at 7AM Taiwan time.</div>
-  <div class="error-msg" id="error-msg">Oops, something went wrong. Please try again.</div>
+  <p class="subscribe-note" data-i18n="sub_note">Join readers getting smarter about their portfolio every morning.</p>
+  <div class="success-msg" id="success-msg" data-i18n="success1">🎉 You're in! First issue arrives tomorrow at 7AM Taiwan time.</div>
+  <div class="error-msg" id="error-msg" data-i18n="error">Oops, something went wrong. Please try again.</div>
 </div>
 
 <!-- Stats -->
 <div class="stats">
   <div class="stat-item">
     <div class="stat-num">7AM</div>
-    <div class="stat-label">Taiwan Time Daily</div>
+    <div class="stat-label" data-i18n="stat1">Taiwan Time Daily</div>
   </div>
   <div class="stat-item">
     <div class="stat-num">75+</div>
-    <div class="stat-label">News Sources Scanned</div>
+    <div class="stat-label" data-i18n="stat2">News Sources Scanned</div>
   </div>
   <div class="stat-item">
     <div class="stat-num">0</div>
-    <div class="stat-label">Fake News Through</div>
+    <div class="stat-label" data-i18n="stat3">Fake News Through</div>
   </div>
   <div class="stat-item">
-    <div class="stat-num">Free</div>
-    <div class="stat-label">Forever (No CC)</div>
+    <div class="stat-num" data-i18n="stat4_num">Free</div>
+    <div class="stat-label" data-i18n="stat4">Forever (No CC)</div>
   </div>
 </div>
 
 <!-- Features -->
 <div class="features">
-  <h2>Built for busy people</h2>
+  <h2 data-i18n="feat_title">Built for busy people</h2>
   <div class="features-grid">
     <div class="feature-card">
       <div class="feature-icon">☕</div>
-      <div class="feature-title">30-Second Summary</div>
-      <div class="feature-desc">3 bullet points at the top. Catch the most important thing even on your most hectic morning.</div>
+      <div class="feature-title" data-i18n="f1_title">30-Second Summary</div>
+      <div class="feature-desc" data-i18n="f1_desc">3 bullet points at the top. Catch the most important thing even on your most hectic morning.</div>
     </div>
     <div class="feature-card">
       <div class="feature-icon">🛡️</div>
-      <div class="feature-title">Fake News Filtered</div>
-      <div class="feature-desc">Only news from Reuters, CNBC, Bloomberg, FT and other verified sources. Every story is cross-checked.</div>
+      <div class="feature-title" data-i18n="f2_title">Fake News Filtered</div>
+      <div class="feature-desc" data-i18n="f2_desc">Only news from Reuters, CNBC, Bloomberg, FT and other verified sources. Every story is cross-checked.</div>
     </div>
     <div class="feature-card">
       <div class="feature-icon">💡</div>
-      <div class="feature-title">"Why It Matters" Explained</div>
-      <div class="feature-desc">Every headline comes with one line explaining how it actually affects your stocks. No more guessing.</div>
+      <div class="feature-title" data-i18n="f3_title">"Why It Matters" Explained</div>
+      <div class="feature-desc" data-i18n="f3_desc">Every headline comes with one line explaining how it actually affects your stocks. No more guessing.</div>
     </div>
     <div class="feature-card">
       <div class="feature-icon">🇺🇸 🇹🇼</div>
-      <div class="feature-title">US + Taiwan Markets</div>
-      <div class="feature-desc">S&P500, NASDAQ, TWSE, individual stocks — all in one place. No tab-switching.</div>
+      <div class="feature-title" data-i18n="f4_title">US + Taiwan Markets</div>
+      <div class="feature-desc" data-i18n="f4_desc">S&P500, NASDAQ, TWSE, individual stocks — all in one place. No tab-switching.</div>
     </div>
     <div class="feature-card">
       <div class="feature-icon">🤖</div>
-      <div class="feature-title">AI That Speaks Human</div>
-      <div class="feature-desc">Not a stiff analyst report. Written in plain language, like a knowledgeable friend giving you the rundown.</div>
+      <div class="feature-title" data-i18n="f5_title">AI That Speaks Human</div>
+      <div class="feature-desc" data-i18n="f5_desc">Not a stiff analyst report. Written in plain language, like a knowledgeable friend giving you the rundown.</div>
     </div>
     <div class="feature-card">
       <div class="feature-icon">🎯</div>
-      <div class="feature-title">Daily Verdict</div>
-      <div class="feature-desc">Bullish / Bearish / Neutral — what the AI thinks about today's market, with reasons. Make better decisions.</div>
+      <div class="feature-title" data-i18n="f6_title">Daily Verdict</div>
+      <div class="feature-desc" data-i18n="f6_desc">Bullish / Bearish / Neutral — what the AI thinks about today's market, with reasons. Make better decisions.</div>
     </div>
   </div>
 </div>
 
 <!-- Preview -->
 <div class="preview">
-  <h2>What it looks like 👇</h2>
+  <h2 data-i18n="preview_title">What it looks like 👇</h2>
   <div class="preview-card">
     <div class="preview-header">
       <div class="preview-date">Tuesday · May 20, 2026</div>
-      <div class="preview-title">📊 Market Daily</div>
-      <div class="preview-sub">AI Curated · Fake-News Filtered · US + Taiwan</div>
+      <div class="preview-title">📊 財經日報</div>
+      <div class="preview-sub">AI 精選 · 假訊息過濾 · 美股 + 台股</div>
     </div>
     <div class="preview-body">
       <div class="preview-tldr">
-        <div class="preview-tldr-title">☕ 30-Second Briefing</div>
+        <div class="preview-tldr-title">☕ 30 秒看完今天重點</div>
         <ul>
-          <li>Fed signals two rate cuts still on the table — markets loved it (+0.85%)</li>
-          <li>NVIDIA unveiled Blackwell Ultra chip, AI compute 3× faster, stock up 4%</li>
-          <li>TSMC May revenue hits record high, CoWoS packaging still sold out</li>
+          <li>Fed 暗示今年還有兩次降息，市場大漲 0.85%</li>
+          <li>NVIDIA 發布 Blackwell Ultra 晶片，AI 算力提升 3 倍，股價漲 4%</li>
+          <li>台積電 5 月營收創歷史新高，CoWoS 封裝繼續供不應求</li>
         </ul>
       </div>
-      <div class="preview-news-title">🔥 Top Stories Today</div>
+      <div class="preview-news-title">🔥 今日最重要的事</div>
       <div class="preview-news-item">
-        <div><span class="preview-badge v">✅ Multi-source</span></div>
-        <div class="preview-news-text">Fed official hints two rate cuts still possible this year</div>
-        <div class="preview-news-why">💡 Why it matters: Lower rates = cheaper money = stocks go up. Risk-on mode activated.</div>
+        <div><span class="preview-badge v">✅ 多源確認</span></div>
+        <div class="preview-news-text">Fed 官員暗示今年仍可能降息兩次</div>
+        <div class="preview-news-why">💡 為什麼重要：降息 = 資金便宜 = 股市上漲，風險偏好開啟</div>
       </div>
       <div class="preview-news-item">
-        <div><span class="preview-badge v">✅ Multi-source</span></div>
-        <div class="preview-news-text">NVIDIA's Blackwell Ultra delivers 3× AI computing power</div>
-        <div class="preview-news-why">💡 Why it matters: Reinforces NVDA's dominance. Expect upgrades across the AI supply chain — including TSMC.</div>
+        <div><span class="preview-badge v">✅ 多源確認</span></div>
+        <div class="preview-news-text">NVIDIA Blackwell Ultra AI 算力提升 3 倍</div>
+        <div class="preview-news-why">💡 為什麼重要：鞏固 NVDA 主導地位，AI 供應鏈（包含台積電）有望跟漲</div>
       </div>
       <div class="preview-news-item">
-        <div><span class="preview-badge s">⚠️ Single source</span></div>
-        <div class="preview-news-text">Apple reportedly planning $19.99/mo AI subscription at WWDC</div>
-        <div class="preview-news-why">💡 Why it matters: New revenue stream, but single source — wait for confirmation before acting.</div>
+        <div><span class="preview-badge s">⚠️ 單一來源</span></div>
+        <div class="preview-news-text">傳 Apple 將在 WWDC 推出 $19.99/月 AI 訂閱方案</div>
+        <div class="preview-news-why">💡 為什麼重要：新收入來源，但單一來源，建議等確認再行動</div>
       </div>
     </div>
   </div>
@@ -306,25 +320,123 @@
 
 <!-- CTA Bottom -->
 <div class="cta-bottom">
-  <h2>Start your mornings smarter</h2>
-  <p>Free forever. Takes 10 seconds to subscribe.</p>
+  <h2 data-i18n="cta_title">Start your mornings smarter</h2>
+  <p data-i18n="cta_sub">Free forever. Takes 10 seconds to subscribe.</p>
   <div class="subscribe-box">
     <input type="email" id="email-input-2" placeholder="your@email.com" />
-    <button onclick="subscribe2()">Subscribe Free →</button>
+    <button onclick="subscribe2()" data-i18n="btn_sub2">Subscribe Free →</button>
   </div>
-  <div class="success-msg" id="success-msg-2" style="margin-top:16px;">🎉 You're in! See you tomorrow at 7AM.</div>
-  <div class="error-msg" id="error-msg-2" style="margin-top:16px;">Oops, something went wrong. Please try again.</div>
+  <div class="success-msg" id="success-msg-2" style="margin-top:16px;" data-i18n="success2">🎉 You're in! See you tomorrow at 7AM.</div>
+  <div class="error-msg" id="error-msg-2" style="margin-top:16px;" data-i18n="error2">Oops, something went wrong. Please try again.</div>
 </div>
 
 <!-- Footer -->
 <footer>
-  MarketDaily · AI-curated US & Taiwan financial news<br>
-  ✅ Multi-source verified &nbsp;|&nbsp; ⚠️ Single source — read with caution<br>
-  For informational purposes only. Not financial advice.
+  <span data-i18n="footer1">MarketDaily · AI-curated US & Taiwan financial news</span><br>
+  <span data-i18n="footer2">✅ Multi-source verified &nbsp;|&nbsp; ⚠️ Single source — read with caution</span><br>
+  <span data-i18n="footer3">For informational purposes only. Not financial advice.</span>
 </footer>
 
 <script>
   const BREVO_API_KEY = "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";
+
+  const i18n = {
+    en: {
+      nav_badge: "🇹🇼 Taiwan Investors",
+      pill: "🆓 Free · No Spam · Unsubscribe Anytime",
+      hero_h1: 'Your daily stock market<br><span class="gradient">briefing in 30 seconds</span>',
+      hero_sub: "Every morning at 7AM Taiwan time — AI-curated US & Taiwan market news, fake-news filtered, written like a smart friend texting you.",
+      btn_sub1: "Get It Free →",
+      sub_note: "Join readers getting smarter about their portfolio every morning.",
+      success1: "🎉 You're in! First issue arrives tomorrow at 7AM Taiwan time.",
+      error: "Oops, something went wrong. Please try again.",
+      stat1: "Taiwan Time Daily",
+      stat2: "News Sources Scanned",
+      stat3: "Fake News Through",
+      stat4_num: "Free",
+      stat4: "Forever (No CC)",
+      feat_title: "Built for busy people",
+      f1_title: "30-Second Summary",
+      f1_desc: "3 bullet points at the top. Catch the most important thing even on your most hectic morning.",
+      f2_title: "Fake News Filtered",
+      f2_desc: "Only news from Reuters, CNBC, Bloomberg, FT and other verified sources. Every story is cross-checked.",
+      f3_title: '"Why It Matters" Explained',
+      f3_desc: "Every headline comes with one line explaining how it actually affects your stocks. No more guessing.",
+      f4_title: "US + Taiwan Markets",
+      f4_desc: "S&P500, NASDAQ, TWSE, individual stocks — all in one place. No tab-switching.",
+      f5_title: "AI That Speaks Human",
+      f5_desc: "Not a stiff analyst report. Written in plain language, like a knowledgeable friend giving you the rundown.",
+      f6_title: "Daily Verdict",
+      f6_desc: "Bullish / Bearish / Neutral — what the AI thinks about today's market, with reasons. Make better decisions.",
+      preview_title: "What it looks like 👇",
+      cta_title: "Start your mornings smarter",
+      cta_sub: "Free forever. Takes 10 seconds to subscribe.",
+      btn_sub2: "Subscribe Free →",
+      success2: "🎉 You're in! See you tomorrow at 7AM.",
+      error2: "Oops, something went wrong. Please try again.",
+      footer1: "MarketDaily · AI-curated US & Taiwan financial news",
+      footer2: "✅ Multi-source verified &nbsp;|&nbsp; ⚠️ Single source — read with caution",
+      footer3: "For informational purposes only. Not financial advice.",
+    },
+    zh: {
+      nav_badge: "🇹🇼 台灣投資人",
+      pill: "🆓 免費 · 不寄垃圾信 · 隨時取消訂閱",
+      hero_h1: '每天早上 7 點<br><span class="gradient">30 秒看完財經大事</span>',
+      hero_sub: "每天早上 7 點準時送達，AI 精選美股 + 台股新聞，假訊息全過濾，像聰明朋友傳訊息給你一樣好懂。",
+      btn_sub1: "免費訂閱 →",
+      sub_note: "加入每天早上讀更聰明的投資人行列。",
+      success1: "🎉 訂閱成功！明天早上 7 點見。",
+      error: "出了點問題，請再試一次。",
+      stat1: "台灣時間每日發送",
+      stat2: "新聞來源掃描數",
+      stat3: "假新聞通過率",
+      stat4_num: "免費",
+      stat4: "永久免費，不需信用卡",
+      feat_title: "專為忙碌的人打造",
+      f1_title: "30 秒快速摘要",
+      f1_desc: "最上方三個重點，再忙的早晨也能在 30 秒內掌握市場大事。",
+      f2_title: "假訊息過濾",
+      f2_desc: "只採用 Reuters、CNBC、Bloomberg、FT 等可信媒體，每則新聞交叉比對。",
+      f3_title: "「為什麼重要」一句話說清楚",
+      f3_desc: "每則新聞都附上一句話，直接告訴你這件事對你持股的影響，不用猜。",
+      f4_title: "美股 + 台股同步覆蓋",
+      f4_desc: "S&P500、NASDAQ、台灣加權指數、個股全都有，一個地方看完。",
+      f5_title: "AI 說人話",
+      f5_desc: "不是生硬的分析報告，用生活化的語言，像懂財經的朋友跟你說重點。",
+      f6_title: "每日市場結論",
+      f6_desc: "偏多 / 偏空 / 觀望 — AI 給出今日市場判斷並說明理由，幫你做更好的決策。",
+      preview_title: "長這個樣子 👇",
+      cta_title: "讓每個早晨更聰明",
+      cta_sub: "永久免費，10 秒完成訂閱。",
+      btn_sub2: "免費訂閱 →",
+      success2: "🎉 訂閱成功！明天早上 7 點見。",
+      error2: "出了點問題，請再試一次。",
+      footer1: "財經日報 · AI 精選美股 + 台股新聞",
+      footer2: "✅ 多源確認 &nbsp;|&nbsp; ⚠️ 單一來源，請自行查證",
+      footer3: "本日報為 AI 生成，僅供參考，不構成投資建議。",
+    }
+  };
+
+  let currentLang = "en";
+
+  function applyLang(lang) {
+    const t = i18n[lang];
+    document.querySelectorAll("[data-i18n]").forEach(el => {
+      const key = el.getAttribute("data-i18n");
+      if (t[key] !== undefined) el.textContent = t[key];
+    });
+    document.querySelectorAll("[data-i18n-html]").forEach(el => {
+      const key = el.getAttribute("data-i18n-html");
+      if (t[key] !== undefined) el.innerHTML = t[key];
+    });
+    document.getElementById("lang-toggle").textContent = lang === "en" ? "中文" : "EN";
+    document.documentElement.lang = lang === "en" ? "en" : "zh-Hant";
+  }
+
+  function toggleLang() {
+    currentLang = currentLang === "en" ? "zh" : "en";
+    applyLang(currentLang);
+  }
 
   async function addContact(email) {
     const resp = await fetch("https://api.brevo.com/v3/contacts", {
@@ -345,11 +457,13 @@
   async function subscribe() {
     const email = document.getElementById("email-input").value.trim();
     if (!email || !email.includes("@")) return;
-    const btn = document.querySelector(".subscribe-box button");
-    btn.textContent = "Subscribing...";
+    const btn = document.querySelector(".hero .subscribe-box button");
+    const loadingText = currentLang === "zh" ? "訂閱中..." : "Subscribing...";
+    const origText = btn.textContent;
+    btn.textContent = loadingText;
     btn.disabled = true;
     const ok = await addContact(email);
-    btn.textContent = "Get It Free →";
+    btn.textContent = origText;
     btn.disabled = false;
     document.getElementById(ok ? "success-msg" : "error-msg").style.display = "block";
   }
