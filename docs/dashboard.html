@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>訂閱者專區 · 財經日報</title>
+<style>
+:root {
+  --bg: #f5f7fa;
+  --surface: #fff;
+  --border: #eee;
+  --text: #1a1a1a;
+  --text2: #666;
+  --text3: #aaa;
+  --input-bg: #f8f9fc;
+  --input-border: #e8e8f0;
+  --tag-bg: #eef2ff;
+  --tag-border: #c7d2fe;
+  --tag-text: #4338ca;
+  --report-bg: #f8f9fc;
+  --nav-bg: #fff;
+  --nav-border: #eee;
+  --stat-bg: #fff;
+}
+[data-theme="dark"] {
+  --bg: #0a0a12;
+  --surface: rgba(255,255,255,0.04);
+  --border: rgba(255,255,255,0.08);
+  --text: #e2e8f0;
+  --text2: rgba(255,255,255,0.5);
+  --text3: rgba(255,255,255,0.25);
+  --input-bg: rgba(255,255,255,0.06);
+  --input-border: rgba(255,255,255,0.1);
+  --tag-bg: rgba(99,102,241,0.2);
+  --tag-border: rgba(99,102,241,0.35);
+  --tag-text: #a5b4fc;
+  --report-bg: rgba(255,255,255,0.03);
+  --nav-bg: rgba(255,255,255,0.03);
+  --nav-border: rgba(255,255,255,0.07);
+  --stat-bg: rgba(255,255,255,0.04);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; transition: background 0.25s, color 0.25s; }
+
+/* ── Nav ── */
+nav { background: var(--nav-bg); border-bottom: 1px solid var(--nav-border); display: flex; justify-content: space-between; align-items: center; padding: 16px 28px; position: sticky; top: 0; z-index: 50; backdrop-filter: blur(12px); }
+.logo { font-size: 16px; font-weight: 800; color: var(--text); }
+.logo span { color: #6366f1; }
+.nav-right { display: flex; align-items: center; gap: 10px; }
+.nav-email { font-size: 13px; color: var(--text2); }
+.theme-btn { background: var(--input-bg); border: 1px solid var(--input-border); color: var(--text2); font-size: 15px; width: 34px; height: 34px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+.theme-btn:hover { border-color: #6366f1; color: #6366f1; }
+.logout-btn { font-size: 12px; color: var(--text3); background: var(--input-bg); border: 1px solid var(--input-border); padding: 6px 14px; border-radius: 20px; cursor: pointer; transition: all 0.15s; }
+.logout-btn:hover { color: var(--text); }
+
+/* ── Login Screen ── */
+#login-screen { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 24px; }
+.login-card { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 36px 32px; width: 100%; max-width: 400px; box-shadow: 0 4px 24px rgba(0,0,0,0.07); text-align: center; }
+[data-theme="dark"] .login-card { box-shadow: none; }
+.login-logo { font-size: 28px; font-weight: 800; color: var(--text); margin-bottom: 6px; }
+.login-logo span { color: #6366f1; }
+.login-sub { font-size: 13px; color: var(--text2); margin-bottom: 28px; }
+.login-label { font-size: 13px; font-weight: 700; color: var(--text2); text-align: left; margin-bottom: 8px; }
+.login-input { width: 100%; padding: 12px 14px; background: var(--input-bg); border: 1.5px solid var(--input-border); border-radius: 10px; font-size: 14px; color: var(--text); outline: none; transition: border-color 0.2s; margin-bottom: 14px; }
+.login-input:focus { border-color: #6366f1; }
+.login-btn { width: 100%; padding: 13px; background: linear-gradient(135deg, #6366f1, #4338ca); color: #fff; border: none; border-radius: 12px; font-size: 14px; font-weight: 700; cursor: pointer; transition: opacity 0.2s; }
+.login-btn:hover { opacity: 0.9; }
+.login-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.login-err { font-size: 13px; color: #ef4444; margin-top: 12px; display: none; }
+.login-hint { font-size: 12px; color: var(--text3); margin-top: 16px; line-height: 1.7; }
+
+/* ── Dashboard ── */
+#dashboard { display: none; }
+.hero { background: linear-gradient(135deg, #0f0c29, #302b63, #24243e); padding: 32px 28px 28px; }
+.hero-label { font-size: 11px; color: #a5b4fc; letter-spacing: 2px; text-transform: uppercase; font-weight: 700; margin-bottom: 8px; }
+.hero-name { font-size: 24px; font-weight: 800; color: #fde68a; margin-bottom: 6px; }
+.hero-sub { font-size: 13px; color: #c4b5fd; }
+.plan-badge { display: inline-block; margin-top: 12px; background: rgba(99,102,241,0.25); border: 1px solid rgba(99,102,241,0.4); color: #a5b4fc; font-size: 11px; font-weight: 700; padding: 4px 14px; border-radius: 20px; letter-spacing: 0.5px; }
+
+.container { max-width: 700px; margin: 0 auto; padding: 28px 20px 60px; }
+
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 24px; }
+.stat { background: var(--stat-bg); border: 1px solid var(--border); border-radius: 14px; padding: 16px; }
+.stat-label { font-size: 10px; font-weight: 700; color: var(--text3); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
+.stat-value { font-size: 17px; font-weight: 800; color: var(--text); }
+.stat-value.green { color: #16a34a; }
+.stat-sub { font-size: 11px; color: var(--text3); margin-top: 3px; line-height: 1.4; }
+
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 22px; margin-bottom: 14px; transition: background 0.25s, border-color 0.25s; }
+.card-title { font-size: 14px; font-weight: 800; color: var(--text); margin-bottom: 4px; }
+.card-desc { font-size: 12px; color: var(--text3); margin-bottom: 16px; }
+
+.search-wrap { position: relative; margin-bottom: 12px; }
+.search-input { width: 100%; padding: 10px 14px 10px 36px; background: var(--input-bg); border: 1.5px solid var(--input-border); border-radius: 10px; font-size: 13px; color: var(--text); outline: none; transition: border-color 0.2s; }
+.search-input:focus { border-color: #6366f1; }
+.search-input::placeholder { color: var(--text3); }
+.search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 13px; pointer-events: none; }
+
+.dropdown { position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: var(--surface); border: 1.5px solid var(--border); border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); z-index: 100; max-height: 220px; overflow-y: auto; display: none; }
+[data-theme="dark"] .dropdown { box-shadow: 0 8px 24px rgba(0,0,0,0.4); }
+.dropdown.open { display: block; }
+.dropdown-item { padding: 10px 14px; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: background 0.1s; }
+.dropdown-item:hover, .dropdown-item.hi { background: var(--tag-bg); }
+.d-ticker { font-size: 13px; font-weight: 800; color: #6366f1; min-width: 56px; }
+.d-name { font-size: 13px; color: var(--text2); flex: 1; }
+.d-add { font-size: 11px; color: var(--text3); }
+.dropdown-empty { padding: 14px; text-align: center; font-size: 13px; color: var(--text3); }
+
+.tags { display: flex; flex-wrap: wrap; gap: 8px; min-height: 24px; }
+.tag { background: var(--tag-bg); border: 1.5px solid var(--tag-border); color: var(--tag-text); font-size: 12px; font-weight: 700; padding: 5px 10px 5px 12px; border-radius: 20px; display: inline-flex; align-items: center; gap: 6px; }
+.tag-x { cursor: pointer; opacity: 0.6; transition: opacity 0.15s; }
+.tag-x:hover { opacity: 1; color: #ef4444; }
+.tags-empty { font-size: 12px; color: var(--text3); padding: 2px 0; }
+
+.save-btn { width: 100%; padding: 13px; background: linear-gradient(135deg, #6366f1, #4338ca); color: #fff; border: none; border-radius: 12px; font-size: 14px; font-weight: 700; cursor: pointer; transition: opacity 0.2s; margin-bottom: 14px; }
+.save-btn:hover { opacity: 0.9; }
+.save-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.msg { display: none; padding: 13px 16px; border-radius: 10px; font-size: 13px; font-weight: 600; margin-bottom: 14px; text-align: center; }
+.msg.success { background: #f0fdf4; color: #166534; border: 1.5px solid #86efac; }
+.msg.error { background: #fef2f2; color: #991b1b; border: 1.5px solid #fca5a5; }
+[data-theme="dark"] .msg.success { background: rgba(22,163,74,0.15); border-color: rgba(22,163,74,0.3); color: #4ade80; }
+[data-theme="dark"] .msg.error { background: rgba(239,68,68,0.15); border-color: rgba(239,68,68,0.3); color: #f87171; }
+
+.report-list { display: flex; flex-direction: column; gap: 8px; }
+.report-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: var(--report-bg); border: 1px solid var(--border); border-radius: 12px; cursor: pointer; text-decoration: none; transition: background 0.15s, border-color 0.15s; }
+.report-item:hover { background: var(--tag-bg); border-color: var(--tag-border); }
+.report-left { display: flex; align-items: center; gap: 12px; }
+.report-icon { font-size: 18px; }
+.report-date { font-size: 13px; font-weight: 700; color: var(--text); }
+.report-sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
+.report-arrow { font-size: 13px; color: #6366f1; font-weight: 700; }
+.report-empty { font-size: 13px; color: var(--text3); text-align: center; padding: 16px 0; }
+
+.section-gap { margin-top: 8px; }
+</style>
+</head>
+<body>
+
+<!-- Login Screen -->
+<div id="login-screen">
+  <div>
+    <nav style="position:static; margin-bottom:0; background:transparent; border:none; justify-content:flex-end; padding:0 0 16px 0;">
+      <button class="theme-btn" onclick="toggleTheme()" title="切換深色/白色">🌙</button>
+    </nav>
+    <div class="login-card">
+      <div class="login-logo">Market<span>Daily</span></div>
+      <div class="login-sub">訂閱者專區 · 輸入你的 Email 進入</div>
+      <div class="login-label">訂閱 Email</div>
+      <input type="email" class="login-input" id="login-email" placeholder="your@email.com" onkeydown="if(event.key==='Enter')doLogin()">
+      <button class="login-btn" id="login-btn" onclick="doLogin()">進入我的專區 →</button>
+      <div class="login-err" id="login-err"></div>
+      <div class="login-hint">尚未訂閱？<a href="index.html" style="color:#6366f1;font-weight:700;">前往訂閱 →</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- Dashboard -->
+<div id="dashboard">
+  <nav>
+    <div class="logo">Market<span>Daily</span></div>
+    <div class="nav-right">
+      <span class="nav-email" id="nav-email"></span>
+      <button class="theme-btn" onclick="toggleTheme()" title="切換深色/白色" id="theme-icon">🌙</button>
+      <button class="logout-btn" onclick="doLogout()">登出</button>
+    </div>
+  </nav>
+
+  <div class="hero">
+    <div class="hero-label">財經日報 · 訂閱者專區</div>
+    <div class="hero-name" id="hero-name">👋 嗨！</div>
+    <div class="hero-sub">每天早上 7:00 AM，你的個人化財經日報會送到信箱</div>
+    <div class="plan-badge" id="plan-badge">✅ 訂閱中</div>
+  </div>
+
+  <div class="container">
+
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-label">訂閱狀態</div>
+        <div class="stat-value green">✅ 啟用中</div>
+        <div class="stat-sub" id="stat-plan">免費方案</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">美股追蹤</div>
+        <div class="stat-value" id="stat-us">0 支</div>
+        <div class="stat-sub" id="stat-us-list">尚未設定</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">台股追蹤</div>
+        <div class="stat-value" id="stat-tw">0 支</div>
+        <div class="stat-sub" id="stat-tw-list">尚未設定</div>
+      </div>
+    </div>
+
+    <!-- US Stocks -->
+    <div class="card">
+      <div class="card-title">🇺🇸 美股持倉</div>
+      <div class="card-desc">搜尋代號或公司名稱（例如 NVDA、Tesla），點擊加入清單</div>
+      <div class="search-wrap">
+        <span class="search-icon">🔍</span>
+        <input type="text" class="search-input" id="us-search" placeholder="搜尋美股代號或名稱..." autocomplete="off">
+        <div class="dropdown" id="us-dropdown"></div>
+      </div>
+      <div class="tags" id="us-tags"><span class="tags-empty">尚未選擇任何美股</span></div>
+    </div>
+
+    <!-- TW Stocks -->
+    <div class="card">
+      <div class="card-title">🇹🇼 台股持倉</div>
+      <div class="card-desc">搜尋代號或公司名稱（例如 2330、台積電），點擊加入清單</div>
+      <div class="search-wrap">
+        <span class="search-icon">🔍</span>
+        <input type="text" class="search-input" id="tw-search" placeholder="搜尋台股代號或名稱..." autocomplete="off">
+        <div class="dropdown" id="tw-dropdown"></div>
+      </div>
+      <div class="tags" id="tw-tags"><span class="tags-empty">尚未選擇任何台股</span></div>
+    </div>
+
+    <button class="save-btn" id="save-btn" onclick="savePreferences()">儲存設定</button>
+    <div class="msg success" id="success-msg">✅ 設定已儲存！明天起的報告會依你的選股客製化。</div>
+    <div class="msg error" id="error-msg"></div>
+
+    <!-- Recent Reports -->
+    <div class="card section-gap">
+      <div class="card-title" style="margin-bottom:14px;">📨 最近報告</div>
+      <div class="report-list" id="report-list">
+        <div class="report-empty">載入中...</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const WORKER_URL = "https://marketdaily-webhook.delvin-12345678.workers.dev";
+
+// ── Theme ──
+function toggleTheme() {
+  const html = document.documentElement;
+  const isDark = html.getAttribute("data-theme") === "dark";
+  html.setAttribute("data-theme", isDark ? "light" : "dark");
+  document.querySelectorAll(".theme-btn, #theme-icon").forEach(el => {
+    el.textContent = isDark ? "🌙" : "☀️";
+  });
+  localStorage.setItem("md-theme", isDark ? "light" : "dark");
+}
+(function() {
+  const saved = localStorage.getItem("md-theme") || "light";
+  document.documentElement.setAttribute("data-theme", saved);
+  document.querySelectorAll(".theme-btn, #theme-icon").forEach(el => {
+    el.textContent = saved === "dark" ? "☀️" : "🌙";
+  });
+})();
+
+// ── Stock DBs ──
+const US_STOCKS = [
+  ["AAPL","Apple"],["MSFT","Microsoft"],["NVDA","NVIDIA"],["GOOGL","Google / Alphabet"],
+  ["GOOG","Google Class C"],["META","Meta Platforms"],["AMZN","Amazon"],["TSLA","Tesla"],
+  ["AMD","AMD"],["TSM","台積電 ADR"],["ARM","ARM Holdings"],["AVGO","Broadcom"],
+  ["QCOM","Qualcomm"],["INTC","Intel"],["MU","Micron Technology"],["ASML","ASML"],
+  ["JPM","JPMorgan Chase"],["GS","Goldman Sachs"],["MS","Morgan Stanley"],["BAC","Bank of America"],
+  ["WFC","Wells Fargo"],["BRK-B","Berkshire Hathaway"],["V","Visa"],["MA","Mastercard"],
+  ["PYPL","PayPal"],["SQ","Block (Square)"],["COIN","Coinbase"],["HOOD","Robinhood"],
+  ["NFLX","Netflix"],["DIS","Disney"],["SPOT","Spotify"],["RBLX","Roblox"],
+  ["UBER","Uber"],["LYFT","Lyft"],["ABNB","Airbnb"],["BKNG","Booking Holdings"],
+  ["SBUX","Starbucks"],["MCD","McDonald's"],["NKE","Nike"],["LULU","Lululemon"],
+  ["COST","Costco"],["WMT","Walmart"],["TGT","Target"],
+  ["PG","Procter & Gamble"],["KO","Coca-Cola"],["PEP","PepsiCo"],["JNJ","Johnson & Johnson"],
+  ["PFE","Pfizer"],["MRNA","Moderna"],["ABBV","AbbVie"],["LLY","Eli Lilly"],
+  ["XOM","ExxonMobil"],["CVX","Chevron"],["COP","ConocoPhillips"],
+  ["BA","Boeing"],["CAT","Caterpillar"],["GE","GE Aerospace"],["HON","Honeywell"],
+  ["PLTR","Palantir"],["SNOW","Snowflake"],["CRM","Salesforce"],["NOW","ServiceNow"],
+  ["ORCL","Oracle"],["IBM","IBM"],["DELL","Dell Technologies"],
+  ["MSTR","MicroStrategy"],["RIOT","Riot Platforms"],["MARA","Marathon Digital"],
+  ["SPY","S&P 500 ETF"],["QQQ","Nasdaq 100 ETF"],["SOXL","半導體 3x ETF"],
+  ["SOXX","半導體 ETF"],["VTI","全市場 ETF"],["VOO","Vanguard S&P500 ETF"],
+];
+const TW_STOCKS = [
+  ["2330","台積電"],["2317","鴻海"],["2454","聯發科"],["2308","台達電"],
+  ["2303","聯電"],["2412","中華電信"],["2882","國泰金"],["2886","兆豐金"],
+  ["2881","富邦金"],["6505","台塑化"],["3008","大立光"],["2891","中信金"],
+  ["2002","中鋼"],["1301","台塑"],["1303","南亞"],["1326","台化"],
+  ["2357","華碩"],["2382","廣達"],["2395","研華"],["2376","技嘉"],
+  ["3034","聯詠"],["3711","日月光投控"],["2379","瑞昱"],["2408","南亞科"],
+  ["6669","緯穎"],["2301","光寶科"],["2353","宏碁"],["3045","台灣大"],
+  ["4904","遠傳"],["2474","可成"],["3037","欣興"],
+  ["2337","旺宏"],["2344","華邦電"],["3533","嘉澤"],["6415","矽力-KY"],
+  ["2609","陽明"],["2615","萬海"],["2603","長榮"],["2618","長榮航"],
+  ["2610","華航"],["5880","合庫金"],["2884","玉山金"],["2885","元大金"],
+  ["2887","台新金"],["2888","新光金"],["2892","第一金"],["5876","上海商銀"],
+  ["1216","統一"],["1101","台泥"],["1102","亞泥"],["2207","和泰車"],
+  ["2912","統一超"],["6278","台表科"],["3231","緯創"],["4938","和碩"],["2356","英業達"],
+];
+
+const selected = { us: [], tw: [] };
+const hiIdx = { us: -1, tw: -1 };
+
+function search(q, db) {
+  if (!q) return [];
+  const lq = q.toLowerCase();
+  return db.filter(([s, n]) => s.toLowerCase().includes(lq) || n.toLowerCase().includes(lq)).slice(0, 8);
+}
+
+function renderDD(market, results, q) {
+  const dd = document.getElementById(`${market}-dropdown`);
+  if (!q) { dd.classList.remove("open"); return; }
+  if (!results.length) {
+    dd.innerHTML = `<div class="dropdown-empty">找不到「${q}」，可直接按 Enter 加入自訂代號</div>`;
+  } else {
+    dd.innerHTML = results.map(([sym, name]) =>
+      `<div class="dropdown-item" data-sym="${sym}" data-name="${name.replace(/"/g,'&quot;')}" onclick="addStock('${market}','${sym}','${name.replace(/'/g,"&#39;")}')">
+        <span class="d-ticker">${sym}</span><span class="d-name">${name}</span><span class="d-add">+ 加入</span>
+      </div>`
+    ).join("");
+  }
+  dd.classList.add("open");
+  hiIdx[market] = -1;
+}
+
+function addStock(market, sym, name) {
+  if (selected[market].find(s => s.sym === sym)) return;
+  selected[market].push({ sym, name });
+  renderTags(market);
+  updateStats();
+  document.getElementById(`${market}-search`).value = "";
+  document.getElementById(`${market}-dropdown`).classList.remove("open");
+}
+
+function removeStock(market, sym) {
+  selected[market] = selected[market].filter(s => s.sym !== sym);
+  renderTags(market);
+  updateStats();
+}
+
+function renderTags(market) {
+  const el = document.getElementById(`${market}-tags`);
+  if (!selected[market].length) {
+    el.innerHTML = `<span class="tags-empty">尚未選擇任何${market === "us" ? "美股" : "台股"}</span>`;
+    return;
+  }
+  el.innerHTML = selected[market].map(({ sym, name }) =>
+    `<div class="tag">${sym} <span class="tag-x" onclick="removeStock('${market}','${sym}')">×</span></div>`
+  ).join("");
+}
+
+function updateStats() {
+  const us = selected.us, tw = selected.tw;
+  document.getElementById("stat-us").textContent = `${us.length} 支`;
+  document.getElementById("stat-tw").textContent = `${tw.length} 支`;
+  document.getElementById("stat-us-list").textContent = us.length ? us.slice(0,3).map(s=>s.sym).join(" · ") + (us.length > 3 ? " ..." : "") : "尚未設定";
+  document.getElementById("stat-tw-list").textContent = tw.length ? tw.slice(0,2).map(s=>s.sym).join(" · ") + (tw.length > 2 ? " ..." : "") : "尚未設定";
+}
+
+["us","tw"].forEach(market => {
+  const input = document.getElementById(`${market}-search`);
+  const db = market === "us" ? US_STOCKS : TW_STOCKS;
+  input.addEventListener("input", () => renderDD(market, search(input.value.trim(), db), input.value.trim()));
+  input.addEventListener("keydown", e => {
+    const dd = document.getElementById(`${market}-dropdown`);
+    const items = dd.querySelectorAll(".dropdown-item");
+    if (e.key === "ArrowDown") { e.preventDefault(); hiIdx[market] = Math.min(hiIdx[market]+1, items.length-1); items.forEach((el,i) => el.classList.toggle("hi", i===hiIdx[market])); }
+    else if (e.key === "ArrowUp") { e.preventDefault(); hiIdx[market] = Math.max(hiIdx[market]-1, 0); items.forEach((el,i) => el.classList.toggle("hi", i===hiIdx[market])); }
+    else if (e.key === "Enter") { e.preventDefault(); if (hiIdx[market] >= 0 && items[hiIdx[market]]) items[hiIdx[market]].click(); else if (input.value.trim()) { const sym = input.value.trim().toUpperCase(); addStock(market, sym, sym); } }
+    else if (e.key === "Escape") dd.classList.remove("open");
+  });
+  document.addEventListener("click", e => { if (!input.closest(".search-wrap").contains(e.target)) dd.classList.remove("open"); });
+});
+
+// ── Login ──
+async function doLogin() {
+  const email = document.getElementById("login-email").value.trim().toLowerCase();
+  const errEl = document.getElementById("login-err");
+  const btn = document.getElementById("login-btn");
+  errEl.style.display = "none";
+
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    errEl.textContent = "請輸入有效的 Email"; errEl.style.display = "block"; return;
+  }
+  btn.disabled = true; btn.textContent = "驗證中...";
+
+  try {
+    const res = await fetch(WORKER_URL + "/check-subscriber", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+    const data = await res.json();
+    if (data.subscribed) {
+      localStorage.setItem("md-email", email);
+      localStorage.setItem("md-plan", data.plan || "free");
+      showDashboard(email, data.plan || "free");
+    } else {
+      errEl.textContent = "找不到這個 Email 的訂閱記錄，請確認你的訂閱 Email，或前往訂閱。";
+      errEl.style.display = "block";
+    }
+  } catch {
+    errEl.textContent = "網路錯誤，請稍後再試";
+    errEl.style.display = "block";
+  } finally {
+    btn.disabled = false; btn.textContent = "進入我的專區 →";
+  }
+}
+
+function doLogout() {
+  localStorage.removeItem("md-email");
+  localStorage.removeItem("md-plan");
+  document.getElementById("dashboard").style.display = "none";
+  document.getElementById("login-screen").style.display = "flex";
+  document.getElementById("login-email").value = "";
+}
+
+async function showDashboard(email, plan) {
+  document.getElementById("login-screen").style.display = "none";
+  document.getElementById("dashboard").style.display = "block";
+
+  const name = email.split("@")[0];
+  document.getElementById("hero-name").textContent = `👋 嗨，${name}！`;
+  document.getElementById("nav-email").textContent = email;
+  document.getElementById("stat-plan").textContent = plan === "paid" ? "付費方案 NT$500/月" : "免費方案";
+  document.getElementById("plan-badge").textContent = plan === "paid" ? "⭐ 付費方案 · 訂閱中" : "✅ 免費方案 · 訂閱中";
+
+  await loadPreferences(email);
+  loadReports();
+}
+
+async function loadPreferences(email) {
+  try {
+    const res = await fetch(WORKER_URL + "/get-preferences", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+    const data = await res.json();
+    selected.us = []; selected.tw = [];
+    (data.us_stocks || []).forEach(sym => { const f = US_STOCKS.find(([s])=>s===sym); selected.us.push({ sym, name: f ? f[1] : sym }); });
+    (data.tw_stocks || []).forEach(sym => { const f = TW_STOCKS.find(([s])=>s===sym); selected.tw.push({ sym, name: f ? f[1] : sym }); });
+    renderTags("us"); renderTags("tw"); updateStats();
+  } catch {}
+}
+
+function loadReports() {
+  const container = document.getElementById("report-list");
+  const today = new Date();
+  const reports = [];
+  for (let i = 0; i < 5; i++) {
+    const d = new Date(today); d.setDate(d.getDate() - i);
+    if (d.getDay() === 0 || d.getDay() === 6) continue;
+    const dateStr = d.toISOString().split("T")[0];
+    const label = i === 0 ? "今日報告" : i === 1 ? "昨日報告" : `${i} 天前`;
+    reports.push({ dateStr, label });
+    if (reports.length >= 4) break;
+  }
+  if (!reports.length) { container.innerHTML = `<div class="report-empty">目前尚無報告</div>`; return; }
+  container.innerHTML = reports.map(({ dateStr, label }) =>
+    `<a class="report-item" href="#" onclick="return false;">
+      <div class="report-left">
+        <span class="report-icon">📄</span>
+        <div><div class="report-date">${dateStr}</div><div class="report-sub">${label}</div></div>
+      </div>
+      <span class="report-arrow">查看 →</span>
+    </a>`
+  ).join("");
+}
+
+async function savePreferences() {
+  const email = localStorage.getItem("md-email");
+  const successEl = document.getElementById("success-msg");
+  const errorEl = document.getElementById("error-msg");
+  successEl.style.display = "none"; errorEl.style.display = "none";
+
+  const btn = document.getElementById("save-btn");
+  btn.disabled = true; btn.textContent = "儲存中...";
+  try {
+    const res = await fetch(WORKER_URL + "/save-preferences", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, us_stocks: selected.us.map(s=>s.sym), tw_stocks: selected.tw.map(s=>s.sym) }),
+    });
+    const data = await res.json();
+    if (data.ok) { successEl.style.display = "block"; setTimeout(() => successEl.style.display="none", 4000); }
+    else { errorEl.textContent = "❌ 儲存失敗，請稍後再試"; errorEl.style.display = "block"; }
+  } catch { errorEl.textContent = "❌ 網路錯誤，請稍後再試"; errorEl.style.display = "block"; }
+  finally { btn.disabled = false; btn.textContent = "儲存設定"; }
+}
+
+// Auto-login if session exists
+(function() {
+  const email = localStorage.getItem("md-email");
+  const plan = localStorage.getItem("md-plan") || "free";
+  if (email) showDashboard(email, plan);
+})();
+</script>
+</body>
+</html>

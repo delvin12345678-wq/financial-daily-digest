@@ -18,6 +18,29 @@ export default {
 
     const url = new URL(request.url);
 
+    // Check if email is a subscriber
+    if (url.pathname === "/check-subscriber" && request.method === "POST") {
+      let body;
+      try { body = await request.json(); } catch {
+        return json({ error: "Invalid request" }, 400);
+      }
+      const email = (body.email || "").trim().toLowerCase();
+      if (!email) return json({ subscribed: false });
+      const res = await fetch(`https://api.brevo.com/v3/contacts/${encodeURIComponent(email)}`, {
+        headers: { "api-key": env.BREVO_API_KEY }
+      });
+      if (!res.ok) return json({ subscribed: false });
+      const contact = await res.json();
+      const listIds = contact.listIds || [];
+      const targetList = parseInt(env.BREVO_LIST_ID) || 2;
+      const isPaid = (contact.attributes?.PAID === true || contact.attributes?.PLAN === "paid");
+      return json({
+        subscribed: listIds.includes(targetList),
+        plan: isPaid ? "paid" : "free",
+        since: contact.createdAt || null,
+      });
+    }
+
     // Save user preferences
     if (url.pathname === "/save-preferences" && request.method === "POST") {
       let body;
