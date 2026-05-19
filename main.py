@@ -110,9 +110,11 @@ def run():
 
     print("⑤ 發布到 Brevo...")
     from config import BREVO_API_KEY
+    from publisher import get_list_id, check_subscriber_count
     if not BREVO_API_KEY:
         print("   Brevo API key 尚未設定，跳過發布")
     else:
+        check_subscriber_count(get_list_id())
         success = publish_to_brevo(data["date"], html_report)
         if success:
             print("✅ 今日財經日報發布完成！")
