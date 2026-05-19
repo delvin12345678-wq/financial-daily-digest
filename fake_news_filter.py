@@ -1,6 +1,8 @@
 from collections import defaultdict
 from config import NEWS_WHITELIST_DOMAINS, TW_NEWS_WHITELIST_DOMAINS, VAGUE_KEYWORDS
 
+TIER1_DOMAINS = {"reuters.com", "cnbc.com", "ft.com", "apnews.com", "wsj.com", "bloomberg.com"}
+
 
 def _domain_from_url(url: str) -> str:
     try:
@@ -14,26 +16,43 @@ def _has_vague_language(text: str) -> bool:
     return any(kw.lower() in text_lower for kw in VAGUE_KEYWORDS)
 
 
+def _keyword_group(title: str) -> str:
+    words = set(title.lower().split())
+    stop = {"the","a","an","in","of","to","and","for","is","are","was","were","on","at","by"}
+    key_words = [w for w in words if len(w) > 4 and w not in stop]
+    return " ".join(sorted(key_words[:5]))
+
+
 def filter_and_label(articles: list, whitelist: list) -> list:
-    title_map = defaultdict(list)
+    seen_titles = set()
+    keyword_map = defaultdict(list)
+
     for article in articles:
         domain = _domain_from_url(article.get("url", ""))
         if domain not in whitelist:
             continue
-        title = article.get("title", "")
+        title = article.get("title", "").strip()
+        if not title or title in seen_titles:
+            continue
         if _has_vague_language(title + " " + article.get("description", "")):
             continue
-        title_map[title].append(article)
+        seen_titles.add(title)
+        article["_domain"] = domain
+        group_key = _keyword_group(title)
+        keyword_map[group_key].append(article)
 
     result = []
-    for title, group in title_map.items():
+    for group in keyword_map.values():
         article = group[0]
-        sources = list({_domain_from_url(a["url"]) for a in group})
-        article["verified"] = len(sources) >= 2
-        article["sources"] = sources
+        domain = article["_domain"]
+        all_domains = {a["_domain"] for a in group}
+        is_tier1 = domain in TIER1_DOMAINS
+        is_multi = len(all_domains) >= 2
+        article["verified"] = is_tier1 or is_multi
+        article["sources"] = list(all_domains)
         result.append(article)
 
-    result.sort(key=lambda a: a["verified"], reverse=True)
+    result.sort(key=lambda a: (a["verified"], a["_domain"] in TIER1_DOMAINS), reverse=True)
     return result
 
 
@@ -42,5 +61,4 @@ def filter_us_news(articles: list) -> list:
 
 
 def filter_tw_news(articles: list) -> list:
-    # Taiwan news is fetched in English from US whitelist sources
     return filter_and_label(articles, NEWS_WHITELIST_DOMAINS)
