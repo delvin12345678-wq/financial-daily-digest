@@ -254,20 +254,25 @@
 
 <!-- Hero -->
 <div class="hero">
-  <div class="hero-pill" data-i18n="pill">🆓 Free · No Spam · Unsubscribe Anytime</div>
+  <div class="hero-pill" data-i18n="pill">📊 AI-Curated · Fake-News Filtered · Daily 7AM</div>
   <h1 data-i18n-html="hero_h1">Your daily stock market<br><span class="gradient">briefing in 30 seconds</span></h1>
   <p class="hero-sub" data-i18n="hero_sub">
     Every morning at 7AM Taiwan time — AI-curated US & Taiwan market news,
     fake-news filtered, written like a smart friend texting you.
   </p>
-
-  <div class="subscribe-box">
-    <input type="email" id="email-input" placeholder="your@email.com" />
-    <button onclick="subscribe()" data-i18n="btn_sub1">Get It Free →</button>
+  <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin-bottom:12px;">
+    <a href="https://buy.stripe.com/9B6aEW2Op6nO4L87Ze4Ja00" target="_blank" style="background:#6366f1;color:#fff;font-size:15px;font-weight:700;padding:14px 32px;border-radius:10px;text-decoration:none;transition:background 0.2s;" data-i18n="hero_btn_paid">Subscribe NT$500/mo →</a>
+    <button onclick="showInviteForm()" style="background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.7);font-size:15px;font-weight:700;padding:14px 24px;border-radius:10px;border:1px solid rgba(255,255,255,0.15);cursor:pointer;" data-i18n="hero_btn_invite">Have an invite code?</button>
   </div>
-  <p class="subscribe-note" data-i18n="sub_note">Join readers getting smarter about their portfolio every morning.</p>
+  <div id="invite-form" style="display:none;margin-top:16px;">
+    <div class="subscribe-box">
+      <input type="email" id="email-input" placeholder="your@email.com" />
+      <input type="text" id="invite-code-input" placeholder="DELVIN-XXXXXX" style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.15);color:#fff;font-size:15px;padding:14px 20px;border-radius:10px;width:180px;outline:none;" />
+      <button onclick="subscribe()" data-i18n="btn_sub1">Redeem Free →</button>
+    </div>
+  </div>
   <div class="success-msg" id="success-msg" data-i18n="success1">🎉 You're in! First issue arrives tomorrow at 7AM Taiwan time.</div>
-  <div class="error-msg" id="error-msg" data-i18n="error">Oops, something went wrong. Please try again.</div>
+  <div class="error-msg" id="error-msg" data-i18n="error">Invalid invite code. Please check and try again.</div>
 </div>
 
 <!-- Stats -->
@@ -403,13 +408,9 @@
 <!-- CTA Bottom -->
 <div class="cta-bottom">
   <h2 data-i18n="cta_title">Start your mornings smarter</h2>
-  <p data-i18n="cta_sub">Free forever. Takes 10 seconds to subscribe.</p>
-  <div class="subscribe-box">
-    <input type="email" id="email-input-2" placeholder="your@email.com" />
-    <button onclick="subscribe2()" data-i18n="btn_sub2">Subscribe Free →</button>
-  </div>
-  <div class="success-msg" id="success-msg-2" style="margin-top:16px;" data-i18n="success2">🎉 You're in! See you tomorrow at 7AM.</div>
-  <div class="error-msg" id="error-msg-2" style="margin-top:16px;" data-i18n="error2">Oops, something went wrong. Please try again.</div>
+  <p data-i18n="cta_sub">NT$500/month. Cancel anytime.</p>
+  <a href="https://buy.stripe.com/9B6aEW2Op6nO4L87Ze4Ja00" target="_blank" style="display:inline-block;background:#6366f1;color:#fff;font-size:16px;font-weight:700;padding:16px 40px;border-radius:12px;text-decoration:none;" data-i18n="cta_btn">Subscribe Now →</a>
+  <p style="margin-top:16px;font-size:13px;color:rgba(255,255,255,0.3);" data-i18n="cta_invite_hint">Invited by a friend? <span style="color:#a5b4fc;cursor:pointer;" onclick="document.getElementById('invite-form').style.display='block';window.scrollTo({top:0,behavior:'smooth'});" data-i18n="cta_invite_link">Use your invite code above ↑</span></p>
 </div>
 
 <!-- Footer -->
@@ -425,7 +426,12 @@
   const i18n = {
     en: {
       nav_badge: "🇹🇼 Taiwan Investors",
-      pill: "🆓 Free · No Spam · Unsubscribe Anytime",
+      pill: "📊 AI-Curated · Fake-News Filtered · Daily 7AM",
+      hero_btn_paid: "Subscribe NT$500/mo →",
+      hero_btn_invite: "Have an invite code?",
+      cta_btn: "Subscribe Now →",
+      cta_invite_hint: "Invited by a friend?",
+      cta_invite_link: "Use your invite code above ↑",
       hero_h1: 'Your daily stock market<br><span class="gradient">briefing in 30 seconds</span>',
       hero_sub: "Every morning at 7AM Taiwan time — AI-curated US & Taiwan market news, fake-news filtered, written like a smart friend texting you.",
       btn_sub1: "Get It Free →",
@@ -480,7 +486,12 @@
     },
     zh: {
       nav_badge: "🇹🇼 台灣投資人",
-      pill: "🆓 免費 · 不寄垃圾信 · 隨時取消訂閱",
+      pill: "📊 AI 精選 · 假訊息過濾 · 每天早上 7 點",
+      hero_btn_paid: "立即訂閱 NT$500/月 →",
+      hero_btn_invite: "有邀請碼？",
+      cta_btn: "立即訂閱 →",
+      cta_invite_hint: "朋友邀請你加入？",
+      cta_invite_link: "在上方輸入邀請碼 ↑",
       hero_h1: '每天早上 7 點<br><span class="gradient">30 秒看完財經大事</span>',
       hero_sub: "每天早上 7 點準時送達，AI 精選美股 + 台股新聞，假訊息全過濾，像聰明朋友傳訊息給你一樣好懂。",
       btn_sub1: "免費訂閱 →",
@@ -556,48 +567,47 @@
     applyLang(currentLang);
   }
 
+  const INVITE_CODES = [
+    "DELVIN-FE8FZ1","DELVIN-XKNJ4N","DELVIN-F4ONQQ","DELVIN-RBIG9S",
+    "DELVIN-WYW4IP","DELVIN-BE2O13","DELVIN-OVMFHN","DELVIN-AV3VIB",
+    "DELVIN-06U59N","DELVIN-CVRBWF"
+  ];
+
+  function showInviteForm() {
+    document.getElementById("invite-form").style.display = "block";
+  }
+
   async function addContact(email) {
     const resp = await fetch("https://api.brevo.com/v3/contacts", {
       method: "POST",
-      headers: {
-        "api-key": BREVO_API_KEY,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        email: email,
-        listIds: [2],
-        updateEnabled: true
-      })
+      headers: { "api-key": BREVO_API_KEY, "Content-Type": "application/json" },
+      body: JSON.stringify({ email, listIds: [2], updateEnabled: true })
     });
     return resp.ok || resp.status === 204;
   }
 
   async function subscribe() {
     const email = document.getElementById("email-input").value.trim();
+    const code = document.getElementById("invite-code-input").value.trim().toUpperCase();
     if (!email || !email.includes("@")) return;
-    const btn = document.querySelector(".hero .subscribe-box button");
-    const loadingText = currentLang === "zh" ? "訂閱中..." : "Subscribing...";
+    if (!INVITE_CODES.includes(code)) {
+      document.getElementById("error-msg").style.display = "block";
+      return;
+    }
+    const btn = document.querySelector("#invite-form button");
     const origText = btn.textContent;
-    btn.textContent = loadingText;
+    btn.textContent = currentLang === "zh" ? "驗證中..." : "Verifying...";
     btn.disabled = true;
     const ok = await addContact(email);
     btn.textContent = origText;
     btn.disabled = false;
+    document.getElementById("error-msg").style.display = "none";
     document.getElementById(ok ? "success-msg" : "error-msg").style.display = "block";
   }
 
-  async function subscribe2() {
-    const email = document.getElementById("email-input-2").value.trim();
-    if (!email || !email.includes("@")) return;
-    const ok = await addContact(email);
-    document.getElementById(ok ? "success-msg-2" : "error-msg-2").style.display = "block";
-  }
-
-  document.getElementById("email-input").addEventListener("keydown", e => {
-    if (e.key === "Enter") subscribe();
-  });
-  document.getElementById("email-input-2").addEventListener("keydown", e => {
-    if (e.key === "Enter") subscribe2();
+  document.addEventListener("DOMContentLoaded", () => {
+    const ei = document.getElementById("email-input");
+    if (ei) ei.addEventListener("keydown", e => { if (e.key === "Enter") subscribe(); });
   });
 </script>
 
