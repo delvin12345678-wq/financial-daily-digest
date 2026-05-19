@@ -605,6 +605,12 @@ async function init() {
     document.getElementById("login-password").value = savedPwd;
     document.getElementById("remember-me").checked = true;
   }
+  const urlEmail = new URLSearchParams(window.location.search).get("email");
+  if (urlEmail && !savedEmail) {
+    document.getElementById("login-email").value = urlEmail;
+    document.getElementById("login-password").focus();
+    history.replaceState(null, "", "dashboard.html");
+  }
   const email = localStorage.getItem("md-email");
   const plan = localStorage.getItem("md-plan") || "free";
   if (email) showDashboard(email, plan);

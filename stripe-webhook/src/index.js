@@ -6,6 +6,11 @@ const INVITE_CODES = [
   "DELVIN-06U59N","DELVIN-CVRBWF"
 ];
 
+async function hashPassword(password) {
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(password));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join("");
+}
+
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
@@ -27,6 +32,7 @@ export default {
         return json({ error: "Invalid request" }, 400);
       }
       const email = (body.email || "").trim().toLowerCase();
+      const password = body.password || "";
       if (!email) return json({ subscribed: false });
 
       if (ADMIN_EMAILS.includes(email)) {
@@ -40,12 +46,49 @@ export default {
       const contact = await res.json();
       const listIds = contact.listIds || [];
       const targetList = parseInt(env.BREVO_LIST_ID) || 2;
+      if (!listIds.includes(targetList)) return json({ subscribed: false });
+
       const isPaid = (contact.attributes?.PAID === true || contact.attributes?.PLAN === "paid");
-      return json({
-        subscribed: listIds.includes(targetList),
-        plan: isPaid ? "paid" : "free",
-        since: contact.createdAt || null,
+      const plan = isPaid ? "paid" : "free";
+      const since = contact.createdAt || null;
+
+      const storedHash = await env.USER_PREFS.get(`pwd:${email}`);
+      if (!storedHash) {
+        return json({ subscribed: true, plan, since, needsPasswordSetup: true });
+      }
+      if (!password) {
+        return json({ subscribed: true, needsPasswordEntry: true });
+      }
+      const inputHash = await hashPassword(password);
+      if (inputHash !== storedHash) {
+        return json({ subscribed: true, error: "wrong_password" });
+      }
+      return json({ subscribed: true, plan, since });
+    }
+
+    // Set subscriber password (first-time setup)
+    if (url.pathname === "/set-password" && request.method === "POST") {
+      let body;
+      try { body = await request.json(); } catch { return json({ error: "Invalid request" }, 400); }
+      const email = (body.email || "").trim().toLowerCase();
+      const password = body.password || "";
+      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json({ error: "invalid_email" }, 400);
+      if (password.length < 6) return json({ error: "too_short" }, 400);
+
+      const res = await fetch(`https://api.brevo.com/v3/contacts/${encodeURIComponent(email)}`, {
+        headers: { "api-key": env.BREVO_API_KEY }
       });
+      if (!res.ok) return json({ error: "not_subscriber" }, 403);
+      const contact = await res.json();
+      const listIds = contact.listIds || [];
+      const targetList = parseInt(env.BREVO_LIST_ID) || 2;
+      if (!listIds.includes(targetList)) return json({ error: "not_subscriber" }, 403);
+
+      const hash = await hashPassword(password);
+      await env.USER_PREFS.put(`pwd:${email}`, hash);
+
+      const isPaid = (contact.attributes?.PAID === true || contact.attributes?.PLAN === "paid");
+      return json({ ok: true, plan: isPaid ? "paid" : "free", since: contact.createdAt || null });
     }
 
     // Admin stats

@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>風格 2 — 白色卡片</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f5f7fa; color: #1a1a1a; min-height: 100vh; }
+
+nav { background: #fff; display: flex; justify-content: space-between; align-items: center; padding: 16px 32px; border-bottom: 1px solid #eee; }
+.logo { font-size: 16px; font-weight: 800; }
+.logo span { color: #6366f1; }
+.nav-right { display: flex; align-items: center; gap: 14px; }
+.nav-email { font-size: 13px; color: #888; }
+.logout-btn { font-size: 12px; color: #888; background: #f5f5f5; border: 1px solid #e0e0e0; padding: 5px 14px; border-radius: 20px; cursor: pointer; }
+
+.container { max-width: 720px; margin: 0 auto; padding: 32px 20px 60px; }
+
+.welcome { margin-bottom: 28px; }
+.welcome h1 { font-size: 24px; font-weight: 800; color: #111; margin-bottom: 6px; }
+.welcome p { font-size: 14px; color: #666; }
+
+.stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 24px; }
+.stat { background: #fff; border: 1px solid #eee; border-radius: 14px; padding: 18px; }
+.stat-label { font-size: 11px; font-weight: 700; color: #aaa; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
+.stat-value { font-size: 18px; font-weight: 800; color: #111; }
+.stat-sub { font-size: 11px; color: #aaa; margin-top: 3px; }
+.stat-value.green { color: #16a34a; }
+
+.card { background: #fff; border: 1px solid #eee; border-radius: 16px; padding: 22px; margin-bottom: 16px; }
+.card-title { font-size: 15px; font-weight: 800; color: #222; margin-bottom: 4px; }
+.card-desc { font-size: 12px; color: #aaa; margin-bottom: 16px; }
+
+.search-wrap { position: relative; margin-bottom: 12px; }
+.search-input { width: 100%; padding: 10px 14px 10px 36px; background: #f8f9fc; border: 1.5px solid #e8e8f0; border-radius: 10px; font-size: 13px; color: #333; outline: none; }
+.search-input::placeholder { color: #bbb; }
+.search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 13px; }
+
+.tags { display: flex; flex-wrap: wrap; gap: 7px; }
+.tag { background: #eef2ff; border: 1.5px solid #c7d2fe; color: #4338ca; font-size: 12px; font-weight: 700; padding: 5px 10px 5px 12px; border-radius: 20px; display: inline-flex; align-items: center; gap: 6px; }
+.tag-x { color: #a5b4fc; cursor: pointer; }
+
+.report-list { display: flex; flex-direction: column; gap: 8px; }
+.report-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: #f8f9fc; border: 1px solid #eee; border-radius: 12px; cursor: pointer; transition: background 0.15s; }
+.report-item:hover { background: #eef2ff; border-color: #c7d2fe; }
+.report-left { display: flex; align-items: center; gap: 12px; }
+.report-icon { font-size: 18px; }
+.report-date { font-size: 13px; font-weight: 700; color: #222; }
+.report-sub { font-size: 11px; color: #aaa; }
+.report-arrow { font-size: 13px; color: #6366f1; font-weight: 700; }
+
+.save-btn { width: 100%; padding: 13px; background: linear-gradient(135deg, #6366f1, #4338ca); color: #fff; border: none; border-radius: 12px; font-size: 14px; font-weight: 700; cursor: pointer; }
+
+.demo-tag { position: fixed; top: 12px; left: 50%; transform: translateX(-50%); background: #6366f1; color: #fff; font-size: 12px; font-weight: 800; padding: 5px 16px; border-radius: 20px; z-index: 999; }
+</style>
+</head>
+<body>
+<div class="demo-tag">🎨 風格 2 — 白色卡片</div>
+
+<nav>
+  <div class="logo">Market<span>Daily</span></div>
+  <div class="nav-right">
+    <span class="nav-email">delvin@gmail.com</span>
+    <button class="logout-btn">登出</button>
+  </div>
+</nav>
+
+<div class="container">
+  <div class="welcome">
+    <h1>👋 嗨，Delvin！</h1>
+    <p>每天早上 7:00 AM，你的個人化財經日報已準備好</p>
+  </div>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-label">訂閱狀態</div>
+      <div class="stat-value green">✅ 啟用中</div>
+      <div class="stat-sub">免費方案</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">美股追蹤</div>
+      <div class="stat-value">3 支</div>
+      <div class="stat-sub">NVDA · TSLA · AAPL</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">台股追蹤</div>
+      <div class="stat-value">2 支</div>
+      <div class="stat-sub">2330 · 2454</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🇺🇸 美股持倉</div>
+    <div class="card-desc">搜尋代號或公司名稱加入清單</div>
+    <div class="search-wrap">
+      <span class="search-icon">🔍</span>
+      <input class="search-input" placeholder="搜尋美股...">
+    </div>
+    <div class="tags">
+      <div class="tag">NVDA <span class="tag-x">×</span></div>
+      <div class="tag">TSLA <span class="tag-x">×</span></div>
+      <div class="tag">AAPL <span class="tag-x">×</span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🇹🇼 台股持倉</div>
+    <div class="card-desc">搜尋代號或公司名稱加入清單</div>
+    <div class="search-wrap">
+      <span class="search-icon">🔍</span>
+      <input class="search-input" placeholder="搜尋台股...">
+    </div>
+    <div class="tags">
+      <div class="tag">2330 台積電 <span class="tag-x">×</span></div>
+      <div class="tag">2454 聯發科 <span class="tag-x">×</span></div>
+    </div>
+  </div>
+
+  <button class="save-btn" style="margin-bottom:24px;">儲存設定</button>
+
+  <div class="card">
+    <div class="card-title" style="margin-bottom:14px;">📨 最近報告</div>
+    <div class="report-list">
+      <div class="report-item"><div class="report-left"><span class="report-icon">📄</span><div><div class="report-date">2026-05-19</div><div class="report-sub">今日報告</div></div></div><span class="report-arrow">查看 →</span></div>
+      <div class="report-item"><div class="report-left"><span class="report-icon">📄</span><div><div class="report-date">2026-05-18</div><div class="report-sub">昨日報告</div></div></div><span class="report-arrow">查看 →</span></div>
+      <div class="report-item"><div class="report-left"><span class="report-icon">📄</span><div><div class="report-date">2026-05-17</div><div class="report-sub">2 天前</div></div></div><span class="report-arrow">查看 →</span></div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

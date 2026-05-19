@@ -239,6 +239,26 @@
     .subscribe-box input[type="email"] { width: 100%; }
     .subscribe-box button { width: 100%; }
   }
+
+  /* Netflix-style email flow */
+  .wb-card { background: rgba(99,102,241,0.12); border: 1px solid rgba(99,102,241,0.3); border-radius: 16px; padding: 24px 28px; max-width: 380px; margin: 0 auto; text-align: center; }
+  .back-link { background: none; border: none; color: rgba(255,255,255,0.4); font-size: 13px; cursor: pointer; margin-top: 12px; display: block; width: 100%; text-align: center; transition: color 0.2s; }
+  .back-link:hover { color: rgba(255,255,255,0.7); }
+  .plan-mini-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; max-width: 560px; margin: 0 auto; }
+  .plan-mini-card { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); border-radius: 16px; padding: 22px; text-align: left; }
+  .plan-mini-card.featured { background: rgba(99,102,241,0.12); border-color: rgba(99,102,241,0.35); }
+  .plan-mini-badge { font-size: 11px; font-weight: 800; padding: 4px 12px; border-radius: 20px; display: inline-block; margin-bottom: 14px; }
+  .plan-mini-price { font-size: 26px; font-weight: 900; margin-bottom: 16px; letter-spacing: -1px; }
+  .plan-mini-price span { font-size: 14px; font-weight: 400; color: rgba(255,255,255,0.4); letter-spacing: 0; }
+  .plan-mini-input { width: 100%; padding: 10px 12px; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.15); color: #fff; font-size: 14px; border-radius: 10px; outline: none; margin-bottom: 8px; transition: border 0.2s; }
+  .plan-mini-input:focus { border-color: #6366f1; }
+  .plan-mini-input::placeholder { color: rgba(255,255,255,0.35); }
+  .plan-mini-btn { display: block; width: 100%; text-align: center; padding: 12px; border-radius: 12px; font-size: 14px; font-weight: 700; border: none; cursor: pointer; transition: opacity 0.2s; text-decoration: none; margin-top: 4px; }
+  .plan-mini-btn.free { background: rgba(34,197,94,0.2); color: #86efac; border: 1px solid rgba(34,197,94,0.3); }
+  .plan-mini-btn.free:hover { opacity: 0.85; }
+  .plan-mini-btn.paid { background: #6366f1; color: #fff; }
+  .plan-mini-btn.paid:hover { opacity: 0.9; }
+  @media (max-width: 520px) { .plan-mini-grid { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>
@@ -261,20 +281,52 @@
     Every morning at 7AM Taiwan time — AI-curated US & Taiwan market news,
     fake-news filtered, written like a smart friend texting you.
   </p>
-  <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin-bottom:12px;">
-    <a href="https://buy.stripe.com/9B6aEW2Op6nO4L87Ze4Ja00" target="_blank" style="background:#6366f1;color:#fff;font-size:15px;font-weight:700;padding:14px 32px;border-radius:10px;text-decoration:none;transition:background 0.2s;" data-i18n="hero_btn_paid">Subscribe NT$500/mo →</a>
-    <button onclick="showInviteForm()" style="background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.7);font-size:15px;font-weight:700;padding:14px 24px;border-radius:10px;border:1px solid rgba(255,255,255,0.15);cursor:pointer;" data-i18n="hero_btn_invite">Have an invite code?</button>
-  </div>
-  <div id="invite-form" style="display:none;margin-top:16px;">
+  <!-- Step 1: Email entry -->
+  <div id="email-step">
     <div class="subscribe-box">
-      <input type="email" id="invite-email-input" placeholder="your@email.com" data-i18n-placeholder="placeholder_email" style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.15);color:#fff;font-size:15px;padding:14px 20px;border-radius:10px;width:220px;outline:none;" />
-      <input type="text" id="invite-code-input" placeholder="DELVIN-XXXXXX" style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.15);color:#fff;font-size:15px;padding:14px 20px;border-radius:10px;width:160px;outline:none;" />
-      <button onclick="subscribe()" data-i18n="btn_sub1">免費訂閱 →</button>
+      <input type="email" id="hero-email" placeholder="your@email.com" data-i18n-placeholder="placeholder_email" onkeydown="if(event.key==='Enter')checkEmail()">
+      <button onclick="checkEmail()" id="hero-check-btn" data-i18n="hero_btn_check">繼續 →</button>
+    </div>
+    <p class="subscribe-note" data-i18n="sub_note_netflix">已訂閱？輸入你的 Email 直接登入</p>
+    <div class="error-msg" id="error-email-msg" style="display:none;" data-i18n="error_email">Please enter a valid email address.</div>
+  </div>
+
+  <!-- Step 2a: Returning subscriber -->
+  <div id="returning-step" style="display:none;">
+    <div class="wb-card">
+      <div style="font-size:13px;color:#a5b4fc;font-weight:700;margin-bottom:8px;" data-i18n="wb_found">✅ 找到你的訂閱了！</div>
+      <div id="wb-email" style="font-size:14px;color:rgba(255,255,255,0.7);margin-bottom:20px;word-break:break-all;"></div>
+      <a id="wb-signin-btn" href="dashboard.html" style="display:block;background:#6366f1;color:#fff;font-size:15px;font-weight:700;padding:13px;border-radius:12px;text-decoration:none;margin-bottom:4px;" data-i18n="hero_btn_signin">前往我的專區 →</a>
+      <button class="back-link" onclick="resetEmailStep()" data-i18n="hero_btn_back">← 不是你？重新輸入</button>
     </div>
   </div>
-  <div class="error-msg" id="error-msg" data-i18n="error">Invalid invite code. Please check and try again.</div>
-  <div class="error-msg" id="error-email-msg" style="display:none;" data-i18n="error_email">Please enter a valid email address.</div>
-  <div id="success-msg" style="display:none;margin:12px 28px 0;padding:12px 16px;background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.4);border-radius:10px;font-size:14px;color:#86efac;text-align:center;" data-i18n="success_msg">✅ 訂閱成功！請到信箱確認訂閱連結。</div>
+
+  <!-- Step 2b: New user - choose plan -->
+  <div id="new-user-step" style="display:none;">
+    <div style="font-size:14px;color:#a5b4fc;font-weight:700;margin-bottom:20px;text-align:center;" data-i18n="choose_plan">選擇你的方案</div>
+    <div class="plan-mini-grid">
+      <div class="plan-mini-card">
+        <div class="plan-mini-badge" style="background:rgba(34,197,94,0.15);color:#86efac;" data-i18n="price_free_badge">親友方案</div>
+        <div class="plan-mini-price">$0 <span data-i18n="price_mo">/月</span></div>
+        <input type="email" id="new-invite-email" class="plan-mini-input" placeholder="your@email.com" data-i18n-placeholder="placeholder_email">
+        <input type="text" id="new-invite-code" class="plan-mini-input" placeholder="DELVIN-XXXXXX" style="text-transform:uppercase;" onkeydown="if(event.key==='Enter')subscribeInvite()">
+        <button class="plan-mini-btn free" onclick="subscribeInvite()" data-i18n="btn_use_invite">使用邀請碼 →</button>
+        <div id="invite-error" style="display:none;margin-top:8px;font-size:12px;color:#fca5a5;"></div>
+        <div id="invite-success" style="display:none;margin-top:8px;font-size:12px;color:#86efac;"></div>
+      </div>
+      <div class="plan-mini-card featured">
+        <div class="plan-mini-badge" style="background:rgba(99,102,241,0.2);color:#a5b4fc;" data-i18n="price_pro_badge">Premium</div>
+        <div class="plan-mini-price">NT$500 <span data-i18n="price_mo2">/月</span></div>
+        <ul style="list-style:none;margin-bottom:20px;">
+          <li style="font-size:13px;color:rgba(255,255,255,0.65);padding:5px 0 5px 18px;position:relative;"><span style="position:absolute;left:0;color:#6366f1;font-weight:800;">✓</span><span data-i18n="pp1">Everything in Free</span></li>
+          <li style="font-size:13px;color:rgba(255,255,255,0.65);padding:5px 0 5px 18px;position:relative;"><span style="position:absolute;left:0;color:#6366f1;font-weight:800;">✓</span><span data-i18n="pp2">Priority support</span></li>
+          <li style="font-size:13px;color:rgba(255,255,255,0.65);padding:5px 0 5px 18px;position:relative;"><span style="position:absolute;left:0;color:#6366f1;font-weight:800;">✓</span><span data-i18n="pp3">Cancel anytime</span></li>
+        </ul>
+        <a id="stripe-plan-btn" href="https://buy.stripe.com/9B6aEW2Op6nO4L87Ze4Ja00" target="_blank" class="plan-mini-btn paid" data-i18n="price_pro_btn">立即訂閱 →</a>
+      </div>
+    </div>
+    <button class="back-link" onclick="resetEmailStep()" data-i18n="hero_btn_back">← 返回</button>
+  </div>
 </div>
 
 <!-- Stats -->
@@ -408,7 +460,7 @@
   <h2 data-i18n="cta_title">Start your mornings smarter</h2>
   <p data-i18n="cta_sub">NT$500/month. Cancel anytime.</p>
   <a href="https://buy.stripe.com/9B6aEW2Op6nO4L87Ze4Ja00" target="_blank" style="display:inline-block;background:#6366f1;color:#fff;font-size:16px;font-weight:700;padding:16px 40px;border-radius:12px;text-decoration:none;" data-i18n="cta_btn">Subscribe Now →</a>
-  <p style="margin-top:16px;font-size:13px;color:rgba(255,255,255,0.3);" data-i18n="cta_invite_hint">Invited by a friend? <span style="color:#a5b4fc;cursor:pointer;" onclick="document.getElementById('invite-form').style.display='block';window.scrollTo({top:0,behavior:'smooth'});" data-i18n="cta_invite_link">Use your invite code above ↑</span></p>
+  <p style="margin-top:16px;font-size:13px;color:rgba(255,255,255,0.3);" data-i18n="cta_invite_hint">Invited by a friend? <span style="color:#a5b4fc;cursor:pointer;" onclick="window.scrollTo({top:0,behavior:'smooth'});" data-i18n="cta_invite_link">Use your invite code ↑</span></p>
 </div>
 
 <!-- Footer -->
@@ -460,7 +512,14 @@
       f6_desc: "Bullish / Bearish / Neutral — what the AI thinks about today's market, with reasons. Make better decisions.",
       preview_title: "What it looks like 👇",
       cta_title: "Start your mornings smarter",
-      cta_sub: "Free forever. Takes 10 seconds to subscribe.",
+      cta_sub: "NT$500/month. Cancel anytime.",
+      hero_btn_check: "Get Started →",
+      hero_btn_signin: "Go to My Account →",
+      hero_btn_back: "← Not you? Change email",
+      wb_found: "✅ Found your subscription!",
+      choose_plan: "Choose your plan",
+      btn_use_invite: "Use Invite Code →",
+      sub_note_netflix: "Already subscribed? Enter your email to sign in.",
       btn_sub2: "Subscribe Free →",
       success2: "🎉 You're in! See you tomorrow at 7AM.",
       error2: "Oops, something went wrong. Please try again.",
@@ -534,7 +593,14 @@
       f6_desc: "偏多 / 偏空 / 觀望 — AI 給出今日市場判斷並說明理由，幫你做更好的決策。",
       preview_title: "長這個樣子 👇",
       cta_title: "讓每個早晨更聰明",
-      cta_sub: "永久免費，10 秒完成訂閱。",
+      cta_sub: "NT$500/月，隨時取消。",
+      hero_btn_check: "繼續 →",
+      hero_btn_signin: "前往我的專區 →",
+      hero_btn_back: "← 不是你？重新輸入",
+      wb_found: "✅ 找到你的訂閱了！",
+      choose_plan: "選擇你的方案",
+      btn_use_invite: "使用邀請碼 →",
+      sub_note_netflix: "已訂閱？輸入你的 Email 直接登入",
       btn_sub2: "免費訂閱 →",
       success2: "🎉 訂閱成功！明天早上 7 點見。",
       error2: "出了點問題，請再試一次。",
@@ -599,27 +665,68 @@
   }
 
 
-  function showInviteForm() {
-    document.getElementById("invite-form").style.display = "block";
-  }
-
-  async function subscribe() {
-    const email = document.getElementById("invite-email-input").value.trim();
-    const code = document.getElementById("invite-code-input").value.trim().toUpperCase();
-    const btn = document.querySelector("#invite-form button");
-
-    document.getElementById("error-msg").style.display = "none";
-    document.getElementById("error-email-msg").style.display = "none";
-    document.getElementById("success-msg").style.display = "none";
+  async function checkEmail() {
+    const email = document.getElementById("hero-email").value.trim().toLowerCase();
+    const errEl = document.getElementById("error-email-msg");
+    const btn = document.getElementById("hero-check-btn");
+    errEl.style.display = "none";
 
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      document.getElementById("error-email-msg").style.display = "block";
-      return;
+      errEl.style.display = "block"; return;
     }
 
     btn.disabled = true;
-    btn.textContent = "...";
+    btn.textContent = currentLang === "zh" ? "確認中..." : "Checking...";
 
+    try {
+      const res = await fetch(WORKER_URL + "/check-subscriber", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json();
+
+      if (data.subscribed || data.needsPasswordSetup) {
+        document.getElementById("email-step").style.display = "none";
+        document.getElementById("wb-email").textContent = email;
+        document.getElementById("wb-signin-btn").href = `dashboard.html?email=${encodeURIComponent(email)}`;
+        document.getElementById("returning-step").style.display = "block";
+      } else {
+        document.getElementById("email-step").style.display = "none";
+        document.getElementById("new-invite-email").value = email;
+        document.getElementById("stripe-plan-btn").href = `https://buy.stripe.com/9B6aEW2Op6nO4L87Ze4Ja00?prefilled_email=${encodeURIComponent(email)}`;
+        document.getElementById("new-user-step").style.display = "block";
+      }
+    } catch {
+      errEl.textContent = currentLang === "zh" ? "網路錯誤，請稍後再試。" : "Network error. Please try again.";
+      errEl.style.display = "block";
+    } finally {
+      btn.disabled = false;
+      btn.textContent = currentLang === "zh" ? "繼續 →" : "Get Started →";
+    }
+  }
+
+  function resetEmailStep() {
+    document.getElementById("returning-step").style.display = "none";
+    document.getElementById("new-user-step").style.display = "none";
+    document.getElementById("email-step").style.display = "block";
+    document.getElementById("hero-email").focus();
+  }
+
+  async function subscribeInvite() {
+    const email = document.getElementById("new-invite-email").value.trim();
+    const code = document.getElementById("new-invite-code").value.trim().toUpperCase();
+    const btn = document.querySelector(".plan-mini-btn.free");
+    const errEl = document.getElementById("invite-error");
+    const successEl = document.getElementById("invite-success");
+    errEl.style.display = "none"; successEl.style.display = "none";
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      errEl.textContent = currentLang === "zh" ? "請輸入有效的 Email" : "Please enter a valid email.";
+      errEl.style.display = "block"; return;
+    }
+
+    btn.disabled = true; btn.textContent = "...";
     try {
       const res = await fetch(WORKER_URL + "/free-subscribe", {
         method: "POST",
@@ -628,30 +735,26 @@
       });
       const data = await res.json();
       if (data.ok) {
-        document.getElementById("success-msg").style.display = "block";
-        document.getElementById("invite-email-input").value = "";
-        document.getElementById("invite-code-input").value = "";
+        successEl.textContent = currentLang === "zh" ? "✅ 訂閱成功！請到信箱確認連結。" : "✅ Subscribed! Check your inbox.";
+        successEl.style.display = "block";
+        document.getElementById("new-invite-code").value = "";
       } else if (data.error === "invalid_code") {
-        document.getElementById("error-msg").style.display = "block";
+        errEl.textContent = currentLang === "zh" ? "邀請碼不對，請再確認一次。" : "Invalid invite code. Please check again.";
+        errEl.style.display = "block";
       } else {
-        document.getElementById("error-email-msg").textContent = currentLang === "zh" ? "出了點問題，請稍後再試。" : "Something went wrong. Please try again.";
-        document.getElementById("error-email-msg").style.display = "block";
+        errEl.textContent = currentLang === "zh" ? "出了點問題，請稍後再試。" : "Something went wrong. Please try again.";
+        errEl.style.display = "block";
       }
     } catch {
-      document.getElementById("error-email-msg").textContent = currentLang === "zh" ? "出了點問題，請稍後再試。" : "Something went wrong. Please try again.";
-      document.getElementById("error-email-msg").style.display = "block";
+      errEl.textContent = currentLang === "zh" ? "網路錯誤，請稍後再試。" : "Network error. Please try again.";
+      errEl.style.display = "block";
     } finally {
       btn.disabled = false;
-      const t = i18n[currentLang];
-      btn.textContent = t.btn_sub1 || "免費訂閱 →";
+      btn.textContent = currentLang === "zh" ? "使用邀請碼 →" : "Use Invite Code →";
     }
   }
 
   document.addEventListener("DOMContentLoaded", () => {
-    const ci = document.getElementById("invite-code-input");
-    if (ci) ci.addEventListener("keydown", e => { if (e.key === "Enter") subscribe(); });
-    const ei = document.getElementById("invite-email-input");
-    if (ei) ei.addEventListener("keydown", e => { if (e.key === "Enter") subscribe(); });
     if (currentLang !== "en") applyLang(currentLang);
   });
 </script>
