@@ -31,6 +31,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .news-tag.single { background: #fef9c3; color: #854d0e; }
 .news-headline { font-size: 15px; font-weight: 700; color: #111; line-height: 1.4; margin-bottom: 8px; }
 .news-why { font-size: 13px; color: #555; line-height: 1.5; background: #f0f7ff; padding: 8px 12px; border-radius: 8px; }
+.read-more { display: inline-block; margin-top: 10px; font-size: 12px; font-weight: 700; color: #3b82f6; text-decoration: none; letter-spacing: 0.3px; }
+.read-more:hover { text-decoration: underline; }
 
 .stock-card { display: flex; align-items: flex-start; gap: 12px; margin: 0 28px 10px; padding: 12px 16px; border-radius: 12px; background: #fafafa; border: 1px solid #eee; }
 .ticker { font-size: 14px; font-weight: 800; color: #1a1a2e; min-width: 52px; padding-top: 2px; }

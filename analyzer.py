@@ -44,7 +44,9 @@ def _format_news(articles: list, max_items: int = 8) -> str:
     lines = []
     for a in articles[:max_items]:
         tag = "✅" if a.get("verified") else "⚠️"
-        lines.append(f"  {tag} {a.get('title', '')} [{', '.join(a.get('sources', []))}]")
+        url = a.get("url", "")
+        sources = ", ".join(a.get("sources", []))
+        lines.append(f"  {tag} {a.get('title', '')} [{sources}] URL:{url}")
     return "\n".join(lines)
 
 
@@ -99,6 +101,7 @@ def generate_report(data: dict) -> str:
   <div class="news-tag verified">✅ 多源確認</div>
   <div class="news-headline">（標題，口語化改寫，不超過 25 字）</div>
   <div class="news-why">💡 為什麼重要：（一句話說清楚這對股市的影響）</div>
+  <a class="read-more" href="（該新聞的 URL）" target="_blank">閱讀原文 →</a>
 </div>
 （重複 5 次，⚠️ 單一來源的用 <div class="news-tag single">⚠️ 單一來源</div>）
 

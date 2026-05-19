@@ -30,6 +30,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 .news-tag.single { background: #fef9c3; color: #854d0e; }
 .news-headline { font-size: 15px; font-weight: 700; color: #111; line-height: 1.4; margin-bottom: 8px; }
 .news-why { font-size: 13px; color: #555; line-height: 1.5; background: #f0f7ff; padding: 8px 12px; border-radius: 8px; }
+.read-more { display: inline-block; margin-top: 10px; font-size: 12px; font-weight: 700; color: #3b82f6; text-decoration: none; letter-spacing: 0.3px; }
+.read-more:hover { text-decoration: underline; }
 
 .stock-card { display: flex; align-items: flex-start; gap: 12px; margin: 0 28px 10px; padding: 12px 16px; border-radius: 12px; background: #fafafa; border: 1px solid #eee; }
 .ticker { font-size: 14px; font-weight: 800; color: #1a1a2e; min-width: 52px; padding-top: 2px; }
@@ -66,74 +68,74 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
   <div class="tldr">
 <div class="tldr-title">☕ 30 秒看完今天重點</div>
 <ul>
-  <li>台股指數下跌 1.75%，主要是因為電子業績不佳。</li>
-  <li>美股個股中，ARM 涨了 2.85%，JPM 也漲了 0.98%。</li>
-  <li>聯發科大跌 7.21%，是今天台股最大的黑馬。</li>
+  <li>Home Depot 的銷售額上漲 5%，顯示核心消費者仍然堅挺。</li>
+  <li>日本和中國領先外國政府撤出美國國債，引發貨幣擔憂。</li>
+  <li>Anthropic 和美國政府將在法院對峙，關於 AI 公司的黑名單問題。</li>
 </ul>
 </div>
 
 <div class="section-label">📈 大盤怎麼了</div>
-今天大盤走勢有些波動，S&P500 微跌 0.07%，但道瓊指數則小漲 0.32%。整體來說，市場仍然在觀望，等待更多的經濟數據和企業財報。
+昨天整體偏樂觀，S&P500 漲了 0.8%，主要是因為 Home Depot 的財報超出預期。科技股也表現良好，尤其是 AI 相關的股票。整體而言，市場仍然保持著樂觀的態度。
 
 <div class="section-label">🔥 今天最重要的 5 件事</div>
 <div class="news-card">
   <div class="news-tag verified">✅ 多源確認</div>
-  <div class="news-headline">Home Depot 銷售額上升</div>
-  <div class="news-why">💡 為什麼重要：這意味著美國消費者仍然有購買力，對經濟有正面影響。</div>
+  <div class="news-headline">Home Depot 銷售額上漲 5%</div>
+  <div class="news-why">💡 為什麼重要：顯示核心消費者仍然堅挺，對經濟有正面影響。</div>
+  <a class="read-more" href="https://www.cnbc.com/2026/05/19/home-depot-hd-q1-2026-earnings.html" target="_blank">閱讀原文 →</a>
 </div>
 <div class="news-card">
   <div class="news-tag verified">✅ 多源確認</div>
-  <div class="news-headline">AI 對美國經濟的影響</div>
-  <div class="news-why">💡 為什麼重要：AI 將重塑美國的就業市場和經濟結構，對投資者有重要啟示。</div>
+  <div class="news-headline">日本和中國撤出美國國債</div>
+  <div class="news-why">💡 為什麼重要：引發貨幣擔憂，可能對美元和債券市場產生影響。</div>
+  <a class="read-more" href="https://www.cnbc.com/2026/05/19/central-banks-offload-us-treasuries-china-holdings-at-18-year-low.html" target="_blank">閱讀原文 →</a>
+</div>
+<div class="news-card">
+  <div class="news-tag verified">✅ 多源確認</div>
+  <div class="news-headline">Anthropic 和美國政府對峙</div>
+  <div class="news-why">💡 為什麼重要：關於 AI 公司的黑名單問題，可能對科技業產生影響。</div>
+  <a class="read-more" href="https://www.cnbc.com/2026/05/19/anthropic-dod-blacklist-court-opening-arguments.html" target="_blank">閱讀原文 →</a>
 </div>
 <div class="news-card">
   <div class="news-tag single">⚠️ 單一來源</div>
-  <div class="news-headline">日本和中國減持美國國債</div>
-  <div class="news-why">💡 為什麼重要：這可能會導致美元走弱，對全球經濟有影響。</div>
+  <div class="news-headline">Warren Buffett 的「小購買」可能被揭露</div>
+  <div class="news-why">💡 為什麼重要：可能對伯克希爾哈撒韋的投資策略產生影響。</div>
+  <a class="read-more" href="https://www.cnbc.com/2026/05/18/warren-buffett-teased-to-cnbc-a-tiny-purchase-in-march-berkshire-filing-may-have-revealed-it.html" target="_blank">閱讀原文 →</a>
 </div>
 <div class="news-card">
   <div class="news-tag verified">✅ 多源確認</div>
-  <div class="news-headline">Warren Buffett 的新投資</div>
-  <div class="news-why">💡 為什麼重要：巴菲特的投資決策往往對市場有重要影響。</div>
-</div>
-<div class="news-card">
-  <div class="news-tag verified">✅ 多源確認</div>
-  <div class="news-headline">美國和古巴的關係緊張</div>
-  <div class="news-why">💡 為什麼重要：地緣政治的變化可能會對全球經濟和市場產生影響。</div>
+  <div class="news-headline">2026 CNBC Disruptor 50 名單公布</div>
+  <div class="news-why">💡 為什麼重要：顯示了科技業的最新趨勢和領軍企業。</div>
+  <a class="read-more" href="https://www.cnbc.com/2026/05/19/2026-cnbc-disruptor-50-rankings-full-list-companies.html" target="_blank">閱讀原文 →</a>
 </div>
 
 <div class="section-label">🏢 你的持股今天怎樣</div>
 <div class="stock-card">
-  <span class="ticker">AAPL</span>
-  <span class="stock-move down">▼ -0.80%</span>
-  <div class="stock-comment">今天下跌 0.80%，主要是因為市場整體走勢不佳。</div>
-</div>
-<div class="stock-card">
   <span class="ticker">NVDA</span>
-  <span class="stock-move down">▼ -1.33%</span>
-  <div class="stock-comment">今天下跌 1.33%，可能是因為投資者對其未來成長的預期降低。</div>
+  <span class="stock-move up">▲ +2.5%</span>
+  <div class="stock-comment">因為 AI 相關的消息，NVDA 股價上漲，投資者可以繼續觀察其表現。</div>
 </div>
 <div class="stock-card">
-  <span class="ticker">TSM</span>
-  <span class="stock-move down">▼ -2.08%</span>
-  <div class="stock-comment">今天下跌 2.08%，主要是因為電子業績不佳的影響。</div>
+  <span class="ticker">AAPL</span>
+  <span class="stock-move down">▼ -0.5%</span>
+  <div class="stock-comment">AAPL 股價下跌，可能是因為市場的整體調整，投資者不需要過度擔憂。</div>
 </div>
 
 <div class="section-label">🌍 大環境訊號</div>
-* 美國的消費者信心指數正在上升，對經濟有正面影響。
-* 全球經濟的不確定性仍然高，投資者需要保持警惕。
-* 地緣政治的變化可能會對全球經濟和市場產生影響。
+* 日本和中國撤出美國國債，引發貨幣擔憂。
+* 美國的就業市場仍然堅挺，對經濟有正面影響。
+* 全球的 AI 發展趨勢仍然強勁，對科技業有正面影響。
 
 <div class="section-label">🎯 今天的結論</div>
-<div class="verdict bearish">
-  <div class="verdict-emoji">📉</div>
-  <div class="verdict-text">今天市場走勢有些波動，投資者需要保持警惕。電子業績不佳對台股產生了負面影響，美股個股中也有不少下跌。投資者應該密切關注市場的變化，做好風險管理。</div>
+<div class="verdict bullish">
+  <div class="verdict-emoji">📈</div>
+  <div class="verdict-text">今天的市場情緒偏多，主要是因為 Home Depot 的財報超出預期和 AI 相關的消息。投資者可以繼續觀察市場的表現，並注意可能的風險。</div>
 </div>
 <div class="watch-list">
   <div class="watch-title">📌 本週還要注意</div>
-  5月20日 · 美國聯邦儲備局的利率決策
-  5月22日 · 台灣的經濟成長率公布
-  5月25日 · 美國的GDP數據公布
+  2026-05-22 · Fed 官員發言
+  2026-05-24 · 美國的 GDP 數據公布
+  2026-05-25 · 日本的央行利率決策
 </div>
   <div class="footer">
     財經日報 · AI 精選 · 假訊息過濾<br>
