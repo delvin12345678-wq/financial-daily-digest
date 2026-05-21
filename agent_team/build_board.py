@@ -4,6 +4,7 @@ from datetime import datetime, timezone, timedelta
 
 DIR = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(DIR, "dashboard.html")
+OUT_JSON = os.path.join(DIR, "board.json")
 TPE = timezone(timedelta(hours=8))
 
 AGENTS = [
@@ -117,10 +118,10 @@ def build():
         "activity": git_activity(),
     }
 
-    html = TEMPLATE.replace("/*__BOARD__*/null",
-                            json.dumps(board, ensure_ascii=False))
-    open(OUT, "w", encoding="utf-8").write(html)
-    print(f"✅ dashboard.html 已更新 — 進行中 {len(working)} · 待辦 {len(inbox)} · "
+    data = json.dumps(board, ensure_ascii=False)
+    open(OUT_JSON, "w", encoding="utf-8").write(data)
+    open(OUT, "w", encoding="utf-8").write(TEMPLATE.replace("/*__BOARD__*/null", data))
+    print(f"✅ 儀表板已更新 — 進行中 {len(working)} · 待辦 {len(inbox)} · "
           f"完成 {len(done)} · 失敗 {len(failed)}")
 
 
