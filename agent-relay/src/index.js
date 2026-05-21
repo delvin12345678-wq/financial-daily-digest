@@ -80,47 +80,57 @@ async function gh(env, path, method = "GET", payload) {
   return text ? JSON.parse(text) : {};
 }
 
-// 把一組檔案變更做成一個 atomic commit。main 被推進(非 fast-forward)時重試。
+// UTF-8 字串轉 base64(Contents API 要求 base64 內容)。
+function b64(str) {
+  const bytes = new TextEncoder().encode(str);
+  let bin = "";
+  for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+  return btoa(bin);
+}
+
+// 路徑逐段 URL-encode(斜線保留)。
+function encPath(p) {
+  return p.split("/").map(encodeURIComponent).join("/");
+}
+
+// 取現有檔案的 blob SHA;不存在回 null。
+async function fileSha(env, path) {
+  try {
+    const cur = await gh(env, `/repos/${REPO}/contents/${encPath(path)}?ref=${BRANCH}`);
+    return cur.sha;
+  } catch (e) {
+    if (e.status === 404) return null;
+    throw e;
+  }
+}
+
+// 用 Contents API 逐檔 commit(fine-grained token 對 Git Data API 會 403)。
+// SHA 過期(409,main 被推進)時重抓重試。
 async function commitFiles(env, message, files) {
-  let lastErr;
-  for (let attempt = 0; attempt < 3; attempt++) {
-    try {
-      const ref = await gh(env, `/repos/${REPO}/git/ref/heads/${BRANCH}`);
-      const baseSha = ref.object.sha;
-      const baseCommit = await gh(env, `/repos/${REPO}/git/commits/${baseSha}`);
-      const tree = [];
-      for (const f of files) {
+  let last = null;
+  for (const f of files) {
+    const url = `/repos/${REPO}/contents/${encPath(f.path)}`;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const sha = await fileSha(env, f.path);
+      try {
         if (f.delete) {
-          tree.push({ path: f.path, mode: "100644", type: "blob", sha: null });
+          if (!sha) break; // 已不存在,免刪
+          const r = await gh(env, url, "DELETE", { message, sha, branch: BRANCH });
+          last = (r.commit && r.commit.sha) || last;
         } else {
-          const blob = await gh(env, `/repos/${REPO}/git/blobs`, "POST", {
-            content: f.content,
-            encoding: "utf-8",
-          });
-          tree.push({ path: f.path, mode: "100644", type: "blob", sha: blob.sha });
+          const body = { message, content: b64(f.content), branch: BRANCH };
+          if (sha) body.sha = sha;
+          const r = await gh(env, url, "PUT", body);
+          last = (r.commit && r.commit.sha) || last;
         }
+        break;
+      } catch (e) {
+        if (e.status === 409 && attempt < 2) continue; // SHA 過期,重抓重試
+        throw e;
       }
-      const newTree = await gh(env, `/repos/${REPO}/git/trees`, "POST", {
-        base_tree: baseCommit.tree.sha,
-        tree,
-      });
-      const commit = await gh(env, `/repos/${REPO}/git/commits`, "POST", {
-        message,
-        tree: newTree.sha,
-        parents: [baseSha],
-      });
-      await gh(env, `/repos/${REPO}/git/refs/heads/${BRANCH}`, "PATCH", {
-        sha: commit.sha,
-        force: false,
-      });
-      return commit.sha;
-    } catch (e) {
-      lastErr = e;
-      if (e.status === 422) continue; // 非 fast-forward,重抓 base 重試
-      throw e;
     }
   }
-  throw lastErr;
+  return last;
 }
 
 async function sendEmail(env, email) {
