@@ -1,7 +1,11 @@
 #!/bin/bash
 # 本機夜間 Worker — 每 30 分鐘由 launchd 觸發
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-CLAUDE="$(command -v claude 2>/dev/null || echo /Applications/cmux.app/Contents/Resources/bin/claude)"
+# launchd 給的 PATH 很精簡,補上常見 bin 目錄(claude / node 等需要)
+export PATH="$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+# 直接指真正的 claude 二進位 —— cmux 那個是 wrapper,會再去 PATH 找,launchd 下會失敗
+CLAUDE="$HOME/.local/bin/claude"
+[ -x "$CLAUDE" ] || CLAUDE="$(command -v claude 2>/dev/null)"
 cd "$REPO" || exit 1
 mkdir -p agent_team/logs
 LOG="agent_team/logs/worker-$(date +%Y%m%d).log"
