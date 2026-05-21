@@ -163,7 +163,8 @@ def _send(subject, html):
         return False
 
 
-def instant(path):
+def build_instant(path):
+    """建即時通知信的 (subject, html),不寄出 —— 給 relay_push.py 用。"""
     meta, body = parse_task(path)
     color, label = STATUS.get(meta.get("status", "done"), STATUS["done"])
     title = meta.get("title", "任務")
@@ -177,7 +178,11 @@ def instant(path):
     <h2 style="font-size:17px;color:#1a1a1a;margin:0 0 14px;">{_html.escape(title)}</h2>
     {md_to_html(body)}
     """
-    return _send(f"[Agent Team] {label} — {title}", shell(f"{label} 任務交付", inner))
+    return f"[Agent Team] {label} — {title}", shell(f"{label} 任務交付", inner)
+
+
+def instant(path):
+    return _send(*build_instant(path))
 
 
 def digest():

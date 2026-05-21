@@ -1,0 +1,12 @@
+name = "marketdaily-agent-relay"
+main = "src/index.js"
+compatibility_date = "2026-05-01"
+
+[vars]
+OWNER_EMAIL = "delvin.12345678@gmail.com"
+SENDER_EMAIL = "delvin.12345678@gmail.com"
+
+# Secrets(用 wrangler secret put 設定,不寫進這裡):
+#   RELAY_SECRET   — 呼叫端驗證用的共享密鑰
+#   GITHUB_TOKEN   — fine-grained PAT,只給 financial-daily-digest 的 Contents 讀寫
+#   BREVO_API_KEY  — Brevo 寄信金鑰
