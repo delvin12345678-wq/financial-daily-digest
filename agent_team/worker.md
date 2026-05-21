@@ -62,6 +62,8 @@ frontmatter `status` 改 `failed`、加 `completed: <UTC ISO>`、移除 `lease`;
 - `git push` 被拒 → `git pull --rebase` 後再 push。
 - **git add 只加 `agent_team/` 底下的檔案**,絕不 `git add -A` ——
   repo 其他未提交的變更是 delvin 的工作,不可碰、不可提交。
+- **每次 `git add agent_team/` 之前,先跑 `python3 agent_team/build_board.py`** ——
+  重建戰情室 `dashboard.html`,讓它跟著本次進度一起提交。
 - 不可逆或對外的動作(刪檔、寄信給訂閱者、部署上線、付費)**先不要做** ——
   寫進「## 進度紀錄」,摘要標註「需 delvin 確認」,留給 delvin 決定。
 - commit 訊息開頭加 `🤖 [agent-team]`。
