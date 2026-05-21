@@ -1,9 +1,9 @@
 name: 財經日報每日發布
 
 on:
-  schedule:
-    - cron: "0 23 * * *"  # 每天 UTC 23:00 = 台灣 AM 7:00
-  workflow_dispatch:       # 手動觸發（測試用）
+  # 每日寄送已改由本機 launchd（com.marketdaily.daily-digest，台灣 07:00）負責。
+  # GitHub Actions 的 schedule 觸發不準時（實測延遲約 12 小時），故移除排程，只保留手動觸發。
+  workflow_dispatch:       # 僅供手動測試
 
 jobs:
   publish:
