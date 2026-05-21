@@ -66,7 +66,8 @@ def main():
 
     data = json.dumps(payload, ensure_ascii=False).encode("utf-8")
     req = urllib.request.Request(relay_url, data=data, method="POST",
-        headers={"X-Relay-Secret": relay_secret, "Content-Type": "application/json"})
+        headers={"X-Relay-Secret": relay_secret, "Content-Type": "application/json",
+                 "User-Agent": "Mozilla/5.0 (compatible; MarketDaily-Agent/1.0)"})
     try:
         with urllib.request.urlopen(req, timeout=30) as r:
             resp = json.load(r)
