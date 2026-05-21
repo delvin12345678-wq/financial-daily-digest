@@ -54,6 +54,17 @@ frontmatter `status` 改 `failed`、加 `completed: <UTC ISO>`、移除 `lease`;
 `git add agent_team/ && git commit && git push`;
 寄通知 `python3 agent_team/notify.py task agent_team/failed/<檔名>`。
 
+## 雲端環境:用寫入代理回寫
+
+若你在雲端 CCR 環境執行(`git push` 會回 403,被 `CCR_TEST_GITPROXY` 封鎖):
+- 全程**不要 git push**。認領、進度、完成各步驟照常在本機 `git add agent_team/ && git commit`,只是不 push。
+- **不要跑 `notify.py`**(雲端沒有寄信金鑰)。
+- 任務做完(或失敗)、`build_board.py` 重建完、本機 commit 都做好後,**最後執行一次**:
+  `python3 agent_team/relay_push.py <done/ 或 failed/ 裡的任務檔路徑>`
+  它會把 `origin/main..HEAD` 的 `agent_team/` 變更 POST 給寫入代理,由代理代為 commit 到 GitHub 並寄通知信。
+- 需環境變數 `RELAY_URL`、`RELAY_SECRET`(排程 routine 會提供)。看到 `✅ 已透過代理回寫` 才算成功。
+- 本機環境 git push 正常,照原流程,不需要這一節。
+
 ## 規則
 
 - 一次只處理一個任務。
