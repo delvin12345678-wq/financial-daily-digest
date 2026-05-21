@@ -1,6 +1,6 @@
 #!/bin/bash
 # 晨間匯總 — 每天早上由 launchd 觸發
-REPO="/Users/delvin/Downloads/Delvin agent"
+REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO" || exit 1
 mkdir -p agent_team/logs
 LOG="agent_team/logs/digest-$(date +%Y%m%d).log"

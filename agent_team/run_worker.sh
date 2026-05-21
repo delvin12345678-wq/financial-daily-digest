@@ -1,6 +1,6 @@
 #!/bin/bash
 # 本機夜間 Worker — 每 30 分鐘由 launchd 觸發
-REPO="/Users/delvin/Downloads/Delvin agent"
+REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 CLAUDE="$(command -v claude 2>/dev/null || echo /Applications/cmux.app/Contents/Resources/bin/claude)"
 cd "$REPO" || exit 1
 mkdir -p agent_team/logs
