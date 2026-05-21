@@ -1,0 +1,10 @@
+name = "marketdaily-digest-cron"
+main = "src/index.js"
+compatibility_date = "2026-05-01"
+
+# 每天 22:55 UTC = 台灣 06:55 觸發,GitHub Actions 跑完 pipeline 約 07:00 寄達。
+[triggers]
+crons = ["55 22 * * *"]
+
+# Secret(用 `wrangler secret put` 設定,不寫進這裡):
+#   GITHUB_TOKEN — fine-grained PAT,對 marketdaily/financial-daily-digest 有 Actions: Read and write
