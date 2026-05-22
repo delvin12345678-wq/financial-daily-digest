@@ -314,6 +314,28 @@ def _postprocess_html(html: str, data: dict) -> str:
 
 DIGEST_EMAIL_MAX_HOLDINGS = 12
 
+# 新手專區：開戶教學 + 名詞小辭典（靜態內容，附在輕度用戶日報底部）
+ROOKIE_GUIDE_HTML = """
+<div class="section-label">🎒 新手專區</div>
+<div class="rookie-guide">
+  <div class="rg-block">
+    <div class="rg-head">🚀 還沒開始投資？三步驟上手</div>
+    <div class="rg-step"><b>1. 開證券戶</b>：手機下載券商 App（台股如國泰、永豐；美股如 Firstrade、IBKR），線上開戶大約 10 分鐘。</div>
+    <div class="rg-step"><b>2. 從小額開始</b>：第一次別投太多，用「賠掉也不影響生活」的金額練手感就好。</div>
+    <div class="rg-step"><b>3. 定期定額</b>：設定每月固定買一點（例如每月 3000 元買 0050），不用猜時機，長期最穩。</div>
+  </div>
+  <div class="rg-block">
+    <div class="rg-head">📖 看不懂的名詞？</div>
+    <div class="rg-term"><b>停損</b>：股價跌到你設定的價位就賣出，避免賠更多。</div>
+    <div class="rg-term"><b>目標價</b>：預期股價會漲到的價位，到了可以考慮獲利了結（賣出賺價差）。</div>
+    <div class="rg-term"><b>ETF</b>：一籃子股票的組合（如 0050 ＝ 台灣前 50 大公司），買一張等於分散投資很多檔，新手最穩。</div>
+    <div class="rg-term"><b>定期定額</b>：固定時間投入固定金額，漲跌都買，攤平成本、不用猜高低點。</div>
+    <div class="rg-term"><b>藍籌股</b>：規模大、體質穩、大家都認識的公司股票（如蘋果、台積電）。</div>
+    <div class="rg-term"><b>VIX 恐慌指數</b>：市場越害怕數字越高；20 以下算平靜，30 以上代表市場很緊張。</div>
+  </div>
+  <div class="rg-disclaimer">本專區為一般教學資訊，不構成投資建議；投資有風險，請評估自身狀況。</div>
+</div>"""
+
 
 def generate_report(data: dict, user_us_stocks: list = None, user_tw_stocks: list = None,
                     email_safe: bool = False) -> str:
@@ -477,6 +499,69 @@ def generate_report(data: dict, user_us_stocks: list = None, user_tw_stocks: lis
 若今天大盤大跌、沒有適合進場的標的，就只放一張 rookie-pick，rookie-verdict 改成「🟡 今天先別急」，rookie-why 說明今天先觀望、可等回穩或改用定期定額。
 rookie-name span 內只放純代號，系統會自動補公司名。最多 2 張。）"""
 
+    # 市場氣氛白話框（所有人都有）
+    mood_section = """<div class="section-label">🌡️ 今天市場氣氛</div>
+<div class="mood-box">
+  <div class="mood-emoji">（依今天 VIX、恐貪指數、大盤漲跌挑一個 emoji：😊 樂觀 / 😐 普通 / 😰 緊張）</div>
+  <div class="mood-text">（一句白話：今天市場氣氛怎樣 + 新手該怎麼做，例如「氣氛偏樂觀，適合分批慢慢買進」「氣氛有點緊張，新手今天先別急著進場」）</div>
+</div>"""
+
+    indicator_block = """<div class="section-label">📊 市場情緒儀表板</div>
+<div class="indicator-bar">
+  <div class="indicator-item">
+    <div class="indicator-label">VIX 恐慌指數</div>
+    <div class="indicator-value indicator-VIXCLASS">（VIX數值）</div>
+    <div class="indicator-sub">（平靜 / 警戒 / 極度恐慌）</div>
+  </div>
+  <div class="indicator-item">
+    <div class="indicator-label">恐貪指數</div>
+    <div class="indicator-value indicator-FGCLASS">（分數/100）</div>
+    <div class="indicator-sub">（Fear / Neutral / Greed）</div>
+  </div>
+  <div class="indicator-item">
+    <div class="indicator-label">美國10年債</div>
+    <div class="indicator-value">（殖利率%）</div>
+    <div class="indicator-sub">（升息預期參考）</div>
+  </div>
+  <div class="indicator-item">
+    <div class="indicator-label">黃金 / 原油</div>
+    <div class="indicator-value">（金價） / （油價）</div>
+    <div class="indicator-sub">（漲跌%）</div>
+  </div>
+  <div class="indicator-item">
+    <div class="indicator-label">USD/TWD 匯率</div>
+    <div class="indicator-value">（匯率）</div>
+    <div class="indicator-sub">（台幣升貶）</div>
+  </div>
+</div>"""
+
+    sector_block = """<div class="section-label">🔄 板塊輪動：哪個板塊最強？</div>
+<div class="sector-bar">
+（根據板塊 ETF 資料，列出今日表現前三和後三，用 sector-item 格式，包含 sector-name 和 sector-move up/down）
+例如：
+  <div class="sector-item">
+    <span class="sector-name">XLK 科技</span>
+    <span class="sector-move up">▲ +2.1%</span>
+    <span class="sector-comment">（一句話說為什麼）</span>
+  </div>
+（共 6 個，強弱各三）
+</div>"""
+
+    second_order_block = """<div class="section-label">🔗 二階思考：美股如何影響台灣？</div>
+<div class="second-order">
+（根據今天美股動向，分析對台灣供應鏈的傳導影響。例如：NVDA 漲 → CoWoS 封裝需求 → 台積電/日月光受惠。只寫真正有關聯的，沒有就不寫。2-3 條 bullet，繁體中文）
+</div>"""
+
+    # 新手精簡模式：拿掉中階區塊（原始數據儀表板、板塊輪動、二階思考）
+    if is_beginner:
+        indicator_section = ""
+        sector_section = ""
+        second_order_section = ""
+    else:
+        indicator_section = indicator_block
+        sector_section = sector_block
+        second_order_section = second_order_block
+
     prompt = f"""你是這位用戶的專屬財經顧問，說話生活化、直接、像朋友。這份報告是**專門為持有 {', '.join(all_holdings) if has_holdings else '各種股票的'} 的用戶客製化生成的**，不是通用報告。
 
 【無幻覺原則 — 最重要，違反就是廢稿】
@@ -526,34 +611,8 @@ rookie-name span 內只放純代號，系統會自動補公司名。最多 2 張
 {signal_instruction}
 {rookie_section}
 
-<div class="section-label">🌡️ 市場情緒儀表板</div>
-<div class="indicator-bar">
-  <div class="indicator-item">
-    <div class="indicator-label">VIX 恐慌指數</div>
-    <div class="indicator-value indicator-VIXCLASS">（VIX數值）</div>
-    <div class="indicator-sub">（平靜 / 警戒 / 極度恐慌）</div>
-  </div>
-  <div class="indicator-item">
-    <div class="indicator-label">恐貪指數</div>
-    <div class="indicator-value indicator-FGCLASS">（分數/100）</div>
-    <div class="indicator-sub">（Fear / Neutral / Greed）</div>
-  </div>
-  <div class="indicator-item">
-    <div class="indicator-label">美國10年債</div>
-    <div class="indicator-value">（殖利率%）</div>
-    <div class="indicator-sub">（升息預期參考）</div>
-  </div>
-  <div class="indicator-item">
-    <div class="indicator-label">黃金 / 原油</div>
-    <div class="indicator-value">（金價） / （油價）</div>
-    <div class="indicator-sub">（漲跌%）</div>
-  </div>
-  <div class="indicator-item">
-    <div class="indicator-label">USD/TWD 匯率</div>
-    <div class="indicator-value">（匯率）</div>
-    <div class="indicator-sub">（台幣升貶）</div>
-  </div>
-</div>
+{mood_section}
+{indicator_section}
 
 <div class="section-label">₿ 加密貨幣</div>
 <div class="crypto-bar">
@@ -572,17 +631,7 @@ rookie-name span 內只放純代號，系統會自動補公司名。最多 2 張
 <div class="section-label">📈 大盤怎麼了</div>
 <div class="market-summary">（用 2-3 句話說大盤狀況，口語化，包含台股）</div>
 
-<div class="section-label">🔄 板塊輪動：哪個板塊最強？</div>
-<div class="sector-bar">
-（根據板塊 ETF 資料，列出今日表現前三和後三，用 sector-item 格式，包含 sector-name 和 sector-move up/down）
-例如：
-  <div class="sector-item">
-    <span class="sector-name">XLK 科技</span>
-    <span class="sector-move up">▲ +2.1%</span>
-    <span class="sector-comment">（一句話說為什麼）</span>
-  </div>
-（共 6 個，強弱各三）
-</div>
+{sector_section}
 
 <div class="section-label">🔥 今天最重要的 5 件事</div>
 <div class="news-card">
@@ -605,10 +654,7 @@ rookie-name span 內只放純代號，系統會自動補公司名。最多 2 張
 - 優先列跟用戶持倉（{', '.join(all_holdings) if has_holdings else '主流科技股'}）相關的個股
 - 只有新聞完全與任何上市公司無關時（例如純政治事件）才可省略，且這種最多 1 張
 
-<div class="section-label">🔗 二階思考：美股如何影響台灣？</div>
-<div class="second-order">
-（根據今天美股動向，分析對台灣供應鏈的傳導影響。例如：NVDA 漲 → CoWoS 封裝需求 → 台積電/日月光受惠。只寫真正有關聯的，沒有就不寫。2-3 條 bullet，繁體中文）
-</div>
+{second_order_section}
 
 {personalized_news_instruction}
 
@@ -655,4 +701,7 @@ rookie-name span 內只放純代號，系統會自動補公司名。最多 2 張
     if raw.startswith("```"):
         raw = re.sub(r'^```[a-zA-Z]*\n?', '', raw)
         raw = re.sub(r'\n?```$', '', raw)
-    return _postprocess_html(raw, data)
+    result = _postprocess_html(raw, data)
+    if is_beginner:
+        result += ROOKIE_GUIDE_HTML
+    return result
