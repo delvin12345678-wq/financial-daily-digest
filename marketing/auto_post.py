@@ -235,7 +235,11 @@ def cmd_stage(env):
 def caption_for(caption, plat, line_url):
     if plat == "line" or not line_url:
         return caption
-    cta = f"📲 加 LINE 不錯過 MarketDaily 👉 {line_url}"
+    if plat == "instagram":
+        # IG 貼文 / 留言的網址不可點 —— 導向可點的個人簡介連結。
+        cta = "📲 加 LINE 即時提醒 — 連結在個人簡介 🔗"
+    else:
+        cta = f"📲 加 LINE 不錯過 MarketDaily 👉 {line_url}"
     if "\n\n" in caption:
         head, _, tail = caption.rpartition("\n\n")
         return f"{head}\n\n{cta}\n\n{tail}"
