@@ -822,7 +822,7 @@ async function sendTodayDigestToOne(email, apiKey, kv) {
     method: "POST",
     headers: { "api-key": apiKey, "Content-Type": "application/json" },
     body: JSON.stringify({
-      sender: { name: "MarketDaily 財經日報", email: "marketdailyhq@gmail.com" },
+      sender: { name: "MarketDaily 財經日報", email: "hello@marketdaily.ai" },
       to: [{ email }],
       subject: `📈 財經日報 ${today} — 今日市場速覽`,
       htmlContent: digestHtml,
@@ -842,7 +842,7 @@ async function addToBrevo(email, apiKey, listId, attributes) {
 }
 
 async function generateSupportResponse(name, topic, message, apiKey) {
-  if (!apiKey) return "感謝您的來信！我們會盡快回覆您。如有緊急問題，請直接聯繫 marketdailyhq@gmail.com";
+  if (!apiKey) return "感謝您的來信！我們會盡快回覆您。如有緊急問題，請直接聯繫 support@marketdaily.ai";
   try {
     const res = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
@@ -866,7 +866,7 @@ async function generateSupportResponse(name, topic, message, apiKey) {
 - Premium 方案：NT$500/月，隨時可取消
 
 【常見問題處理】
-- 帳號/訂閱問題：請用戶聯繫 marketdailyhq@gmail.com
+- 帳號/訂閱問題：請用戶聯繫 support@marketdaily.ai
 - 邀請碼問題：邀請碼由 Delvin 本人發出，數量有限
 - 退訂：在 Email 底部點取消訂閱，或聯繫客服
 
@@ -881,7 +881,7 @@ async function generateSupportResponse(name, topic, message, apiKey) {
     const data = await res.json();
     return data.content?.[0]?.text || "感謝您的來信！我們會盡快回覆您。";
   } catch {
-    return "感謝您的來信！我們收到了您的問題，會盡快為您處理。如有緊急問題，請直接聯繫 marketdailyhq@gmail.com";
+    return "感謝您的來信！我們收到了您的問題，會盡快為您處理。如有緊急問題，請直接聯繫 support@marketdaily.ai";
   }
 }
 
@@ -919,7 +919,7 @@ async function sendSupportReply(email, name, topic, message, aiReply, apiKey) {
   </div>
   <div style="background:#1a1a2e;padding:16px 28px;text-align:center;font-size:11px;color:rgba(255,255,255,0.3);">
     財經日報 · AI 精選 · 假訊息過濾<br>
-    本回覆由 AI 生成，如有複雜問題請聯繫 marketdailyhq@gmail.com
+    本回覆由 AI 生成，如有複雜問題請聯繫 support@marketdaily.ai
   </div>
 </div>
 </body></html>`;
@@ -928,7 +928,7 @@ async function sendSupportReply(email, name, topic, message, aiReply, apiKey) {
     method: "POST",
     headers: { "api-key": apiKey, "Content-Type": "application/json" },
     body: JSON.stringify({
-      sender: { name: "財經日報客服", email: "marketdailyhq@gmail.com" },
+      sender: { name: "財經日報客服", email: "hello@marketdaily.ai" },
       to: [{ email, name: name || "" }],
       subject: `Re: ${topic || "你的問題"} — 財經日報客服`,
       htmlContent: html,
@@ -951,7 +951,7 @@ async function notifyAdmin(userEmail, name, topic, message, aiReply, apiKey) {
     method: "POST",
     headers: { "api-key": apiKey, "Content-Type": "application/json" },
     body: JSON.stringify({
-      sender: { name: "財經日報客服系統", email: "marketdailyhq@gmail.com" },
+      sender: { name: "財經日報客服系統", email: "hello@marketdaily.ai" },
       to: [{ email: "delvin.12345678@gmail.com" }],
       subject: `[客服] ${name || userEmail}：${topic || "一般問題"}`,
       htmlContent: html,
@@ -1082,7 +1082,7 @@ async function sendWelcomeEmail(email, apiKey, isPaid = false, tier = "") {
     method: "POST",
     headers: { "api-key": apiKey, "Content-Type": "application/json" },
     body: JSON.stringify({
-      sender: { name: "財經日報", email: "marketdailyhq@gmail.com" },
+      sender: { name: "財經日報", email: "hello@marketdaily.ai" },
       to: [{ email }],
       subject,
       htmlContent: html,
