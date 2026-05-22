@@ -16,6 +16,32 @@ export default {
   },
 
   async fetch(request, env) {
+    const url = new URL(request.url);
+    if (url.pathname === "/check") {
+      // 用儲存的 GITHUB_TOKEN 做一次唯讀呼叫,確認 token 有效且能存取 workflow。
+      // 不會派發 workflow、不會寄信。
+      if (!env.GITHUB_TOKEN) {
+        return json({ token_present: false, token_ok: false, hint: "Worker 還沒設 GITHUB_TOKEN secret" });
+      }
+      const r = await fetch(
+        `https://api.github.com/repos/${REPO}/actions/workflows/${WORKFLOW}`,
+        {
+          headers: {
+            "Authorization": "Bearer " + env.GITHUB_TOKEN,
+            "Accept": "application/vnd.github+json",
+            "User-Agent": "marketdaily-digest-cron",
+          },
+        }
+      );
+      let detail = null;
+      try { const d = await r.json(); detail = d.state || d.message; } catch {}
+      return json({
+        token_present: true,
+        github_status: r.status,
+        token_ok: r.ok,
+        workflow: detail,
+      });
+    }
     return json({ ok: true, service: "marketdaily-digest-cron", cron: "55 22 * * * (UTC)" });
   },
 };

@@ -7,6 +7,8 @@ import { displayName } from "./stock_names.js";
 
 const SEVERITY_THRESHOLD = 7;
 const DAILY_CAP = 5;
+const MAX_AGE_HOURS = 24;     // 超過此時數的新聞視為舊聞,不評分、不推(即時提醒只推新鮮事)
+const PRESCORE_FLOOR = 40;    // 規則預評分低於此值直接跳過 AI;調高=更省 AI,調低=更不漏新聞
 const CLUSTER_WINDOW_MS = 6 * 3600 * 1000;
 const LINE_PUSH_URL = "https://api.line.me/v2/bot/message/push";
 const SEEN_TTL = 48 * 3600;
@@ -26,6 +28,12 @@ const EVENT_RULES = [
   { type: "leadership", kw: ["ceo", "chief executive", "resign", "steps down", "ousted", "appoints", "fired"] },
   { type: "incident", kw: ["data breach", "hacked", "outage", "strike", "production halt"] },
 ];
+
+// 各事件類型的平均重大度權重 —— 規則預評分用,只擋明顯偏弱的,真正嚴重度仍交給 AI 判。
+const EVENT_WEIGHT = {
+  distress: 95, mna: 88, guidance: 82, regulatory: 76, earnings: 72,
+  incident: 66, legal: 62, leadership: 56, rating: 48, trading: 46,
+};
 
 function json(obj, status = 200) {
   return new Response(JSON.stringify(obj, null, 2), {
@@ -57,6 +65,21 @@ function clusterKey(ticker, eventType, publishedAt) {
   let ms = Date.parse(publishedAt);
   if (isNaN(ms)) ms = Date.now();
   return `${ticker}:${eventType}:${Math.floor(ms / CLUSTER_WINDOW_MS)}`;
+}
+
+// 新聞距今幾小時(無法解析時間 → 0,當作新的)。
+function newsAgeHours(publishedAt) {
+  const ms = Date.parse(publishedAt);
+  if (isNaN(ms)) return 0;
+  return (Date.now() - ms) / 3600000;
+}
+
+// 規則預評分(0-100,不花 AI):事件權重 × 時效新鮮度。
+// 6 小時內滿分,之後線性衰減,到 MAX_AGE_HOURS 時為 0.6 倍。
+function ruleScore(eventType, ageHours) {
+  const base = EVENT_WEIGHT[eventType] || 50;
+  const decay = Math.min(1, Math.max(0, ageHours - 6) / (MAX_AGE_HOURS - 6));
+  return Math.round(base * (1 - 0.4 * decay));
 }
 
 // 列出所有已綁定 LINE 且 plan=premium 的用戶與其持股。
@@ -190,7 +213,7 @@ async function runPipeline(env, { push, persist }) {
   const report = {
     ts: new Date().toISOString(),
     push, persist,
-    counts: { fetched: 0, alreadySeen: 0, rulePassed: 0, premiumMatched: 0, aiEvaluated: 0, wouldPush: 0, pushed: 0 },
+    counts: { fetched: 0, alreadySeen: 0, rulePassed: 0, preFiltered: 0, premiumMatched: 0, aiEvaluated: 0, wouldPush: 0, pushed: 0 },
     premiumUniverse: [],
     candidates: [],
     fired: [],
@@ -221,13 +244,30 @@ async function runPipeline(env, { push, persist }) {
     }
     report.counts.rulePassed++;
 
+    // 規則預評分閘門 —— 不花 AI:擋掉舊聞與明顯偏弱的新聞,壓低 AI 呼叫量。
+    const ageHours = newsAgeHours(news.publishedAt);
+    const preScore = ruleScore(eventType, ageHours);
+    if (ageHours > MAX_AGE_HOURS || preScore < PRESCORE_FLOOR) {
+      if (persist) await env.USER_PREFS.put(seenKey, report.ts, { expirationTtl: SEEN_TTL });
+      report.counts.preFiltered++;
+      report.candidates.push({
+        title: news.title, source: news.source, url: news.url,
+        tickers: news.tickers, eventType, preScore, severity: null,
+        reason: ageHours > MAX_AGE_HOURS
+          ? `規則預篩:新聞已 ${Math.round(ageHours)} 小時,過舊`
+          : `規則預篩:預評分 ${preScore} 未達 ${PRESCORE_FLOOR}`,
+        recipients: [],
+      });
+      continue;
+    }
+
     // 比對 Premium 持有者
     const holders = recipients.filter((r) => news.tickers.some((t) => r.holdings.has(t)));
     if (!holders.length) {
       if (persist) await env.USER_PREFS.put(seenKey, report.ts, { expirationTtl: SEEN_TTL });
       report.candidates.push({
         title: news.title, source: news.source, url: news.url,
-        tickers: news.tickers, eventType, severity: null,
+        tickers: news.tickers, eventType, preScore, severity: null,
         reason: "通過粗篩但無 Premium 持有者", recipients: [],
       });
       continue;
@@ -239,7 +279,7 @@ async function runPipeline(env, { push, persist }) {
     if (!skipped) report.counts.aiEvaluated++;
     const cand = {
       title: news.title, source: news.source, url: news.url,
-      tickers: news.tickers, eventType, severity, reason,
+      tickers: news.tickers, eventType, preScore, severity, reason,
       recipients: [],
     };
 
@@ -352,7 +392,10 @@ export default {
           LINE_CHANNEL_ID: !!env.LINE_CHANNEL_ID,
           LINE_CHANNEL_SECRET: !!env.LINE_CHANNEL_SECRET,
         },
-        config: { severityThreshold: SEVERITY_THRESHOLD, dailyCap: DAILY_CAP, cron: "*/2 * * * *" },
+        config: {
+          severityThreshold: SEVERITY_THRESHOLD, dailyCap: DAILY_CAP,
+          maxAgeHours: MAX_AGE_HOURS, preScoreFloor: PRESCORE_FLOOR, cron: "*/2 * * * *",
+        },
         lastRun: lastRaw ? JSON.parse(lastRaw) : null,
       });
     }
