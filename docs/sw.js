@@ -1,4 +1,4 @@
-const CACHE = "md-v3";
+const CACHE = "md-v4";
 const STATIC = [
   "/",
   "/index.html",
@@ -31,10 +31,10 @@ self.addEventListener("fetch", e => {
   if (url.hostname.includes("workers.dev") || url.pathname.startsWith("/api")) {
     return;
   }
-  // HTML 頁面永遠抓伺服器最新版,繞過瀏覽器 HTTP 快取 —— 避免改版後看到舊頁。
-  const isDoc = e.request.mode === "navigate"
-    || (e.request.headers.get("accept") || "").indexOf("text/html") !== -1;
-  const req = isDoc ? new Request(e.request.url, { cache: "no-store" }) : e.request;
+  // 同源資源(HTML / JS / CSS)一律抓伺服器最新版,繞過瀏覽器 HTTP 快取;
+  // 快取只當離線後援 —— 避免改版後看到舊頁或新舊檔案版本不一致。
+  const sameOrigin = url.origin === self.location.origin;
+  const req = sameOrigin ? new Request(e.request.url, { cache: "no-store" }) : e.request;
   e.respondWith(
     fetch(req)
       .then(res => {
