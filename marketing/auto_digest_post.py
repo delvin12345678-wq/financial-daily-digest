@@ -20,7 +20,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 from auto_post import (caption_for, load_env, post_facebook, post_instagram,
-                       post_line, post_threads)
+                       post_line, post_threads, post_x)
 from digest_to_social import general_points, parse_digest
 from social_cards import make_card
 
@@ -33,7 +33,7 @@ TAGS = "#美股 #台股 #投資理財 #財經 #股市 #理財 #財經新聞"
 MIN_POINTS = 2
 
 PLATFORMS = {"instagram": post_instagram, "facebook": post_facebook,
-             "threads": post_threads, "line": post_line}
+             "threads": post_threads, "line": post_line, "x": post_x}
 
 
 def taiwan_date():
@@ -72,6 +72,15 @@ def build_caption(points, date):
     )
 
 
+def build_caption_x(points, date):
+    """X 280 字限制版:取 2 則重點 + 連結。"""
+    return (
+        f"📈 {short_date(date)} 美股 + 台股重點\n\n"
+        + "\n".join(points[:2])
+        + f"\n\n完整解讀每早 7 點 → {SITE}\n#美股 #台股 #投資理財"
+    )
+
+
 def cmd_generate():
     date = taiwan_date()
     html = fetch_digest(date)
@@ -87,6 +96,8 @@ def cmd_generate():
     day_dir.mkdir(parents=True, exist_ok=True)
     caption = build_caption(points, date)
     (day_dir / "digest_caption.txt").write_text(caption, encoding="utf-8")
+    (day_dir / "digest_caption_x.txt").write_text(
+        build_caption_x(points, date), encoding="utf-8")
 
     png = day_dir / "digest_card.png"
     make_card({
@@ -112,14 +123,19 @@ def cmd_publish():
         print(f"⏭️  {date} 無待發貼文(generate 可能已跳過)")
         return
     caption = cap_f.read_text(encoding="utf-8")
+    cap_x_f = OUT_DIR / date / "digest_caption_x.txt"
+    caption_x = cap_x_f.read_text(encoding="utf-8") if cap_x_f.exists() else caption
     image_url = f"{RAW_BASE}/docs/social/digest_card_{date}.jpg"
     env = load_env()
     line_url = env.get("LINE_ADD_URL", "")
+    targets = {k: v for k, v in PLATFORMS.items()
+               if k != "x" or env.get("X_API_KEY")}
     print(f"發布 {date} 日報社群貼文 → {image_url}\n")
     results = {}
-    for plat, fn in PLATFORMS.items():
+    for plat, fn in targets.items():
+        cap = caption_x if plat == "x" else caption_for(caption, plat, line_url)
         try:
-            ok, detail = fn(env, image_url, caption_for(caption, plat, line_url))
+            ok, detail = fn(env, image_url, cap)
         except KeyError as e:
             ok, detail = False, f"缺少 {e}"
         results[plat] = {"ok": ok, "detail": str(detail)}

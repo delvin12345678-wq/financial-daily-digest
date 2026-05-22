@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """每日日報 → 社群內容自動化。
 
-解析 output/digest_{date}.html,輸出當日 5 平台貼文文案 + 圖卡。
+解析 output/digest_{date}.html,輸出當日 7 平台貼文文案 + 圖卡。
 用法:
     python digest_to_social.py            # 處理最新一份日報
     python digest_to_social.py 2026-05-21 # 指定日期
@@ -119,12 +119,28 @@ def build_captions(d):
         + (p3[0] if p3 else d["market"][:60])
         + f"\n\n看今天完整日報 👉 {link.replace('{platform}', 'line')}"
     )
+    x = (
+        f"📈 {md} 美股 + 台股重點\n\n"
+        + "\n".join(p3[:2])
+        + f"\n\n完整解讀每早 7 點 → {link.replace('{platform}', 'x')}\n"
+        + "#美股 #台股 #投資理財"
+    )
+    youtube = (
+        f"標題:{md} 30 秒看完美股 + 台股｜MarketDaily 財經日報\n\n"
+        f"說明:\n{md} 今日市場重點,30 秒講完 📈\n\n"
+        + "\n".join(f"• {p}" for p in p3)
+        + f"\n\n完整個人化日報每早 7 點免費送 👉 "
+        + f"{link.replace('{platform}', 'youtube')}\n\n"
+        + "僅供參考,非投資建議。\n\n"
+        + f"#Shorts {TAGS_ZH}"
+    )
 
     out = f"# MarketDaily 社群文案 — {d['date']}\n\n"
     out += "> 由 digest_to_social.py 從當日日報自動生成。發文前快速校稿即可。\n"
     out += "> bio 連結記得帶 UTM(各平台已標好)。\n\n"
     for name, body in [("Instagram", ig), ("Facebook", fb), ("Threads", threads),
-                       ("TikTok（影片說明）", tiktok), ("LINE 推播", line)]:
+                       ("X / Twitter", x), ("TikTok（影片說明）", tiktok),
+                       ("YouTube Shorts（標題＋說明）", youtube), ("LINE 推播", line)]:
         out += f"## {name}\n\n```\n{body}\n```\n\n"
     out += f"## 英文版 hashtags（做純英文觸及時換上）\n\n```\n{TAGS_EN}\n```\n"
     return out
@@ -162,7 +178,7 @@ def main():
         }, day_dir / "news_card.png")
 
     print(f"✓ {d['date']} 社群內容已產出 → {day_dir}")
-    print(f"  · captions.md（5 平台文案）")
+    print(f"  · captions.md（7 平台文案）")
     print(f"  · tldr_card.png · news_card.png")
 
 

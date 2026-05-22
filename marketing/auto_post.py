@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""MarketDaily 社群自動發文 — Instagram / Facebook / Threads / LINE。
+"""MarketDaily 社群自動發文 — IG / FB / Threads / LINE / X / YouTube。
 
 一次性設定見 SETUP_AUTOPOST.md;把權杖填進 marketing/.env。
 用法:
@@ -9,8 +9,12 @@
     python auto_post.py post teaser              發單篇(發到該篇設定的平台)
     python auto_post.py post launch --only instagram,facebook
 """
+import base64
+import hashlib
+import hmac
 import json
 import os
+import secrets
 import subprocess
 import sys
 import time
@@ -30,7 +34,9 @@ LOG_FILE = HERE / "social_out" / "post_log.jsonl"
 
 ENV_KEYS = ("META_ACCESS_TOKEN", "FB_PAGE_ID", "IG_USER_ID", "THREADS_ACCESS_TOKEN",
             "THREADS_USER_ID", "LINE_CHANNEL_ID", "LINE_CHANNEL_SECRET",
-            "LINE_CHANNEL_ACCESS_TOKEN", "LINE_ADD_URL", "SITE_BASE")
+            "LINE_CHANNEL_ACCESS_TOKEN", "LINE_ADD_URL", "SITE_BASE",
+            "X_API_KEY", "X_API_SECRET", "X_ACCESS_TOKEN", "X_ACCESS_SECRET",
+            "YT_CLIENT_ID", "YT_CLIENT_SECRET", "YT_REFRESH_TOKEN")
 
 
 def load_env():
@@ -180,10 +186,172 @@ def post_facebook_reel(env, video_url, caption):
     return (True, vid) if ok and p.get("success") else (False, p)
 
 
-PLATFORMS = {"facebook": post_facebook, "instagram": post_instagram,
-             "threads": post_threads, "line": post_line}
+# ── X / Twitter(OAuth 1.0a)──
 
-REEL_PLATFORMS = {"instagram": post_instagram_reel, "facebook": post_facebook_reel}
+def _pe(s):
+    return urllib.parse.quote(str(s), safe="~")
+
+
+def _oauth1_header(method, url, env, params=None):
+    oauth = {
+        "oauth_consumer_key": env["X_API_KEY"],
+        "oauth_nonce": secrets.token_hex(16),
+        "oauth_signature_method": "HMAC-SHA1",
+        "oauth_timestamp": str(int(time.time())),
+        "oauth_token": env["X_ACCESS_TOKEN"],
+        "oauth_version": "1.0",
+    }
+    sig = dict(oauth, **(params or {}))
+    base = "&".join(f"{_pe(k)}={_pe(sig[k])}" for k in sorted(sig))
+    base_str = "&".join([method.upper(), _pe(url), _pe(base)])
+    key = f"{_pe(env['X_API_SECRET'])}&{_pe(env['X_ACCESS_SECRET'])}"
+    oauth["oauth_signature"] = base64.b64encode(
+        hmac.new(key.encode(), base_str.encode(), hashlib.sha1).digest()).decode()
+    return "OAuth " + ", ".join(f'{_pe(k)}="{_pe(oauth[k])}"' for k in sorted(oauth))
+
+
+def _fetch_bytes(url):
+    try:
+        req = urllib.request.Request(url, headers={"User-Agent": "marketdaily-social"})
+        with urllib.request.urlopen(req, timeout=300) as r:
+            return r.read()
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def _multipart(fields):
+    boundary = "----md" + secrets.token_hex(8)
+    body = b""
+    for name, filename, content, ctype in fields:
+        body += f"--{boundary}\r\n".encode()
+        disp = f'form-data; name="{name}"'
+        if filename:
+            disp += f'; filename="{filename}"'
+        body += f"Content-Disposition: {disp}\r\n".encode()
+        if ctype:
+            body += f"Content-Type: {ctype}\r\n".encode()
+        body += b"\r\n" + content + b"\r\n"
+    return boundary, body + f"--{boundary}--\r\n".encode()
+
+
+def _x_fit(text, limit=280):
+    """X 加權長度:CJK / emoji 算 2;超長先丟 hashtag 段,再硬截。"""
+    def wlen(s):
+        return sum(2 if ord(c) > 0x1100 else 1 for c in s)
+    if wlen(text) <= limit:
+        return text
+    head, sep, tail = text.rstrip().rpartition("\n\n")
+    if sep and tail.lstrip().startswith("#") and wlen(head) <= limit:
+        return head
+    out = ""
+    for c in text:
+        if wlen(out) + wlen(c) + 1 > limit:
+            break
+        out += c
+    return out + "…"
+
+
+def _x_create_tweet(env, text, media_ids=None):
+    url = "https://api.twitter.com/2/tweets"
+    payload = {"text": text}
+    if media_ids:
+        payload["media"] = {"media_ids": media_ids}
+    auth = _oauth1_header("POST", url, env)
+    ok, r = http(url, "POST", json_body=payload, headers={"Authorization": auth})
+    return (True, (r.get("data") or {}).get("id")) if ok else (False, r)
+
+
+def _x_upload_media(env, data, ctype):
+    url = "https://upload.twitter.com/1.1/media/upload.json"
+    boundary, body = _multipart([("media", "media", data, ctype)])
+    req = urllib.request.Request(url, data=body, method="POST", headers={
+        "Authorization": _oauth1_header("POST", url, env),
+        "Content-Type": f"multipart/form-data; boundary={boundary}"})
+    try:
+        with urllib.request.urlopen(req, timeout=120) as r:
+            return json.loads(r.read().decode()).get("media_id_string")
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def post_x(env, image_url, caption):
+    text = _x_fit(caption)
+    media_ids = None
+    img = _fetch_bytes(image_url)
+    if img:
+        ctype = "image/png" if image_url.lower().endswith(".png") else "image/jpeg"
+        mid = _x_upload_media(env, img, ctype)
+        if mid:
+            media_ids = [mid]
+    ok, detail = _x_create_tweet(env, text, media_ids)
+    if not ok and media_ids:  # 圖片可能不被免費層支援 → 退回純文字
+        ok, detail = _x_create_tweet(env, text, None)
+    return ok, detail
+
+
+def post_x_reel(env, video_url, caption):
+    # X 影片 chunked upload 較脆弱;影片貼文發純文字(文案已含連結)。
+    return _x_create_tweet(env, _x_fit(caption), None)
+
+
+# ── YouTube(OAuth 2.0 refresh token)──
+
+def _yt_access_token(env):
+    ok, r = http("https://oauth2.googleapis.com/token", "POST", form={
+        "client_id": env.get("YT_CLIENT_ID", ""),
+        "client_secret": env.get("YT_CLIENT_SECRET", ""),
+        "refresh_token": env.get("YT_REFRESH_TOKEN", ""),
+        "grant_type": "refresh_token"})
+    return r.get("access_token") if ok else None
+
+
+def _yt_title_desc(caption):
+    text = caption.strip()
+    first, _, rest = text.partition("\n")
+    rest = rest.strip()
+    if first.startswith("標題"):
+        if rest.startswith("說明"):
+            rest = rest[2:].lstrip(":：\n ").strip()
+        return first[2:].lstrip(":： ").strip()[:100], rest
+    return first.strip()[:100], text
+
+
+def post_youtube(env, video_url, caption):
+    token = _yt_access_token(env)
+    if not token:
+        return False, "YouTube 權杖刷新失敗(檢查 YT_CLIENT_ID / SECRET / REFRESH_TOKEN)"
+    video = _fetch_bytes(video_url)
+    if not video:
+        return False, f"無法下載影片:{video_url}"
+    title, desc = _yt_title_desc(caption)
+    meta = json.dumps({
+        "snippet": {"title": title, "description": desc, "categoryId": "25",
+                    "tags": ["美股", "台股", "財經", "投資理財", "股市"]},
+        "status": {"privacyStatus": "public", "selfDeclaredMadeForKids": False},
+    }).encode()
+    boundary = "----md" + secrets.token_hex(8)
+    body = (f"--{boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n".encode()
+            + meta + f"\r\n--{boundary}\r\nContent-Type: video/*\r\n\r\n".encode()
+            + video + f"\r\n--{boundary}--\r\n".encode())
+    url = ("https://www.googleapis.com/upload/youtube/v3/videos"
+           "?uploadType=multipart&part=snippet,status")
+    req = urllib.request.Request(url, data=body, method="POST", headers={
+        "Authorization": f"Bearer {token}",
+        "Content-Type": f"multipart/related; boundary={boundary}"})
+    try:
+        with urllib.request.urlopen(req, timeout=600) as r:
+            return True, f"https://youtu.be/{json.loads(r.read().decode()).get('id')}"
+    except urllib.error.HTTPError as e:
+        return False, e.read().decode()
+    except Exception as e:  # noqa: BLE001
+        return False, str(e)
+
+
+PLATFORMS = {"facebook": post_facebook, "instagram": post_instagram,
+             "threads": post_threads, "line": post_line, "x": post_x}
+
+REEL_PLATFORMS = {"instagram": post_instagram_reel, "facebook": post_facebook_reel,
+                  "youtube": post_youtube, "x": post_x_reel}
 
 
 def load_posts():
@@ -212,6 +380,16 @@ def cmd_check(env):
         ok, r = http("https://api.line.me/v2/bot/info",
                      headers={"Authorization": f"Bearer {env['LINE_CHANNEL_ACCESS_TOKEN']}"})
         print(f"  LINE OA:      {'✅ ' + r.get('displayName', '?') if ok else '❌ ' + str(r)}")
+    if env.get("X_API_KEY"):
+        # 免費層讀取額度極少,不花在健檢;發文用獨立額度,實際發文時才驗證金鑰。
+        ready = all(env.get(k) for k in
+                    ("X_API_KEY", "X_API_SECRET", "X_ACCESS_TOKEN", "X_ACCESS_SECRET"))
+        print(f"  X / Twitter:  {'✅ 4 把金鑰齊全(發文時驗證)' if ready else '❌ 金鑰不齊'}")
+    if env.get("YT_REFRESH_TOKEN"):
+        # 只授權 youtube.upload(最小權限),故僅驗證 refresh token 能換到 access token。
+        token = _yt_access_token(env)
+        print(f"  YouTube:      "
+              f"{'✅ refresh token 有效(youtube.upload)' if token else '❌ 換取失敗,重跑 get_youtube_token.py'}")
 
 
 def cmd_stage(env):
@@ -233,7 +411,7 @@ def cmd_stage(env):
 
 
 def caption_for(caption, plat, line_url):
-    if plat == "line" or not line_url:
+    if plat in ("line", "x") or not line_url:
         return caption
     if plat == "instagram":
         # IG 貼文 / 留言的網址不可點 —— 導向可點的個人簡介連結。
