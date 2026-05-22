@@ -1360,6 +1360,21 @@ async function setupChatCard(email, plan) {
 
 function chatEsc(s) { const d = document.createElement("div"); d.textContent = s == null ? "" : s; return d.innerHTML; }
 
+// 把持股整理成「代號 公司名」字串給 AI —— 台股才不會只剩數字。
+function holdingsText() {
+  if (typeof selected === "undefined") return "";
+  const fmt = (arr, isUS) => (arr || []).map(s => {
+    const zh = isUS && typeof US_ZH !== "undefined" ? (US_ZH[s.sym] || "") : "";
+    const nm = zh || s.name || "";
+    return (nm && nm !== s.sym) ? `${s.sym} ${nm}` : s.sym;
+  });
+  const parts = [];
+  const us = fmt(selected.us, true), tw = fmt(selected.tw, false);
+  if (us.length) parts.push("美股:" + us.join("、"));
+  if (tw.length) parts.push("台股:" + tw.join("、"));
+  return parts.join(";");
+}
+
 function renderChat() {
   const box = document.getElementById("chat-messages");
   if (!box) return;
@@ -1392,7 +1407,7 @@ async function sendChat() {
   try {
     const res = await fetch(WORKER_URL + "/chat", {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password, messages: _chatHistory }),
+      body: JSON.stringify({ email, password, messages: _chatHistory, holdings: holdingsText() }),
     });
     const data = await res.json();
     _chatBusy = false;

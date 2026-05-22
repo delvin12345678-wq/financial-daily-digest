@@ -267,17 +267,23 @@ export default {
         return json({ error: "no_message" }, 400);
       }
 
-      let holdings = "(尚未設定持股)";
-      const prefRaw = await env.USER_PREFS.get(email);
-      if (prefRaw) {
-        try {
-          const p = JSON.parse(prefRaw);
-          const us = (p.us_stocks || []).join("、");
-          const tw = (p.tw_stocks || []).join("、");
-          const parts = [us && `美股:${us}`, tw && `台股:${tw}`].filter(Boolean);
-          if (parts.length) holdings = parts.join(";");
-        } catch {}
+      // 持股優先用前端帶來的字串(含公司名);取不到才退回 KV 純代號。
+      let holdings = "";
+      if (typeof body.holdings === "string" && body.holdings.trim()) {
+        holdings = body.holdings.trim().slice(0, 800);
+      } else {
+        const prefRaw = await env.USER_PREFS.get(email);
+        if (prefRaw) {
+          try {
+            const p = JSON.parse(prefRaw);
+            const us = (p.us_stocks || []).join("、");
+            const tw = (p.tw_stocks || []).join("、");
+            const parts = [us && `美股:${us}`, tw && `台股:${tw}`].filter(Boolean);
+            if (parts.length) holdings = parts.join(";");
+          } catch {}
+        }
       }
+      if (!holdings) holdings = "(尚未設定持股)";
 
       const system = `你是 MarketDaily 的 AI 投資助手。MarketDaily 是給台灣投資人的每日財經 AI 日報平台。
 
@@ -288,6 +294,7 @@ export default {
 - 可以分析、解釋、提供觀點與資訊,但不做保證、不喊進喊出。只要回答涉及買賣判斷,結尾務必加一句「以上為資訊整理,非投資建議」。
 - 你沒有即時報價與盤中數據;需要即時價格才能回答時,誠實說明,並建議用戶看當日日報或券商報價。
 - 與投資、財經、用戶持股無關的問題,簡短禮貌帶過,引導回投資主題。
+- 提到台股時,一律用公司名稱稱呼(可附代號,如「台積電 2330」),絕不只報數字代號。
 
 這位用戶目前在 MarketDaily 追蹤的持股:${holdings}`;
 
