@@ -1,5 +1,12 @@
 import os
 import re
+import json
+import time
+import logging
+import cssutils
+
+cssutils.log.setLevel(logging.CRITICAL)
+
 from data_fetcher import fetch_all
 from fake_news_filter import filter_us_news, filter_tw_news
 from analyzer import generate_report
@@ -7,14 +14,14 @@ from publisher import publish_to_brevo
 
 
 CSS = """
+:root { color-scheme: light dark; supported-color-schemes: light dark; }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", sans-serif; background: #f2f2f7; color: #1d1d1f; }
 .wrapper { max-width: 620px; margin: 0 auto; background: #fff; }
 
-.header { background: #0a0a0a; color: #fff; padding: 26px 20px 20px; }
-.header-meta { font-size: 10px; color: rgba(255,255,255,0.38); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; }
-.header h1 { font-size: 21px; font-weight: 700; letter-spacing: -0.3px; }
-.header-tagline { font-size: 11px; color: rgba(255,255,255,0.32); margin-top: 5px; }
+.header { background: #ffffff; color: #1d1d1f; padding: 26px 24px 20px; border-bottom: 3px solid #6366f1; }
+.header-meta { font-size: 11px; color: #6b7280; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 6px; }
+.header-tagline { font-size: 12px; color: #6b7280; margin-top: 4px; }
 
 .tldr { background: #fff9f0; border-left: 3px solid #ff9500; margin: 18px 20px 0; padding: 13px 15px; border-radius: 0 10px 10px 0; }
 .tldr-title { font-size: 11px; font-weight: 700; color: #c25e00; margin-bottom: 8px; letter-spacing: 0.8px; text-transform: uppercase; }
@@ -34,6 +41,12 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Ne
 .news-why { font-size: 13px; color: #48484a; line-height: 1.55; background: #f2f2f7; padding: 7px 10px; border-radius: 8px; }
 .read-more { display: inline-block; margin-top: 8px; font-size: 12px; font-weight: 600; color: #0066cc; text-decoration: none; }
 .read-more:hover { text-decoration: underline; }
+
+.news-impact { margin: 9px 0 0; }
+.impact-label { display: inline-block; font-size: 10px; font-weight: 700; color: #8e8e93; letter-spacing: 0.5px; margin-right: 6px; }
+.impact-stock { display: inline-block; font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 20px; margin: 3px 4px 0 0; white-space: nowrap; }
+.impact-stock.up { background: #dcfce7; color: #166534; }
+.impact-stock.down { background: #ffe4e6; color: #9f1239; }
 
 .stock-card { display: flex; align-items: flex-start; gap: 10px; margin: 0 20px 8px; padding: 11px 13px; border-radius: 10px; background: #f2f2f7; border: 1px solid #e5e5ea; }
 .ticker { font-size: 13px; font-weight: 800; color: #0a0a0a; min-width: 56px; padding-top: 2px; font-family: "SF Mono", ui-monospace, monospace; }
@@ -97,6 +110,66 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Ne
 .stock-news-impact { font-size: 13px; color: #48484a; background: #ebebff; padding: 6px 10px; border-radius: 8px; line-height: 1.55; }
 .stock-news-empty { margin: 0 20px 14px; font-size: 13px; color: #aeaeb2; padding: 8px 0; }
 
+.signal-header { margin: 14px 20px 8px; padding: 14px 16px; background: #eef0ff; border: 1px solid #c7d2fe; border-radius: 12px; }
+.signal-header-title { font-size: 11px; font-weight: 700; color: #4338ca; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 3px; }
+.signal-header-subtitle { font-size: 11px; color: #6366f1; }
+.signal-grid { padding: 0 20px 4px; }
+.signal-card { padding: 13px 14px; border-radius: 12px; border: 1px solid; margin-bottom: 10px; }
+.signal-card.buy { background: #f0fdf4; border-color: #bbf7d0; }
+.signal-card.hold { background: #fffbeb; border-color: #fde68a; }
+.signal-card.sell { background: #fff1f2; border-color: #fecdd3; }
+.signal-card.wait { background: #f8fafc; border-color: #e2e8f0; }
+.signal-card-top { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+.signal-day-move { font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 6px; white-space: nowrap; }
+.signal-day-move.up { background: #dcfce7; color: #166534; }
+.signal-day-move.down { background: #ffe4e6; color: #9f1239; }
+.signal-ticker { font-size: 14px; font-weight: 800; color: #0a0a0a; font-family: "SF Mono", ui-monospace, monospace; }
+.signal-score-block { display: flex; align-items: baseline; gap: 1px; margin-left: auto; }
+.signal-score { font-size: 20px; font-weight: 900; color: #1d1d1f; line-height: 1; }
+.signal-score-label { font-size: 11px; color: #8e8e93; }
+.signal-bias { font-size: 10px; font-weight: 800; padding: 3px 10px; border-radius: 20px; letter-spacing: 0.5px; white-space: nowrap; }
+.signal-bias.bullish { background: #dcfce7; color: #166534; }
+.signal-bias.neutral { background: #fef3c7; color: #92400e; }
+.signal-bias.bearish { background: #ffe4e6; color: #9f1239; }
+.signal-body { }
+.signal-reason { font-size: 13px; color: #3a3a3c; line-height: 1.55; margin-bottom: 9px; }
+.signal-battle-plan { background: rgba(0,0,0,0.03); border-radius: 8px; padding: 9px 12px; margin-bottom: 9px; }
+.signal-watch { font-size: 12px; color: #4b5563; line-height: 1.55; margin-bottom: 9px; background: rgba(99,102,241,0.07); padding: 7px 11px; border-radius: 8px; }
+.battle-row { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.battle-label { font-size: 10px; font-weight: 700; color: #8e8e93; letter-spacing: 0.5px; min-width: 52px; }
+.battle-val { font-size: 13px; font-weight: 700; color: #1d1d1f; }
+.battle-val.up { color: #30d158; }
+.battle-val.down { color: #ff3b30; }
+.signal-meta { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.signal-badge { font-size: 11px; font-weight: 800; padding: 3px 10px; border-radius: 20px; white-space: nowrap; }
+.signal-badge.buy { background: #dcfce7; color: #166534; }
+.signal-badge.hold { background: #fef3c7; color: #92400e; }
+.signal-badge.sell { background: #ffe4e6; color: #9f1239; }
+.signal-badge.wait { background: #f1f5f9; color: #475569; }
+.signal-confidence { font-size: 11px; color: #6b7280; }
+.signal-horizon { font-size: 11px; color: #6b7280; background: #f3f4f6; padding: 2px 8px; border-radius: 20px; }
+.signal-disclaimer { margin: 4px 20px 14px; font-size: 10px; color: #aeaeb2; text-align: center; line-height: 1.6; }
+
+.action-board { margin: 16px 20px 6px; }
+.action-board-title { font-size: 14px; font-weight: 900; color: #1d1d1f; margin-bottom: 11px; }
+.action-item { border-radius: 12px; padding: 12px 14px; margin-bottom: 8px; border: 1px solid; }
+.action-item.buy { background: #f0fdf4; border-color: #bbf7d0; }
+.action-item.hold { background: #fffbeb; border-color: #fde68a; }
+.action-item.sell { background: #fff1f2; border-color: #fecdd3; }
+.action-item.wait { background: #f8fafc; border-color: #e2e8f0; }
+.action-main { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 6px; }
+.action-name { font-size: 14px; font-weight: 800; color: #1d1d1f; }
+.action-move { font-size: 11px; font-weight: 800; padding: 2px 7px; border-radius: 6px; white-space: nowrap; }
+.action-move.up { background: #dcfce7; color: #166534; }
+.action-move.down { background: #ffe4e6; color: #9f1239; }
+.action-verdict { margin-left: auto; font-size: 13px; font-weight: 900; padding: 5px 13px; border-radius: 20px; white-space: nowrap; }
+.action-verdict.buy { background: #16a34a; color: #ffffff; }
+.action-verdict.hold { background: #f59e0b; color: #ffffff; }
+.action-verdict.sell { background: #e11d48; color: #ffffff; }
+.action-verdict.wait { background: #94a3b8; color: #ffffff; }
+.action-reason { font-size: 13px; color: #48484a; line-height: 1.6; }
+.action-legend { font-size: 11px; color: #8e8e93; line-height: 1.8; margin-top: 9px; padding: 10px 13px; background: #f2f2f7; border-radius: 10px; }
+
 .footer { background: #0a0a0a; color: rgba(255,255,255,0.28); text-align: center; padding: 18px 20px; font-size: 11px; line-height: 2; }
 """
 
@@ -107,23 +180,42 @@ def build_email_html(date: str, html_report: str) -> str:
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light dark">
+<meta name="supported-color-schemes" content="light dark">
 <title>財經日報 {date}</title>
 <style>{CSS}</style>
 </head>
 <body>
 <div class="wrapper">
   <div class="header">
+    <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="margin-bottom:18px;">
+      <tr>
+        <td width="50" valign="middle" style="padding-right:14px;">
+          <img src="https://marketdaily.ai/logo-icon.svg" width="46" height="46" alt="MD" style="display:block;border-radius:12px;">
+        </td>
+        <td valign="middle">
+          <div style="font-size:20px;font-weight:800;color:#312e81;letter-spacing:-0.5px;line-height:1.2;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">MarketDaily</div>
+          <div style="font-size:10px;color:#6366f1;letter-spacing:3px;text-transform:uppercase;margin-top:3px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">AI 財經日報</div>
+        </td>
+      </tr>
+    </table>
     <div class="header-meta">{date}</div>
-    <h1>📊 財經日報</h1>
     <div class="header-tagline">AI 精選 · 假訊息過濾 · 美股 + 台股</div>
   </div>
   {html_report}
+
+  <div style="margin:20px 20px 4px;background:#f0f0ff;border:1px solid #c7d2fe;border-radius:12px;padding:18px 20px;text-align:center;">
+    <p style="font-size:13px;font-weight:800;color:#4338ca;margin:0 0 6px;">📊 客製化你的每日日報</p>
+    <p style="font-size:12px;color:#6b7280;line-height:1.7;margin:0 0 14px;">前往個人專區選擇你追蹤的美股 / 台股，<br>AI 每天只幫你分析你在乎的持倉動態。</p>
+    <a href="https://marketdaily.ai/dashboard.html" style="display:inline-block;background:#6366f1;color:#fff;font-size:13px;font-weight:700;padding:10px 24px;border-radius:8px;text-decoration:none;">⚙️ 前往設定我的股票偏好 →</a>
+  </div>
+
   <div class="footer">
     財經日報 · AI 精選 · 假訊息過濾<br>
     ✅ 多源確認 = 2個以上白名單媒體報導 &nbsp;|&nbsp; ⚠️ 單一來源 = 請自行查證<br>
     本報告為 AI 生成，僅供參考，不構成投資建議<br><br>
-    <a href="https://marketdaily.github.io/financial-daily-digest/" style="color:#6366f1;text-decoration:none;font-weight:700;">🌐 marketdaily.github.io/financial-daily-digest</a> &nbsp;·&nbsp;
-    <a href="https://marketdaily.github.io/financial-daily-digest/dashboard.html" style="color:#a5b4fc;text-decoration:none;">⚙️ 我的專區</a>
+    <a href="https://marketdaily.ai" style="color:#6366f1;text-decoration:none;font-weight:700;">🌐 marketdaily.ai</a> &nbsp;·&nbsp;
+    <a href="https://marketdaily.ai/dashboard.html" style="color:#a5b4fc;text-decoration:none;">⚙️ 我的專區</a>
   </div>
 </div>
 </body>
@@ -137,6 +229,7 @@ def build_email_html(date: str, html_report: str) -> str:
 
 def save_local(date: str, html_report: str):
     os.makedirs("output", exist_ok=True)
+    os.makedirs("docs/output", exist_ok=True)
     path = f"output/digest_{date}.html"
     with open(path, "w", encoding="utf-8") as f:
         f.write(f"""<!DOCTYPE html>
@@ -144,29 +237,66 @@ def save_local(date: str, html_report: str):
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light dark">
+<meta name="supported-color-schemes" content="light dark">
 <title>財經日報 {date}</title>
 <style>{CSS}</style>
 </head>
 <body>
 <div class="wrapper">
   <div class="header">
+    <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="margin-bottom:18px;">
+      <tr>
+        <td width="50" valign="middle" style="padding-right:14px;">
+          <img src="https://marketdaily.ai/logo-icon.svg" width="46" height="46" alt="MD" style="display:block;border-radius:12px;">
+        </td>
+        <td valign="middle">
+          <div style="font-size:20px;font-weight:800;color:#312e81;letter-spacing:-0.5px;line-height:1.2;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">MarketDaily</div>
+          <div style="font-size:10px;color:#6366f1;letter-spacing:3px;text-transform:uppercase;margin-top:3px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">AI 財經日報</div>
+        </td>
+      </tr>
+    </table>
     <div class="header-meta">{date}</div>
-    <h1>📊 財經日報</h1>
     <div class="header-tagline">AI 精選 · 假訊息過濾 · 美股 + 台股</div>
   </div>
   {html_report}
+
+  <div style="margin:20px 20px 4px;background:#f0f0ff;border:1px solid #c7d2fe;border-radius:12px;padding:18px 20px;text-align:center;">
+    <p style="font-size:13px;font-weight:800;color:#4338ca;margin:0 0 6px;">📊 客製化你的每日日報</p>
+    <p style="font-size:12px;color:#6b7280;line-height:1.7;margin:0 0 14px;">前往個人專區選擇你追蹤的美股 / 台股，<br>AI 每天只幫你分析你在乎的持倉動態。</p>
+    <a href="https://marketdaily.ai/dashboard.html" style="display:inline-block;background:#6366f1;color:#fff;font-size:13px;font-weight:700;padding:10px 24px;border-radius:8px;text-decoration:none;">⚙️ 前往設定我的股票偏好 →</a>
+  </div>
+
   <div class="footer">
     財經日報 · AI 精選 · 假訊息過濾<br>
     ✅ 多源確認 = 2個以上白名單媒體報導 &nbsp;|&nbsp; ⚠️ 單一來源 = 請自行查證<br>
     本報告為 AI 生成，僅供參考，不構成投資建議<br><br>
-    <a href="https://marketdaily.github.io/financial-daily-digest/" style="color:#6366f1;text-decoration:none;font-weight:700;">🌐 marketdaily.github.io/financial-daily-digest</a> &nbsp;·&nbsp;
-    <a href="https://marketdaily.github.io/financial-daily-digest/dashboard.html" style="color:#a5b4fc;text-decoration:none;">⚙️ 我的專區</a>
+    <a href="https://marketdaily.ai" style="color:#6366f1;text-decoration:none;font-weight:700;">🌐 marketdaily.ai</a> &nbsp;·&nbsp;
+    <a href="https://marketdaily.ai/dashboard.html" style="color:#a5b4fc;text-decoration:none;">⚙️ 我的專區</a>
   </div>
 </div>
 </body>
 </html>""")
+    import shutil
+    shutil.copy(path, f"docs/output/digest_{date}.html")
+    _update_manifest(date)
     print(f"   本地預覽已儲存：{path}")
     return path
+
+
+def _update_manifest(date: str):
+    manifest_path = "docs/output/manifest.json"
+    try:
+        with open(manifest_path, "r", encoding="utf-8") as f:
+            manifest = json.load(f)
+    except Exception:
+        manifest = {"dates": []}
+    if date not in manifest.get("dates", []):
+        manifest.setdefault("dates", []).append(date)
+        manifest["dates"].sort(reverse=True)
+        manifest["dates"] = manifest["dates"][:30]
+    with open(manifest_path, "w", encoding="utf-8") as f:
+        json.dump(manifest, f)
 
 
 WORKER_URL = "https://marketdaily-webhook.delvin-12345678.workers.dev"
@@ -191,17 +321,26 @@ def _inject_ai_banner(inner_html: str, date: str) -> str:
 
 
 def get_user_preferences(email: str) -> dict:
+    """讀取用戶在「我的專區」設定的持倉偏好。失敗會重試，確保日報依個人設定客製化。"""
     import requests
-    try:
-        res = requests.post(
-            f"{WORKER_URL}/get-preferences",
-            json={"email": email},
-            timeout=5
-        )
-        if res.ok:
-            return res.json()
-    except Exception:
-        pass
+    for attempt in range(3):
+        try:
+            res = requests.post(
+                f"{WORKER_URL}/get-preferences",
+                json={"email": email},
+                timeout=10
+            )
+            if res.ok:
+                d = res.json() or {}
+                return {
+                    "us_stocks": d.get("us_stocks") or [],
+                    "tw_stocks": d.get("tw_stocks") or [],
+                }
+        except Exception:
+            pass
+        if attempt < 2:
+            time.sleep(2)
+    print(f"   ⚠️ 無法取得 {email} 的偏好設定（重試 3 次後仍失敗），本次改用預設版")
     return {"us_stocks": [], "tw_stocks": []}
 
 
@@ -260,22 +399,35 @@ def run():
     print("⑥ 個人化發送...")
     from analyzer import get_personalized_subject
     success_count = 0
+    ai_calls = 0
     for email in subscribers:
         prefs = subscriber_prefs[email]
         us_stocks = prefs.get("us_stocks") or []
         tw_stocks = prefs.get("tw_stocks") or []
 
+        subject = None
         if us_stocks or tw_stocks:
             print(f"   {email} → 個人化（美股:{len(us_stocks)}, 台股:{len(tw_stocks)}）")
-            inner = generate_report(data, us_stocks or None, tw_stocks or None)
-            inner = _inject_ai_banner(inner, data["date"])
-            subject = get_personalized_subject(data, us_stocks, tw_stocks, data["date"])
+            try:
+                if ai_calls > 0:
+                    time.sleep(8)  # 輕度間隔，避免超過 Gemini 每分鐘請求數限制
+                inner = generate_report(data, us_stocks or None, tw_stocks or None)
+                ai_calls += 1
+                inner = _inject_ai_banner(inner, data["date"])
+                subject = get_personalized_subject(data, us_stocks, tw_stocks, data["date"])
+            except Exception as e:
+                print(f"   ⚠️ {email} 個人化失敗，改用預設版（{e}）")
+                inner = default_report
+                subject = None
         else:
             inner = default_report
-            subject = None
 
-        html = build_email_html(data["date"], inner)
-        ok = send_transactional_email(email, data["date"], html, BREVO_API_KEY, subject=subject)
+        try:
+            html = build_email_html(data["date"], inner)
+            ok = send_transactional_email(email, data["date"], html, BREVO_API_KEY, subject=subject)
+        except Exception as e:
+            ok = False
+            print(f"   ❌ 發送異常：{email}（{e}）")
         if ok:
             success_count += 1
         else:
