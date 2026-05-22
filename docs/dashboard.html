@@ -156,6 +156,13 @@ nav {
   cursor: pointer; transition: all 0.18s; font-family: inherit; font-weight: 600;
 }
 .logout-btn:hover { color: var(--text); border-color: var(--border2); }
+.lang-btn {
+  font-size: 12px; font-weight: 700; color: var(--text2);
+  background: var(--input-bg); border: 1px solid var(--input-border);
+  padding: 6px 14px; border-radius: 20px;
+  cursor: pointer; transition: all 0.18s; font-family: inherit;
+}
+.lang-btn:hover { background: rgba(99,102,241,0.12); border-color: var(--primary-border); color: #fff; }
 
 /* Hero banner */
 .dash-hero {
@@ -462,31 +469,31 @@ nav {
         </div>
         Market<em>Daily</em>
       </div>
-      <div class="login-sub">訂閱者專區 · 輸入你的 Email 進入</div>
+      <div class="login-sub" data-i18n="login_sub">訂閱者專區 · 輸入你的 Email 進入</div>
 
       <div id="login-form">
-        <label class="login-label" for="login-email">訂閱 Email</label>
+        <label class="login-label" for="login-email" data-i18n="login_email_label">訂閱 Email</label>
         <input type="email" class="login-input" id="login-email" placeholder="your@email.com" autocomplete="email">
-        <label class="login-label" for="login-password">密碼</label>
+        <label class="login-label" for="login-password" data-i18n="login_pwd_label">密碼</label>
         <input type="password" class="login-input" id="login-password" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
-        <label class="remember-me"><input type="checkbox" id="remember-me"> 記住我</label>
-        <button class="login-btn" id="login-btn" onclick="doLogin()">進入我的專區 →</button>
+        <label class="remember-me"><input type="checkbox" id="remember-me"> <span data-i18n="login_remember">記住我</span></label>
+        <button class="login-btn" id="login-btn" onclick="doLogin()" data-i18n="login_btn">進入我的專區 →</button>
         <div class="login-err" id="login-err"></div>
       </div>
 
       <div id="set-password-form" style="display:none;">
-        <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:6px;">設定你的密碼</div>
-        <p style="font-size:13px;color:var(--text3);margin-bottom:16px;line-height:1.65;">這是你第一次登入，請設定一個密碼（至少 6 位）</p>
-        <label class="login-label" for="new-password">新密碼</label>
-        <input type="password" class="login-input" id="new-password" placeholder="至少 6 位" autocomplete="new-password">
-        <label class="login-label" for="confirm-password">確認密碼</label>
-        <input type="password" class="login-input" id="confirm-password" placeholder="再輸入一次" autocomplete="new-password" onkeydown="if(event.key==='Enter')doSetPassword()">
-        <button class="login-btn" id="set-pwd-btn" onclick="doSetPassword()">設定並進入 →</button>
+        <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:6px;" data-i18n="setpwd_title">設定你的密碼</div>
+        <p style="font-size:13px;color:var(--text3);margin-bottom:16px;line-height:1.65;" data-i18n="setpwd_desc">這是你第一次登入，請設定一個密碼（至少 6 位）</p>
+        <label class="login-label" for="new-password" data-i18n="setpwd_new_label">新密碼</label>
+        <input type="password" class="login-input" id="new-password" placeholder="至少 6 位" autocomplete="new-password" data-i18n-placeholder="ph_min6">
+        <label class="login-label" for="confirm-password" data-i18n="setpwd_confirm_label">確認密碼</label>
+        <input type="password" class="login-input" id="confirm-password" placeholder="再輸入一次" autocomplete="new-password" onkeydown="if(event.key==='Enter')doSetPassword()" data-i18n-placeholder="ph_again">
+        <button class="login-btn" id="set-pwd-btn" onclick="doSetPassword()" data-i18n="setpwd_btn">設定並進入 →</button>
         <div class="login-err" id="set-pwd-err"></div>
-        <div style="font-size:12px;color:var(--text3);text-align:center;margin-top:14px;cursor:pointer;" onclick="showLoginForm()">← 返回</div>
+        <div style="font-size:12px;color:var(--text3);text-align:center;margin-top:14px;cursor:pointer;" onclick="showLoginForm()" data-i18n="setpwd_back">← 返回</div>
       </div>
 
-      <div class="login-hint">尚未訂閱？<a href="index.html">前往訂閱 →</a><br>第一次使用、不知道怎麼操作？<a href="guide.html">看新手教學 →</a></div>
+      <div class="login-hint" data-i18n-html="login_hint">尚未訂閱？<a href="index.html">前往訂閱 →</a><br>第一次使用、不知道怎麼操作？<a href="guide.html">看新手教學 →</a></div>
     </div>
   </div>
 </div>
@@ -508,15 +515,16 @@ nav {
     <div class="nav-right">
       <span class="nav-email" id="nav-email"></span>
       <span class="admin-badge" id="admin-badge" style="display:none;">👑 Admin</span>
-      <button class="logout-btn" onclick="doLogout()">登出</button>
+      <button class="lang-btn" onclick="toggleLang()">EN</button>
+      <button class="logout-btn" onclick="doLogout()" data-i18n="nav_logout">登出</button>
     </div>
   </nav>
 
   <div class="dash-hero">
     <div class="dash-hero-inner">
-      <div class="dash-hero-label">財經日報 · 訂閱者專區</div>
+      <div class="dash-hero-label" data-i18n="hero_label">財經日報 · 訂閱者專區</div>
       <div class="dash-hero-name" id="hero-name">👋 嗨！</div>
-      <div class="dash-hero-sub">每天早上 7:00 AM，你的個人化財經日報會送到信箱</div>
+      <div class="dash-hero-sub" data-i18n="hero_sub">每天早上 7:00 AM，你的個人化財經日報會送到信箱</div>
       <div class="plan-badge" id="plan-badge">✅ 訂閱中</div>
     </div>
   </div>
@@ -524,10 +532,10 @@ nav {
   <!-- Stories -->
   <div class="stories-section" id="stories-section" style="display:none;">
     <div class="stories-label-row">
-      <div class="stories-label">📊 持倉即時動態</div>
+      <div class="stories-label" data-i18n="stories_label">📊 持倉即時動態</div>
       <div class="sync-countdown" id="sync-countdown" style="display:none;">
         <div class="sync-dot"></div>
-        <span id="sync-counter">60</span>s 後同步
+        <span id="sync-counter">60</span><span data-i18n="sync_suffix">s 後同步</span>
       </div>
     </div>
     <div class="stories-row" id="stories-row"></div>
@@ -535,7 +543,7 @@ nav {
 
   <!-- Market Overview -->
   <div class="market-overview-section" id="market-overview-section" style="display:none;">
-    <div class="stories-label">🌐 今日大盤</div>
+    <div class="stories-label" data-i18n="market_label">🌐 今日大盤</div>
     <div class="mo-row" id="mo-row"></div>
   </div>
 
@@ -565,19 +573,19 @@ nav {
 
     <!-- Admin Panel -->
     <div class="admin-panel" id="admin-panel">
-      <div class="admin-panel-title" style="display:flex;align-items:center;justify-content:space-between;">👑 管理員面板<a href="admin.html" style="font-size:11px;font-weight:600;color:rgba(253,230,138,0.7);background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.25);padding:4px 12px;border-radius:20px;text-decoration:none;transition:all 0.18s;" onmouseover="this.style.background='rgba(245,158,11,0.22)';this.style.color='#fde68a'" onmouseout="this.style.background='rgba(245,158,11,0.12)';this.style.color='rgba(253,230,138,0.7)'">進入後台 →</a></div>
+      <div class="admin-panel-title" style="display:flex;align-items:center;justify-content:space-between;"><span data-i18n="admin_panel_title">👑 管理員面板</span><a href="admin.html" style="font-size:11px;font-weight:600;color:rgba(253,230,138,0.7);background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.25);padding:4px 12px;border-radius:20px;text-decoration:none;transition:all 0.18s;" onmouseover="this.style.background='rgba(245,158,11,0.22)';this.style.color='#fde68a'" onmouseout="this.style.background='rgba(245,158,11,0.12)';this.style.color='rgba(253,230,138,0.7)'" data-i18n="admin_enter_console">進入後台 →</a></div>
       <div class="admin-stats">
         <div class="admin-stat">
           <div class="admin-stat-value" id="admin-total">—</div>
-          <div class="admin-stat-label">總訂閱人數</div>
+          <div class="admin-stat-label" data-i18n="admin_stat_total">總訂閱人數</div>
         </div>
         <div class="admin-stat">
           <div class="admin-stat-value" id="admin-free">—</div>
-          <div class="admin-stat-label">免費訂閱</div>
+          <div class="admin-stat-label" data-i18n="admin_stat_free">免費訂閱</div>
         </div>
         <div class="admin-stat">
           <div class="admin-stat-value" id="admin-paid">—</div>
-          <div class="admin-stat-label">付費訂閱</div>
+          <div class="admin-stat-label" data-i18n="admin_stat_paid">付費訂閱</div>
         </div>
       </div>
       <div class="admin-actions">
@@ -591,82 +599,82 @@ nav {
     <!-- Stats -->
     <div class="stats scene-reveal">
       <div class="stat">
-        <div class="stat-label">訂閱狀態</div>
-        <div class="stat-value green">✅ 啟用中</div>
-        <div class="stat-sub" id="stat-plan">免費方案</div>
+        <div class="stat-label" data-i18n="stat_status_label">訂閱狀態</div>
+        <div class="stat-value green" data-i18n="stat_status_value">✅ 啟用中</div>
+        <div class="stat-sub" id="stat-plan" data-i18n="plan_free">免費方案</div>
       </div>
       <div class="stat">
-        <div class="stat-label">美股追蹤</div>
+        <div class="stat-label" data-i18n="stat_us_label">美股追蹤</div>
         <div class="stat-value" id="stat-us">0 支</div>
-        <div class="stat-sub" id="stat-us-list">尚未設定</div>
+        <div class="stat-sub" id="stat-us-list" data-i18n="not_set">尚未設定</div>
       </div>
       <div class="stat">
-        <div class="stat-label">台股追蹤</div>
+        <div class="stat-label" data-i18n="stat_tw_label">台股追蹤</div>
         <div class="stat-value" id="stat-tw">0 支</div>
-        <div class="stat-sub" id="stat-tw-list">尚未設定</div>
+        <div class="stat-sub" id="stat-tw-list" data-i18n="not_set">尚未設定</div>
       </div>
     </div>
 
     <!-- US Stocks -->
     <div class="card">
-      <div class="card-title">🇺🇸 美股持倉</div>
-      <div class="card-desc">搜尋代號或公司名稱（例如 NVDA、Tesla），點擊加入清單</div>
-      <div class="tags" id="us-tags"><span class="tags-empty">尚未選擇任何美股</span></div>
+      <div class="card-title" data-i18n="us_card_title">🇺🇸 美股持倉</div>
+      <div class="card-desc" data-i18n="us_card_desc">搜尋代號或公司名稱（例如 NVDA、Tesla），點擊加入清單</div>
+      <div class="tags" id="us-tags"><span class="tags-empty" data-i18n="us_tags_empty">尚未選擇任何美股</span></div>
       <div class="search-wrap">
         <span class="search-icon">🔍</span>
-        <input type="text" class="search-input" id="us-search" placeholder="搜尋美股代號或名稱..." autocomplete="off" aria-label="搜尋美股">
+        <input type="text" class="search-input" id="us-search" placeholder="搜尋美股代號或名稱..." autocomplete="off" aria-label="搜尋美股" data-i18n-placeholder="us_search_ph">
         <div class="dropdown" id="us-dropdown"></div>
       </div>
     </div>
 
     <!-- TW Stocks -->
     <div class="card">
-      <div class="card-title">🇹🇼 台股持倉</div>
-      <div class="card-desc">搜尋代號或公司名稱（例如 2330、台積電），點擊加入清單</div>
-      <div class="tags" id="tw-tags"><span class="tags-empty">尚未選擇任何台股</span></div>
+      <div class="card-title" data-i18n="tw_card_title">🇹🇼 台股持倉</div>
+      <div class="card-desc" data-i18n="tw_card_desc">搜尋代號或公司名稱（例如 2330、台積電），點擊加入清單</div>
+      <div class="tags" id="tw-tags"><span class="tags-empty" data-i18n="tw_tags_empty">尚未選擇任何台股</span></div>
       <div class="search-wrap">
         <span class="search-icon">🔍</span>
-        <input type="text" class="search-input" id="tw-search" placeholder="搜尋台股代號或名稱..." autocomplete="off" aria-label="搜尋台股">
+        <input type="text" class="search-input" id="tw-search" placeholder="搜尋台股代號或名稱..." autocomplete="off" aria-label="搜尋台股" data-i18n-placeholder="tw_search_ph">
         <div class="dropdown" id="tw-dropdown"></div>
       </div>
     </div>
 
     <div class="cap-bar" id="cap-bar">
-      <span class="cap-count" id="cap-count">已追蹤 0 檔</span>
-      <a href="pricing.html" class="cap-upgrade" id="cap-upgrade" style="display:none;">升級可追蹤更多 →</a>
+      <span class="cap-count" id="cap-count" data-i18n="cap_count_zero">已追蹤 0 檔</span>
+      <a href="pricing.html" class="cap-upgrade" id="cap-upgrade" style="display:none;" data-i18n="cap_upgrade">升級可追蹤更多 →</a>
     </div>
-    <div class="save-status" id="save-status" onclick="doAutoSave()">你的選擇會自動儲存,不需要按任何按鈕。</div>
+    <div class="save-status" id="save-status" onclick="doAutoSave()" data-i18n="save_status_idle">你的選擇會自動儲存,不需要按任何按鈕。</div>
 
     <!-- Change Password -->
     <div class="card" id="change-pwd-card" style="margin-top:8px;">
-      <div class="card-title">🔒 修改密碼</div>
-      <div class="card-desc">修改你的帳號登入密碼</div>
+      <div class="card-title" data-i18n="cpwd_card_title">🔒 修改密碼</div>
+      <div class="card-desc" data-i18n="cpwd_card_desc">修改你的帳號登入密碼</div>
       <div id="change-pwd-form" style="display:none;margin-top:14px;">
-        <label class="login-label" for="cpwd-old" style="display:block;font-size:12px;font-weight:700;color:var(--text2);margin-bottom:7px;">目前密碼</label>
+        <label class="login-label" for="cpwd-old" style="display:block;font-size:12px;font-weight:700;color:var(--text2);margin-bottom:7px;" data-i18n="cpwd_old_label">目前密碼</label>
         <input type="password" class="login-input" id="cpwd-old" placeholder="••••••••" autocomplete="current-password" style="width:100%;padding:13px 16px;background:var(--input-bg);border:1px solid var(--input-border);border-radius:var(--radius-sm);font-size:14px;font-family:inherit;color:var(--text);outline:none;transition:all 0.2s;margin-bottom:14px;">
-        <label class="login-label" for="cpwd-new" style="display:block;font-size:12px;font-weight:700;color:var(--text2);margin-bottom:7px;">新密碼</label>
-        <input type="password" class="login-input" id="cpwd-new" placeholder="至少 6 位" autocomplete="new-password" style="width:100%;padding:13px 16px;background:var(--input-bg);border:1px solid var(--input-border);border-radius:var(--radius-sm);font-size:14px;font-family:inherit;color:var(--text);outline:none;transition:all 0.2s;margin-bottom:14px;">
-        <label class="login-label" for="cpwd-confirm" style="display:block;font-size:12px;font-weight:700;color:var(--text2);margin-bottom:7px;">確認新密碼</label>
-        <input type="password" class="login-input" id="cpwd-confirm" placeholder="再輸入一次" autocomplete="new-password" style="width:100%;padding:13px 16px;background:var(--input-bg);border:1px solid var(--input-border);border-radius:var(--radius-sm);font-size:14px;font-family:inherit;color:var(--text);outline:none;transition:all 0.2s;margin-bottom:14px;" onkeydown="if(event.key==='Enter')doChangePassword()">
-        <button class="save-btn" onclick="doChangePassword()" id="cpwd-btn">確認修改 →</button>
+        <label class="login-label" for="cpwd-new" style="display:block;font-size:12px;font-weight:700;color:var(--text2);margin-bottom:7px;" data-i18n="cpwd_new_label">新密碼</label>
+        <input type="password" class="login-input" id="cpwd-new" placeholder="至少 6 位" autocomplete="new-password" style="width:100%;padding:13px 16px;background:var(--input-bg);border:1px solid var(--input-border);border-radius:var(--radius-sm);font-size:14px;font-family:inherit;color:var(--text);outline:none;transition:all 0.2s;margin-bottom:14px;" data-i18n-placeholder="ph_min6">
+        <label class="login-label" for="cpwd-confirm" style="display:block;font-size:12px;font-weight:700;color:var(--text2);margin-bottom:7px;" data-i18n="cpwd_confirm_label">確認新密碼</label>
+        <input type="password" class="login-input" id="cpwd-confirm" placeholder="再輸入一次" autocomplete="new-password" style="width:100%;padding:13px 16px;background:var(--input-bg);border:1px solid var(--input-border);border-radius:var(--radius-sm);font-size:14px;font-family:inherit;color:var(--text);outline:none;transition:all 0.2s;margin-bottom:14px;" onkeydown="if(event.key==='Enter')doChangePassword()" data-i18n-placeholder="ph_again">
+        <button class="save-btn" onclick="doChangePassword()" id="cpwd-btn" data-i18n="cpwd_submit">確認修改 →</button>
         <div style="display:none;margin-top:12px;font-size:13px;color:#f87171;text-align:center;" id="cpwd-err"></div>
-        <div style="display:none;margin-top:12px;padding:12px 16px;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.25);color:#6ee7b7;font-size:13px;font-weight:600;border-radius:10px;text-align:center;" id="cpwd-ok">✅ 密碼已更新！</div>
+        <div style="display:none;margin-top:12px;padding:12px 16px;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.25);color:#6ee7b7;font-size:13px;font-weight:600;border-radius:10px;text-align:center;" id="cpwd-ok" data-i18n="cpwd_ok">✅ 密碼已更新！</div>
       </div>
-      <button class="save-btn" onclick="toggleChangePwd()" id="toggle-pwd-btn" style="margin-top:0;">修改密碼</button>
+      <button class="save-btn" onclick="toggleChangePwd()" id="toggle-pwd-btn" style="margin-top:0;" data-i18n="cpwd_toggle">修改密碼</button>
     </div>
 
     <!-- LINE 即時提醒(Premium 專屬) -->
     <div class="card" id="line-alert-card" style="margin-top:8px;display:none;">
-      <div class="card-title">⚡ 即時 LINE 重大新聞提醒</div>
-      <div class="card-desc">重大新聞影響到你的持股時,立刻用 LINE 通知你,不必等隔天日報。Premium 專屬功能。</div>
+      <div class="card-title" data-i18n="line_card_title">⚡ 即時 LINE 重大新聞提醒</div>
+      <div class="card-desc" data-i18n="line_card_desc">重大新聞影響到你的持股時,立刻用 LINE 通知你,不必等隔天日報。Premium 專屬功能。</div>
       <div id="line-unbound-box" style="display:none;margin-top:14px;">
-        <div style="font-size:12px;color:var(--text2);line-height:1.7;margin-bottom:14px;padding:10px 13px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.22);border-radius:10px;">⚠️ 綁定前,請先 <a href="https://line.me/R/ti/p/@516nponm" target="_blank" rel="noopener" style="color:#fbbf24;font-weight:700;">加 MarketDaily 官方帳號好友</a>,提醒才送得到。</div>
-        <button class="save-btn" onclick="bindLine()" id="line-bind-btn" style="margin-top:0;background:#06C755;">綁定 LINE →</button>
+        <div style="font-size:12px;color:var(--text2);line-height:1.7;margin-bottom:14px;padding:10px 13px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.22);border-radius:10px;" data-i18n-html="line_friend_notice">⚠️ 綁定前,請先 <a href="https://line.me/R/ti/p/@516nponm" target="_blank" rel="noopener" style="color:#fbbf24;font-weight:700;">加 MarketDaily 官方帳號好友</a>,提醒才送得到。</div>
+        <button class="save-btn" onclick="bindLine()" id="line-bind-btn" style="margin-top:0;background:#06C755;" data-i18n="line_bind_btn">綁定 LINE →</button>
         <div style="display:none;margin-top:12px;font-size:13px;color:#f87171;text-align:center;" id="line-err"></div>
       </div>
       <div id="line-bound-box" style="display:none;margin-top:14px;">
-        <div style="padding:12px 16px;background:rgba(6,199,85,0.1);border:1px solid rgba(6,199,85,0.3);color:#6ee7b7;font-size:13px;font-weight:600;border-radius:10px;margin-bottom:12px;">✓ LINE 已綁定 — 重大新聞會即時推播給你</div>
-        <button class="save-btn" onclick="unbindLine()" id="line-unbind-btn" style="margin-top:0;background:rgba(255,255,255,0.06);border:1px solid var(--input-border);">解除綁定</button>
+        <div style="padding:12px 16px;background:rgba(6,199,85,0.1);border:1px solid rgba(6,199,85,0.3);color:#6ee7b7;font-size:13px;font-weight:600;border-radius:10px;margin-bottom:12px;" data-i18n="line_bound_notice">✓ LINE 已綁定 — 重大新聞會即時推播給你</div>
+        <button class="save-btn" onclick="unbindLine()" id="line-unbind-btn" style="margin-top:0;background:rgba(255,255,255,0.06);border:1px solid var(--input-border);" data-i18n="line_unbind_btn">解除綁定</button>
       </div>
     </div>
 
@@ -675,43 +683,43 @@ nav {
       <div class="referral-header">
         <div class="referral-icon">🎁</div>
         <div>
-          <div class="referral-title">推薦好友，一起賺報告！</div>
-          <div class="referral-subtitle">分享你的專屬連結，追蹤好友點擊與加入 · Pro 獎勵即將開放</div>
+          <div class="referral-title" data-i18n="ref_title">推薦好友，一起賺報告！</div>
+          <div class="referral-subtitle" data-i18n="ref_subtitle">分享你的專屬連結，追蹤好友點擊與加入 · Pro 獎勵即將開放</div>
         </div>
       </div>
 
       <div class="referral-stats">
         <div class="referral-stat">
           <div class="referral-stat-num" id="ref-clicks">—</div>
-          <div class="referral-stat-label">連結點擊</div>
+          <div class="referral-stat-label" data-i18n="ref_stat_clicks">連結點擊</div>
         </div>
         <div class="referral-stat">
           <div class="referral-stat-num" id="ref-signups">—</div>
-          <div class="referral-stat-label">成功加入</div>
+          <div class="referral-stat-label" data-i18n="ref_stat_signups">成功加入</div>
         </div>
         <div class="referral-stat">
           <div class="referral-stat-num" id="ref-rewards">—</div>
-          <div class="referral-stat-label">可累積獎勵（天）</div>
+          <div class="referral-stat-label" data-i18n="ref_stat_rewards">可累積獎勵（天）</div>
         </div>
       </div>
 
       <div class="referral-link-wrap">
-        <div class="referral-link-text" id="ref-link-display">載入中...</div>
-        <button class="copy-btn" id="copy-ref-btn" onclick="copyRefLink()">複製連結</button>
+        <div class="referral-link-text" id="ref-link-display" data-i18n="ref_loading">載入中...</div>
+        <button class="copy-btn" id="copy-ref-btn" onclick="copyRefLink()" data-i18n="ref_copy_btn">複製連結</button>
       </div>
 
-      <div class="referral-reward-info">
+      <div class="referral-reward-info" data-i18n-html="ref_reward_info">
         <strong>🎁 推薦獎勵即將開放：</strong>系統已開始記錄你的連結點擊與好友加入 — <strong>現在累積的每一次推薦，獎勵啟用後都會算數</strong>。先把連結分享出去，搶先累積。
       </div>
 
       <div class="referral-share-btns">
         <button class="share-btn line" onclick="shareToLine()">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.627-.63h2.386c.349 0 .63.285.63.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.627-.63.349 0 .631.285.631.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.281.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314"/></svg>
-          分享到 LINE
+          <span data-i18n="ref_share_line">分享到 LINE</span>
         </button>
         <button class="share-btn copy-link" onclick="copyRefLink()">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
-          複製連結
+          <span data-i18n="ref_copy_btn2">複製連結</span>
         </button>
       </div>
     </div>
@@ -722,6 +730,332 @@ nav {
 <script src="stocks.js"></script>
 <script>
 const WORKER_URL = "https://marketdaily-webhook.delvin-12345678.workers.dev";
+
+/* ── i18n ── */
+const i18n = {
+  zh: {
+    page_title: "訂閱者專區 · MarketDaily",
+    login_sub: "訂閱者專區 · 輸入你的 Email 進入",
+    login_email_label: "訂閱 Email",
+    login_pwd_label: "密碼",
+    login_remember: "記住我",
+    login_btn: "進入我的專區 →",
+    setpwd_title: "設定你的密碼",
+    setpwd_desc: "這是你第一次登入，請設定一個密碼（至少 6 位）",
+    setpwd_new_label: "新密碼",
+    setpwd_confirm_label: "確認密碼",
+    setpwd_btn: "設定並進入 →",
+    setpwd_back: "← 返回",
+    login_hint: "尚未訂閱？<a href=\"index.html\">前往訂閱 →</a><br>第一次使用、不知道怎麼操作？<a href=\"guide.html\">看新手教學 →</a>",
+    ph_min6: "至少 6 位",
+    ph_again: "再輸入一次",
+    nav_logout: "登出",
+    hero_label: "財經日報 · 訂閱者專區",
+    hero_sub: "每天早上 7:00 AM，你的個人化財經日報會送到信箱",
+    stories_label: "📊 持倉即時動態",
+    sync_suffix: "s 後同步",
+    market_label: "🌐 今日大盤",
+    admin_panel_title: "👑 管理員面板",
+    admin_enter_console: "進入後台 →",
+    admin_stat_total: "總訂閱人數",
+    admin_stat_free: "免費訂閱",
+    admin_stat_paid: "付費訂閱",
+    stat_status_label: "訂閱狀態",
+    stat_status_value: "✅ 啟用中",
+    stat_us_label: "美股追蹤",
+    stat_tw_label: "台股追蹤",
+    not_set: "尚未設定",
+    us_card_title: "🇺🇸 美股持倉",
+    us_card_desc: "搜尋代號或公司名稱（例如 NVDA、Tesla），點擊加入清單",
+    us_tags_empty: "尚未選擇任何美股",
+    us_search_ph: "搜尋美股代號或名稱...",
+    tw_card_title: "🇹🇼 台股持倉",
+    tw_card_desc: "搜尋代號或公司名稱（例如 2330、台積電），點擊加入清單",
+    tw_tags_empty: "尚未選擇任何台股",
+    tw_search_ph: "搜尋台股代號或名稱...",
+    cap_count_zero: "已追蹤 0 檔",
+    cap_upgrade: "升級可追蹤更多 →",
+    save_status_idle: "你的選擇會自動儲存,不需要按任何按鈕。",
+    cpwd_card_title: "🔒 修改密碼",
+    cpwd_card_desc: "修改你的帳號登入密碼",
+    cpwd_old_label: "目前密碼",
+    cpwd_new_label: "新密碼",
+    cpwd_confirm_label: "確認新密碼",
+    cpwd_submit: "確認修改 →",
+    cpwd_ok: "✅ 密碼已更新！",
+    cpwd_toggle: "修改密碼",
+    line_card_title: "⚡ 即時 LINE 重大新聞提醒",
+    line_card_desc: "重大新聞影響到你的持股時,立刻用 LINE 通知你,不必等隔天日報。Premium 專屬功能。",
+    line_friend_notice: "⚠️ 綁定前,請先 <a href=\"https://line.me/R/ti/p/@516nponm\" target=\"_blank\" rel=\"noopener\" style=\"color:#fbbf24;font-weight:700;\">加 MarketDaily 官方帳號好友</a>,提醒才送得到。",
+    line_bind_btn: "綁定 LINE →",
+    line_bound_notice: "✓ LINE 已綁定 — 重大新聞會即時推播給你",
+    line_unbind_btn: "解除綁定",
+    ref_title: "推薦好友，一起賺報告！",
+    ref_subtitle: "分享你的專屬連結，追蹤好友點擊與加入 · Pro 獎勵即將開放",
+    ref_stat_clicks: "連結點擊",
+    ref_stat_signups: "成功加入",
+    ref_stat_rewards: "可累積獎勵（天）",
+    ref_loading: "載入中...",
+    ref_copy_btn: "複製連結",
+    ref_copy_btn2: "複製連結",
+    ref_reward_info: "<strong>🎁 推薦獎勵即將開放：</strong>系統已開始記錄你的連結點擊與好友加入 — <strong>現在累積的每一次推薦，獎勵啟用後都會算數</strong>。先把連結分享出去，搶先累積。",
+    ref_share_line: "分享到 LINE",
+    // dynamic
+    plan_free: "免費方案",
+    plan_paid: "付費方案",
+    plan_admin: "管理員",
+    hero_name_greeting: name => `👋 嗨，${name}！`,
+    badge_admin: "👑 管理員 · 完整權限",
+    badge_paid: "⭐ 付費方案 · 訂閱中",
+    badge_free: "✅ 免費方案 · 訂閱中",
+    unit_count: n => `${n} 支`,
+    cap_count_unlimited: n => `已追蹤 ${n} 檔`,
+    cap_count_capped: (n, cap) => `已追蹤 ${n} / ${cap} 檔`,
+    search_ph_us: "搜尋美股代號或名稱...",
+    search_ph_tw: "搜尋台股代號或名稱...",
+    search_ph_full: cap => `已達上限 ${cap} 檔，移除後才能再加`,
+    err_invalid_email: "請輸入有效的 Email",
+    btn_verifying: "驗證中...",
+    err_no_record: "找不到這個 Email 的訂閱記錄。",
+    err_wrong_pwd: "密碼錯誤，請再試一次",
+    err_need_pwd: "請輸入密碼",
+    err_network: "網路錯誤，請稍後再試",
+    err_pwd_min6: "密碼至少需要 6 位",
+    err_pwd_mismatch: "兩次密碼不一致",
+    btn_setting: "設定中...",
+    err_set_failed: "設定失敗，請稍後再試",
+    err_enter_old_pwd: "請輸入目前密碼",
+    err_new_pwd_min6: "新密碼至少 6 位",
+    btn_processing: "處理中...",
+    err_old_pwd_wrong: "目前密碼錯誤",
+    err_change_failed: "修改失敗，請稍後再試",
+    save_pending: "● 變更將自動儲存…",
+    save_saved_short: "✅ 已儲存",
+    save_saving: "儲存中…",
+    save_saved_long: "✅ 已自動儲存 — 明天的報告就會依這份清單客製",
+    save_failed: "⚠️ 儲存失敗,點這裡重試",
+    save_net_err: "⚠️ 網路錯誤,點這裡重試",
+    ref_copied: "✓ 已複製！",
+    share_line_text: "我每天都在讀 MarketDaily 財經日報，30 秒看完今天所有市場動態！用我的連結一起加入 🎁",
+    line_relogin: "請重新登入",
+    line_prompt_pwd: "請輸入你的帳號密碼以綁定 LINE",
+    line_net_err: "網路錯誤,請稍後再試",
+    line_prompt_pwd_retry: "帳號密碼不正確,請重新輸入",
+    line_bind_failed: "綁定失敗,請稍後再試",
+    line_unbind_prompt: "解除綁定 — 請輸入你的密碼",
+    line_unbind_auth_err: "密碼錯誤",
+    line_unbind_failed: "解除失敗,請稍後再試",
+    line_processing: "處理中...",
+    line_bound_alert: "✅ LINE 綁定成功!重大新聞影響你的持股時會即時推播。",
+    line_error_alert: "⚠️ LINE 綁定失敗,請再試一次。",
+    chart_loading: "載入中…",
+    chart_no_data: "暫無圖表資料",
+    chart_load_failed: "圖表載入失敗",
+    dd_not_found: q => `找不到「${q}」，可直接按 Enter 加入自訂代號`,
+    dd_add: "+ 加入",
+    sig_neutral: "NEUTRAL",
+    sig_bull_slight: "偏多",
+    sig_bear_slight: "偏空",
+    verdict_no_data: "暫無資料",
+    verdict_strong_up: "🚀 強勢大漲！動能強勁，短線偏多，可追高但注意位置。",
+    verdict_up: "📈 穩步走高，買盤持續湧入，建議持有，設好停利點。",
+    verdict_slight_up: "➡️ 小幅收漲，趨勢中性偏多，可持續關注明日走向。",
+    verdict_slight_down: "⚠️ 小幅回落，注意前低支撐，破支撐前先觀望。",
+    verdict_down: "📉 明顯回調，賣壓出現，建議暫時觀望，等止跌訊號。",
+    verdict_strong_down: "🔴 重挫！單日大跌，注意風險，避免追殺，等反彈再評估。",
+    chart_full: "完整圖表 ↗",
+    level_support: "支撐",
+    level_target: "目標",
+    level_stop: "止損"
+  },
+  en: {
+    page_title: "Subscriber Area · MarketDaily",
+    login_sub: "Subscriber Area · Enter your email to continue",
+    login_email_label: "Subscription Email",
+    login_pwd_label: "Password",
+    login_remember: "Remember me",
+    login_btn: "Enter My Account →",
+    setpwd_title: "Set Your Password",
+    setpwd_desc: "This is your first login — please set a password (at least 6 characters).",
+    setpwd_new_label: "New Password",
+    setpwd_confirm_label: "Confirm Password",
+    setpwd_btn: "Set and Continue →",
+    setpwd_back: "← Back",
+    login_hint: "Not subscribed yet? <a href=\"index.html\">Subscribe now →</a><br>First time here, not sure how it works? <a href=\"guide.html\">See the getting-started guide →</a>",
+    ph_min6: "At least 6 characters",
+    ph_again: "Enter again",
+    nav_logout: "Log out",
+    hero_label: "Financial Digest · Subscriber Area",
+    hero_sub: "Every morning at 7:00 AM, your personalized financial digest lands in your inbox.",
+    stories_label: "📊 Live Portfolio Updates",
+    sync_suffix: "s to sync",
+    market_label: "🌐 Today's Markets",
+    admin_panel_title: "👑 Admin Panel",
+    admin_enter_console: "Open Console →",
+    admin_stat_total: "Total Subscribers",
+    admin_stat_free: "Free Subscribers",
+    admin_stat_paid: "Paid Subscribers",
+    stat_status_label: "Subscription",
+    stat_status_value: "✅ Active",
+    stat_us_label: "US Stocks Tracked",
+    stat_tw_label: "TW Stocks Tracked",
+    not_set: "Not set",
+    us_card_title: "🇺🇸 US Holdings",
+    us_card_desc: "Search by ticker or company name (e.g. NVDA, Tesla), then click to add to your list.",
+    us_tags_empty: "No US stocks selected yet",
+    us_search_ph: "Search US ticker or name...",
+    tw_card_title: "🇹🇼 TW Holdings",
+    tw_card_desc: "Search by ticker or company name (e.g. 2330, TSMC), then click to add to your list.",
+    tw_tags_empty: "No TW stocks selected yet",
+    tw_search_ph: "Search TW ticker or name...",
+    cap_count_zero: "0 stocks tracked",
+    cap_upgrade: "Upgrade to track more →",
+    save_status_idle: "Your selections save automatically — no button needed.",
+    cpwd_card_title: "🔒 Change Password",
+    cpwd_card_desc: "Change your account login password.",
+    cpwd_old_label: "Current Password",
+    cpwd_new_label: "New Password",
+    cpwd_confirm_label: "Confirm New Password",
+    cpwd_submit: "Confirm Change →",
+    cpwd_ok: "✅ Password updated!",
+    cpwd_toggle: "Change Password",
+    line_card_title: "⚡ Real-Time LINE Breaking-News Alerts",
+    line_card_desc: "When major news affects your holdings, we notify you instantly on LINE — no need to wait for the next day's digest. Premium-only feature.",
+    line_friend_notice: "⚠️ Before binding, please <a href=\"https://line.me/R/ti/p/@516nponm\" target=\"_blank\" rel=\"noopener\" style=\"color:#fbbf24;font-weight:700;\">add the MarketDaily official account as a friend</a>, otherwise alerts can't reach you.",
+    line_bind_btn: "Bind LINE →",
+    line_bound_notice: "✓ LINE connected — breaking news will be pushed to you in real time.",
+    line_unbind_btn: "Unbind",
+    ref_title: "Refer Friends, Earn Reports Together!",
+    ref_subtitle: "Share your personal link and track friend clicks and sign-ups · Pro rewards coming soon.",
+    ref_stat_clicks: "Link Clicks",
+    ref_stat_signups: "Sign-ups",
+    ref_stat_rewards: "Earnable Rewards (days)",
+    ref_loading: "Loading...",
+    ref_copy_btn: "Copy Link",
+    ref_copy_btn2: "Copy Link",
+    ref_reward_info: "<strong>🎁 Referral rewards coming soon:</strong> the system is already logging your link clicks and friend sign-ups — <strong>every referral you accumulate now will count once rewards go live</strong>. Share your link and get a head start.",
+    ref_share_line: "Share to LINE",
+    // dynamic
+    plan_free: "Free Plan",
+    plan_paid: "Paid Plan",
+    plan_admin: "Administrator",
+    hero_name_greeting: name => `👋 Hi, ${name}!`,
+    badge_admin: "👑 Administrator · Full Access",
+    badge_paid: "⭐ Paid Plan · Subscribed",
+    badge_free: "✅ Free Plan · Subscribed",
+    unit_count: n => `${n}`,
+    cap_count_unlimited: n => `${n} stocks tracked`,
+    cap_count_capped: (n, cap) => `${n} / ${cap} stocks tracked`,
+    search_ph_us: "Search US ticker or name...",
+    search_ph_tw: "Search TW ticker or name...",
+    search_ph_full: cap => `Limit reached (${cap}) — remove one to add more`,
+    err_invalid_email: "Please enter a valid email",
+    btn_verifying: "Verifying...",
+    err_no_record: "No subscription record found for this email.",
+    err_wrong_pwd: "Wrong password, please try again",
+    err_need_pwd: "Please enter your password",
+    err_network: "Network error, please try again later",
+    err_pwd_min6: "Password must be at least 6 characters",
+    err_pwd_mismatch: "Passwords do not match",
+    btn_setting: "Setting...",
+    err_set_failed: "Setup failed, please try again later",
+    err_enter_old_pwd: "Please enter your current password",
+    err_new_pwd_min6: "New password must be at least 6 characters",
+    btn_processing: "Processing...",
+    err_old_pwd_wrong: "Current password is incorrect",
+    err_change_failed: "Change failed, please try again later",
+    save_pending: "● Changes will save automatically…",
+    save_saved_short: "✅ Saved",
+    save_saving: "Saving…",
+    save_saved_long: "✅ Saved automatically — tomorrow's report will follow this list",
+    save_failed: "⚠️ Save failed, click here to retry",
+    save_net_err: "⚠️ Network error, click here to retry",
+    ref_copied: "✓ Copied!",
+    share_line_text: "I read the MarketDaily financial digest every day — all of today's market moves in 30 seconds! Join with my link 🎁",
+    line_relogin: "Please log in again",
+    line_prompt_pwd: "Enter your account password to bind LINE",
+    line_net_err: "Network error, please try again later",
+    line_prompt_pwd_retry: "Incorrect account or password, please re-enter",
+    line_bind_failed: "Binding failed, please try again later",
+    line_unbind_prompt: "Unbind — please enter your password",
+    line_unbind_auth_err: "Wrong password",
+    line_unbind_failed: "Unbind failed, please try again later",
+    line_processing: "Processing...",
+    line_bound_alert: "✅ LINE bound successfully! You'll get real-time alerts when major news affects your holdings.",
+    line_error_alert: "⚠️ LINE binding failed, please try again.",
+    chart_loading: "Loading…",
+    chart_no_data: "No chart data available",
+    chart_load_failed: "Failed to load chart",
+    dd_not_found: q => `No results for "${q}" — press Enter to add it as a custom ticker`,
+    dd_add: "+ Add",
+    sig_neutral: "NEUTRAL",
+    sig_bull_slight: "Slightly Bullish",
+    sig_bear_slight: "Slightly Bearish",
+    verdict_no_data: "No data available",
+    verdict_strong_up: "🚀 Strong rally! Powerful momentum, short-term bullish — you can chase, but watch your entry.",
+    verdict_up: "📈 Steady climb, buying keeps flowing in. Hold, and set a take-profit level.",
+    verdict_slight_up: "➡️ Modest gain, trend neutral-to-bullish. Keep watching tomorrow's direction.",
+    verdict_slight_down: "⚠️ Small pullback, watch the prior-low support. Stay on the sidelines until it holds.",
+    verdict_down: "📉 Clear correction, selling pressure appearing. Best to wait for a bottoming signal.",
+    verdict_strong_down: "🔴 Sharp drop! Big single-day loss — mind the risk, don't chase the fall, reassess on a bounce.",
+    chart_full: "Full chart ↗",
+    level_support: "Support",
+    level_target: "Target",
+    level_stop: "Stop"
+  }
+};
+
+let currentLang = localStorage.getItem('md-lang-v2') || 'zh';
+function T(key) {
+  const t = i18n[currentLang] || i18n.zh;
+  return t[key] !== undefined ? t[key] : (i18n.zh[key] !== undefined ? i18n.zh[key] : key);
+}
+
+function applyLang(lang) {
+  currentLang = (lang === 'en') ? 'en' : 'zh';
+  const t = i18n[currentLang];
+  document.title = t.page_title;
+  document.documentElement.lang = currentLang === 'zh' ? 'zh-Hant' : 'en';
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const v = t[el.dataset.i18n];
+    if (typeof v === 'string') el.textContent = v;
+  });
+  document.querySelectorAll('[data-i18n-html]').forEach(el => {
+    const v = t[el.dataset.i18nHtml];
+    if (typeof v === 'string') el.innerHTML = v;
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    const v = t[el.dataset.i18nPlaceholder];
+    if (typeof v === 'string') el.placeholder = v;
+  });
+  const langBtn = document.querySelector('.lang-btn');
+  if (langBtn) langBtn.textContent = currentLang === 'zh' ? 'EN' : '中文';
+  localStorage.setItem('md-lang-v2', currentLang);
+  if (typeof refreshDynamicLang === 'function') refreshDynamicLang();
+}
+
+function toggleLang() {
+  applyLang(currentLang === 'zh' ? 'en' : 'zh');
+}
+
+// Re-render dynamic (JS-set) strings after a language switch
+function refreshDynamicLang() {
+  const email = localStorage.getItem("md-email");
+  const plan = localStorage.getItem("md-plan") || "free";
+  if (email && document.getElementById("dashboard").style.display !== "none") {
+    const name = email.split("@")[0];
+    const heroName = document.getElementById("hero-name");
+    if (heroName) heroName.textContent = T('hero_name_greeting')(name);
+    if (plan === "admin") {
+      const sp = document.getElementById("stat-plan"); if (sp) sp.textContent = T('plan_admin');
+      const badge = document.getElementById("plan-badge"); if (badge) badge.textContent = T('badge_admin');
+    } else {
+      const sp = document.getElementById("stat-plan"); if (sp) sp.textContent = plan === "paid" ? T('plan_paid') : T('plan_free');
+      const badge = document.getElementById("plan-badge"); if (badge) badge.textContent = plan === "paid" ? T('badge_paid') : T('badge_free');
+    }
+    renderTags("us"); renderTags("tw"); updateStats();
+  }
+}
 
 let US_STOCKS = [], TW_STOCKS = [];
 const selected = { us: [], tw: [] };
@@ -752,12 +1086,12 @@ function renderDD(market, results, q) {
   const dd = document.getElementById(`${market}-dropdown`);
   if (!q) { dd.classList.remove("open"); return; }
   if (!results.length) {
-    dd.innerHTML = `<div class="dropdown-empty">找不到「${q}」，可直接按 Enter 加入自訂代號</div>`;
+    dd.innerHTML = `<div class="dropdown-empty">${T('dd_not_found')(q)}</div>`;
   } else {
     dd.innerHTML = results.map(([sym, name]) => {
       const zh = market === "us" && typeof US_ZH !== "undefined" ? (US_ZH[sym] || "") : "";
       return `<div class="dropdown-item" onclick="addStock('${market}','${sym}','${name.replace(/'/g,"&#39;")}')">
-        <span class="d-ticker">${sym}</span><span class="d-name">${zh ? `<b style="color:rgba(255,255,255,0.9)">${zh}</b> ` : ""}${name}</span><span class="d-add">+ 加入</span>
+        <span class="d-ticker">${sym}</span><span class="d-name">${zh ? `<b style="color:rgba(255,255,255,0.9)">${zh}</b> ` : ""}${name}</span><span class="d-add">${T('dd_add')}</span>
       </div>`;
     }).join("");
   }
@@ -786,7 +1120,7 @@ function removeStock(market, sym) {
 function renderTags(market) {
   const el = document.getElementById(`${market}-tags`);
   if (!selected[market].length) {
-    el.innerHTML = `<span class="tags-empty">尚未選擇任何${market === "us" ? "美股" : "台股"}</span>`; return;
+    el.innerHTML = `<span class="tags-empty">${market === "us" ? T('us_tags_empty') : T('tw_tags_empty')}</span>`; return;
   }
   el.innerHTML = selected[market].map(({ sym, name }) => {
     const zh = market === "us" && typeof US_ZH !== "undefined" ? (US_ZH[sym] || "") : "";
@@ -798,16 +1132,16 @@ function renderTags(market) {
 
 function updateStats() {
   const us = selected.us, tw = selected.tw;
-  document.getElementById("stat-us").textContent = `${us.length} 支`;
-  document.getElementById("stat-tw").textContent = `${tw.length} 支`;
-  document.getElementById("stat-us-list").textContent = us.length ? us.slice(0,3).map(s=>s.sym).join(" · ") + (us.length > 3 ? " ..." : "") : "尚未設定";
-  document.getElementById("stat-tw-list").textContent = tw.length ? tw.slice(0,2).map(s=>s.sym).join(" · ") + (tw.length > 2 ? " ..." : "") : "尚未設定";
+  document.getElementById("stat-us").textContent = T('unit_count')(us.length);
+  document.getElementById("stat-tw").textContent = T('unit_count')(tw.length);
+  document.getElementById("stat-us-list").textContent = us.length ? us.slice(0,3).map(s=>s.sym).join(" · ") + (us.length > 3 ? " ..." : "") : T('not_set');
+  document.getElementById("stat-tw-list").textContent = tw.length ? tw.slice(0,2).map(s=>s.sym).join(" · ") + (tw.length > 2 ? " ..." : "") : T('not_set');
 
   const n = us.length + tw.length;
   const atCap = userCap !== Infinity && n >= userCap;
   const countEl = document.getElementById("cap-count");
   if (countEl) {
-    countEl.textContent = userCap === Infinity ? `已追蹤 ${n} 檔` : `已追蹤 ${n} / ${userCap} 檔`;
+    countEl.textContent = userCap === Infinity ? T('cap_count_unlimited')(n) : T('cap_count_capped')(n, userCap);
     countEl.classList.toggle("full", atCap);
     document.getElementById("cap-upgrade").style.display = atCap && userPlan !== "premium" ? "" : "none";
   }
@@ -816,8 +1150,8 @@ function updateStats() {
     if (inp) {
       inp.disabled = atCap;
       inp.placeholder = atCap
-        ? `已達上限 ${userCap} 檔，移除後才能再加`
-        : (m === "us" ? "搜尋美股代號或名稱..." : "搜尋台股代號或名稱...");
+        ? T('search_ph_full')(userCap)
+        : (m === "us" ? T('search_ph_us') : T('search_ph_tw'));
     }
   });
 }
@@ -847,25 +1181,25 @@ async function doLogin() {
   const errEl = document.getElementById("login-err");
   const btn = document.getElementById("login-btn");
   errEl.style.display = "none";
-  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { errEl.textContent = "請輸入有效的 Email"; errEl.style.display = "block"; return; }
-  btn.disabled = true; btn.textContent = "驗證中...";
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { errEl.textContent = T('err_invalid_email'); errEl.style.display = "block"; return; }
+  btn.disabled = true; btn.textContent = T('btn_verifying');
   try {
     const res = await fetch(WORKER_URL + "/check-subscriber", {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
     });
     const data = await res.json();
-    if (!data.subscribed && !data.needsPasswordSetup) { errEl.textContent = "找不到這個 Email 的訂閱記錄。"; errEl.style.display = "block"; return; }
-    if (data.error === "wrong_password") { errEl.textContent = "密碼錯誤，請再試一次"; errEl.style.display = "block"; return; }
-    if (data.needsPasswordEntry) { errEl.textContent = "請輸入密碼"; errEl.style.display = "block"; return; }
+    if (!data.subscribed && !data.needsPasswordSetup) { errEl.textContent = T('err_no_record'); errEl.style.display = "block"; return; }
+    if (data.error === "wrong_password") { errEl.textContent = T('err_wrong_pwd'); errEl.style.display = "block"; return; }
+    if (data.needsPasswordEntry) { errEl.textContent = T('err_need_pwd'); errEl.style.display = "block"; return; }
     if (data.needsPasswordSetup) { _pendingEmail = email; document.getElementById("login-form").style.display = "none"; document.getElementById("set-password-form").style.display = "block"; return; }
     if (document.getElementById("remember-me").checked) { localStorage.setItem("md-saved-email", email); localStorage.setItem("md-saved-pwd", password); }
     else { localStorage.removeItem("md-saved-email"); localStorage.removeItem("md-saved-pwd"); }
     localStorage.setItem("md-email", email); localStorage.setItem("md-plan", data.plan || "free");
     sessionStorage.setItem("md-pwd", password);
     showDashboard(email, data.plan || "free");
-  } catch { errEl.textContent = "網路錯誤，請稍後再試"; errEl.style.display = "block"; }
-  finally { btn.disabled = false; btn.textContent = "進入我的專區 →"; }
+  } catch { errEl.textContent = T('err_network'); errEl.style.display = "block"; }
+  finally { btn.disabled = false; btn.textContent = T('login_btn'); }
 }
 
 async function doSetPassword() {
@@ -873,19 +1207,19 @@ async function doSetPassword() {
   const confirm = document.getElementById("confirm-password").value;
   const errEl = document.getElementById("set-pwd-err"); const btn = document.getElementById("set-pwd-btn");
   errEl.style.display = "none";
-  if (password.length < 6) { errEl.textContent = "密碼至少需要 6 位"; errEl.style.display = "block"; return; }
-  if (password !== confirm) { errEl.textContent = "兩次密碼不一致"; errEl.style.display = "block"; return; }
-  btn.disabled = true; btn.textContent = "設定中...";
+  if (password.length < 6) { errEl.textContent = T('err_pwd_min6'); errEl.style.display = "block"; return; }
+  if (password !== confirm) { errEl.textContent = T('err_pwd_mismatch'); errEl.style.display = "block"; return; }
+  btn.disabled = true; btn.textContent = T('btn_setting');
   try {
     const res = await fetch(WORKER_URL + "/set-password", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: _pendingEmail, password }) });
     const data = await res.json();
-    if (!data.ok) { errEl.textContent = "設定失敗，請稍後再試"; errEl.style.display = "block"; return; }
+    if (!data.ok) { errEl.textContent = T('err_set_failed'); errEl.style.display = "block"; return; }
     if (document.getElementById("remember-me") && document.getElementById("remember-me").checked) { localStorage.setItem("md-saved-email", _pendingEmail); localStorage.setItem("md-saved-pwd", password); }
     localStorage.setItem("md-email", _pendingEmail); localStorage.setItem("md-plan", data.plan || "free");
     sessionStorage.setItem("md-pwd", password);
     showDashboard(_pendingEmail, data.plan || "free");
-  } catch { errEl.textContent = "網路錯誤，請稍後再試"; errEl.style.display = "block"; }
-  finally { btn.disabled = false; btn.textContent = "設定並進入 →"; }
+  } catch { errEl.textContent = T('err_network'); errEl.style.display = "block"; }
+  finally { btn.disabled = false; btn.textContent = T('setpwd_btn'); }
 }
 
 function showLoginForm() {
@@ -916,17 +1250,17 @@ async function showDashboard(email, plan) {
   document.getElementById("dashboard").style.display = "block";
   setTimeout(function () { if (window.mdStockTour) window.mdStockTour(); }, 700);
   const name = email.split("@")[0];
-  document.getElementById("hero-name").textContent = `👋 嗨，${name}！`;
+  document.getElementById("hero-name").textContent = T('hero_name_greeting')(name);
   document.getElementById("nav-email").textContent = email;
   if (plan === "admin") {
-    document.getElementById("stat-plan").textContent = "管理員";
-    const badge = document.getElementById("plan-badge"); badge.textContent = "👑 管理員 · 完整權限"; badge.classList.add("admin");
+    document.getElementById("stat-plan").textContent = T('plan_admin');
+    const badge = document.getElementById("plan-badge"); badge.textContent = T('badge_admin'); badge.classList.add("admin");
     document.getElementById("admin-badge").style.display = "inline-flex";
     document.getElementById("admin-panel").style.display = "block";
     loadAdminStats();
   } else {
-    document.getElementById("stat-plan").textContent = plan === "paid" ? "付費方案" : "免費方案";
-    document.getElementById("plan-badge").textContent = plan === "paid" ? "⭐ 付費方案 · 訂閱中" : "✅ 免費方案 · 訂閱中";
+    document.getElementById("stat-plan").textContent = plan === "paid" ? T('plan_paid') : T('plan_free');
+    document.getElementById("plan-badge").textContent = plan === "paid" ? T('badge_paid') : T('badge_free');
   }
   setupLineCard(email, plan);
   await loadPreferences(email);
@@ -957,12 +1291,12 @@ async function bindLine(retryPwd) {
   const errEl = document.getElementById("line-err");
   const btn = document.getElementById("line-bind-btn");
   if (errEl) errEl.style.display = "none";
-  if (!email) { if (errEl) { errEl.textContent = "請重新登入"; errEl.style.display = "block"; } return; }
+  if (!email) { if (errEl) { errEl.textContent = T('line_relogin'); errEl.style.display = "block"; } return; }
   if (!password) {
-    password = prompt("請輸入你的帳號密碼以綁定 LINE");
+    password = prompt(T('line_prompt_pwd'));
     if (!password) return;
   }
-  btn.disabled = true; btn.textContent = "處理中...";
+  btn.disabled = true; btn.textContent = T('line_processing');
   let data;
   try {
     const res = await fetch(WORKER_URL + "/line/login", {
@@ -971,22 +1305,22 @@ async function bindLine(retryPwd) {
     });
     data = await res.json();
   } catch {
-    btn.disabled = false; btn.textContent = "綁定 LINE →";
-    errEl.textContent = "網路錯誤,請稍後再試"; errEl.style.display = "block"; return;
+    btn.disabled = false; btn.textContent = T('line_bind_btn');
+    errEl.textContent = T('line_net_err'); errEl.style.display = "block"; return;
   }
-  btn.disabled = false; btn.textContent = "綁定 LINE →";
+  btn.disabled = false; btn.textContent = T('line_bind_btn');
   if (data.authUrl) { sessionStorage.setItem("md-pwd", password); window.location.href = data.authUrl; return; }
   if (data.error === "auth") {
-    const p = prompt("帳號密碼不正確,請重新輸入");
+    const p = prompt(T('line_prompt_pwd_retry'));
     if (p) bindLine(p);
     return;
   }
-  errEl.textContent = "綁定失敗,請稍後再試"; errEl.style.display = "block";
+  errEl.textContent = T('line_bind_failed'); errEl.style.display = "block";
 }
 
 async function unbindLine() {
   const email = localStorage.getItem("md-email");
-  const password = sessionStorage.getItem("md-pwd") || localStorage.getItem("md-saved-pwd") || prompt("解除綁定 — 請輸入你的密碼");
+  const password = sessionStorage.getItem("md-pwd") || localStorage.getItem("md-saved-pwd") || prompt(T('line_unbind_prompt'));
   if (!password) return;
   try {
     const res = await fetch(WORKER_URL + "/line/unbind", {
@@ -997,8 +1331,8 @@ async function unbindLine() {
     if (data.ok) {
       document.getElementById("line-bound-box").style.display = "none";
       document.getElementById("line-unbound-box").style.display = "block";
-    } else { alert(data.error === "auth" ? "密碼錯誤" : "解除失敗,請稍後再試"); }
-  } catch { alert("網路錯誤,請稍後再試"); }
+    } else { alert(data.error === "auth" ? T('line_unbind_auth_err') : T('line_unbind_failed')); }
+  } catch { alert(T('line_net_err')); }
 }
 
 async function loadAdminStats() {
@@ -1105,24 +1439,24 @@ async function refreshQuotes() {
 }
 
 function storySignal(change) {
-  if (change === null) return { label: "NEUTRAL", cls: "neutral", score: "5.0", targetPct: 3 };
+  if (change === null) return { label: T('sig_neutral'), cls: "neutral", score: "5.0", targetPct: 3 };
   if (change >= 5)   return { label: "BULLISH",  cls: "bull",    score: (Math.min(9.5, 5 + change * 0.7)).toFixed(1), targetPct: 8 };
   if (change >= 2)   return { label: "BULLISH",  cls: "bull",    score: (5 + change * 0.7).toFixed(1), targetPct: 5 };
-  if (change >= 0.5) return { label: "偏多",      cls: "bull",    score: (5 + change * 0.7).toFixed(1), targetPct: 3 };
-  if (change >= -0.5) return { label: "NEUTRAL",  cls: "neutral", score: "5.0", targetPct: 3 };
-  if (change >= -2)  return { label: "偏空",      cls: "bear",    score: (5 + change * 0.7).toFixed(1), targetPct: -3 };
+  if (change >= 0.5) return { label: T('sig_bull_slight'), cls: "bull",    score: (5 + change * 0.7).toFixed(1), targetPct: 3 };
+  if (change >= -0.5) return { label: T('sig_neutral'),  cls: "neutral", score: "5.0", targetPct: 3 };
+  if (change >= -2)  return { label: T('sig_bear_slight'), cls: "bear",    score: (5 + change * 0.7).toFixed(1), targetPct: -3 };
   if (change >= -5)  return { label: "BEARISH",   cls: "bear",    score: (Math.max(1.5, 5 + change * 0.7)).toFixed(1), targetPct: -5 };
   return { label: "BEARISH", cls: "bear", score: "1.5", targetPct: -8 };
 }
 
 function storyVerdict(change) {
-  if (change === null) return "暫無資料";
-  if (change >= 5)  return "🚀 強勢大漲！動能強勁，短線偏多，可追高但注意位置。";
-  if (change >= 2)  return "📈 穩步走高，買盤持續湧入，建議持有，設好停利點。";
-  if (change >= 0)  return "➡️ 小幅收漲，趨勢中性偏多，可持續關注明日走向。";
-  if (change >= -2) return "⚠️ 小幅回落，注意前低支撐，破支撐前先觀望。";
-  if (change >= -5) return "📉 明顯回調，賣壓出現，建議暫時觀望，等止跌訊號。";
-  return "🔴 重挫！單日大跌，注意風險，避免追殺，等反彈再評估。";
+  if (change === null) return T('verdict_no_data');
+  if (change >= 5)  return T('verdict_strong_up');
+  if (change >= 2)  return T('verdict_up');
+  if (change >= 0)  return T('verdict_slight_up');
+  if (change >= -2) return T('verdict_slight_down');
+  if (change >= -5) return T('verdict_down');
+  return T('verdict_strong_down');
 }
 
 async function loadStories(email) {
@@ -1205,8 +1539,8 @@ function renderStoryCard() {
     const prevClose = q.price / (1 + changeVal / 100);
     const target = q.price * (1 + sig.targetPct / 100);
     levelsEl.innerHTML =
-      `<span class="sc-level-chip">支撐 ${prevClose >= 100 ? prevClose.toFixed(0) : prevClose.toFixed(2)}</span>` +
-      `<span class="sc-level-chip">${sig.targetPct >= 0 ? "目標" : "止損"} ${target >= 100 ? target.toFixed(0) : target.toFixed(2)} (${sig.targetPct > 0 ? "+" : ""}${sig.targetPct}%)</span>`;
+      `<span class="sc-level-chip">${T('level_support')} ${prevClose >= 100 ? prevClose.toFixed(0) : prevClose.toFixed(2)}</span>` +
+      `<span class="sc-level-chip">${sig.targetPct >= 0 ? T('level_target') : T('level_stop')} ${target >= 100 ? target.toFixed(0) : target.toFixed(2)} (${sig.targetPct > 0 ? "+" : ""}${sig.targetPct}%)</span>`;
   } else {
     levelsEl.innerHTML = "";
   }
@@ -1244,7 +1578,7 @@ function renderStoryCard() {
       <div class="story-chart-wrap" style="position:relative;">
         <canvas id="story-chart-canvas" style="width:100%;height:100%;display:block;touch-action:none;cursor:crosshair;"></canvas>
         <div id="story-chart-msg" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:12px;color:rgba(226,232,240,0.4);pointer-events:none;"></div>
-        <a href="${chartLink}" target="_blank" rel="noopener" style="position:absolute;bottom:6px;right:8px;font-size:10px;color:rgba(165,180,252,0.55);text-decoration:none;z-index:2;background:rgba(0,0,0,0.4);padding:2px 6px;border-radius:4px;">完整圖表 ↗</a>
+        <a href="${chartLink}" target="_blank" rel="noopener" style="position:absolute;bottom:6px;right:8px;font-size:10px;color:rgba(165,180,252,0.55);text-decoration:none;z-index:2;background:rgba(0,0,0,0.4);padding:2px 6px;border-radius:4px;">${T('chart_full')}</a>
       </div>
     </div>`;
 
@@ -1287,7 +1621,7 @@ async function loadChart(sym, period) {
   _chartData = null;
   _chartHover = null;
   if (_chartAnimId) { cancelAnimationFrame(_chartAnimId); _chartAnimId = null; }
-  if (msg) msg.textContent = "載入中…";
+  if (msg) msg.textContent = T('chart_loading');
   const c0 = canvas.getContext("2d");
   if (c0) c0.clearRect(0, 0, canvas.width, canvas.height);
   try {
@@ -1295,14 +1629,14 @@ async function loadChart(sym, period) {
     const data = await res.json();
     if (reqId !== _chartReqId) return;
     const points = (data && data.points) || [];
-    if (points.length < 2) { if (msg) msg.textContent = "暫無圖表資料"; return; }
+    if (points.length < 2) { if (msg) msg.textContent = T('chart_no_data'); return; }
     if (msg) msg.textContent = "";
     _chartData = { points, prevClose: data.prevClose };
     bindChartPointer(canvas);
     animateChart(canvas);
   } catch {
     if (reqId !== _chartReqId) return;
-    if (msg) msg.textContent = "圖表載入失敗";
+    if (msg) msg.textContent = T('chart_load_failed');
   }
 }
 
@@ -1582,10 +1916,10 @@ async function doChangePassword() {
   const okEl = document.getElementById("cpwd-ok");
   const btn = document.getElementById("cpwd-btn");
   errEl.style.display = "none"; okEl.style.display = "none";
-  if (!oldPwd) { errEl.textContent = "請輸入目前密碼"; errEl.style.display = "block"; return; }
-  if (newPwd.length < 6) { errEl.textContent = "新密碼至少 6 位"; errEl.style.display = "block"; return; }
-  if (newPwd !== confirmPwd) { errEl.textContent = "兩次密碼不一致"; errEl.style.display = "block"; return; }
-  btn.disabled = true; btn.textContent = "處理中...";
+  if (!oldPwd) { errEl.textContent = T('err_enter_old_pwd'); errEl.style.display = "block"; return; }
+  if (newPwd.length < 6) { errEl.textContent = T('err_new_pwd_min6'); errEl.style.display = "block"; return; }
+  if (newPwd !== confirmPwd) { errEl.textContent = T('err_pwd_mismatch'); errEl.style.display = "block"; return; }
+  btn.disabled = true; btn.textContent = T('btn_processing');
   try {
     const res = await fetch(WORKER_URL + "/change-password", {
       method: "POST", headers: { "Content-Type": "application/json" },
@@ -1600,12 +1934,12 @@ async function doChangePassword() {
       document.getElementById("cpwd-confirm").value = "";
       setTimeout(() => { toggleChangePwd(); okEl.style.display = "none"; }, 3000);
     } else if (data.error === "wrong_password") {
-      errEl.textContent = "目前密碼錯誤"; errEl.style.display = "block";
+      errEl.textContent = T('err_old_pwd_wrong'); errEl.style.display = "block";
     } else {
-      errEl.textContent = "修改失敗，請稍後再試"; errEl.style.display = "block";
+      errEl.textContent = T('err_change_failed'); errEl.style.display = "block";
     }
-  } catch { errEl.textContent = "網路錯誤，請稍後再試"; errEl.style.display = "block"; }
-  finally { btn.disabled = false; btn.textContent = "確認修改 →"; }
+  } catch { errEl.textContent = T('err_network'); errEl.style.display = "block"; }
+  finally { btn.disabled = false; btn.textContent = T('cpwd_submit'); }
 }
 
 // ── 自動儲存:選股 / 移除後即時存檔,不需手動按鈕 ──
@@ -1626,7 +1960,7 @@ function curPayload() {
 // 去抖動:連續選股只在停手 0.65 秒後送一次。
 function scheduleSave() {
   clearTimeout(_saveTimer);
-  setSaveStatus("", "● 變更將自動儲存…");
+  setSaveStatus("", T('save_pending'));
   _saveTimer = setTimeout(doAutoSave, 650);
 }
 
@@ -1635,8 +1969,8 @@ async function doAutoSave() {
   const email = localStorage.getItem("md-email");
   if (!email) return;
   const payload = curPayload();
-  if (payload === _lastSaved) { setSaveStatus("saved", "✅ 已儲存"); return; }
-  setSaveStatus("saving", "儲存中…");
+  if (payload === _lastSaved) { setSaveStatus("saved", T('save_saved_short')); return; }
+  setSaveStatus("saving", T('save_saving'));
   try {
     const res = await fetch(WORKER_URL + "/save-preferences", {
       method: "POST", headers: { "Content-Type": "application/json" }, body: payload,
@@ -1644,12 +1978,12 @@ async function doAutoSave() {
     const data = await res.json();
     if (data.ok) {
       _lastSaved = payload;
-      setSaveStatus("saved", "✅ 已自動儲存 — 明天的報告就會依這份清單客製");
+      setSaveStatus("saved", T('save_saved_long'));
     } else {
-      setSaveStatus("error", "⚠️ 儲存失敗,點這裡重試");
+      setSaveStatus("error", T('save_failed'));
     }
   } catch {
-    setSaveStatus("error", "⚠️ 網路錯誤,點這裡重試");
+    setSaveStatus("error", T('save_net_err'));
   }
 }
 
@@ -1678,20 +2012,21 @@ function copyRefLink() {
   if (!_refLink) return;
   navigator.clipboard.writeText(_refLink).then(() => {
     const btn = document.getElementById("copy-ref-btn");
-    btn.textContent = "✓ 已複製！";
+    btn.textContent = T('ref_copied');
     btn.classList.add("copied");
-    setTimeout(() => { btn.textContent = "複製連結"; btn.classList.remove("copied"); }, 2000);
+    setTimeout(() => { btn.textContent = T('ref_copy_btn'); btn.classList.remove("copied"); }, 2000);
   });
 }
 
 function shareToLine() {
   if (!_refLink) return;
-  const text = encodeURIComponent(`我每天都在讀 MarketDaily 財經日報，30 秒看完今天所有市場動態！用我的連結一起加入 🎁`);
+  const text = encodeURIComponent(T('share_line_text'));
   const url = encodeURIComponent(_refLink);
   window.open(`https://line.me/R/msg/text/?${text}%0A${url}`, "_blank");
 }
 
 async function init() {
+  applyLang(localStorage.getItem('md-lang-v2') || 'zh');
   US_STOCKS = typeof US_STOCKS_FULL !== 'undefined' ? US_STOCKS_FULL : [];
   TW_STOCKS = typeof TW_STOCKS_FULL !== 'undefined' ? TW_STOCKS_FULL : [];
   const savedEmail = localStorage.getItem("md-saved-email") || ""; const savedPwd = localStorage.getItem("md-saved-pwd") || "";
@@ -1701,8 +2036,8 @@ async function init() {
   const email = localStorage.getItem("md-email"); const plan = localStorage.getItem("md-plan") || "free";
   if (email) showDashboard(email, plan);
   const lineParam = new URLSearchParams(window.location.search).get("line");
-  if (lineParam === "bound") { alert("✅ LINE 綁定成功!重大新聞影響你的持股時會即時推播。"); history.replaceState(null, "", "dashboard.html"); }
-  else if (lineParam === "error") { alert("⚠️ LINE 綁定失敗,請再試一次。"); history.replaceState(null, "", "dashboard.html"); }
+  if (lineParam === "bound") { alert(T('line_bound_alert')); history.replaceState(null, "", "dashboard.html"); }
+  else if (lineParam === "error") { alert(T('line_error_alert')); history.replaceState(null, "", "dashboard.html"); }
 }
 init();
 </script>

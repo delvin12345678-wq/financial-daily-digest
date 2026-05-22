@@ -874,7 +874,7 @@ footer {
     Market<em>Daily</em>
   </a>
   <div class="nav-right">
-    <a href="guide.html" class="lang-btn">📖 新手教學</a>
+    <a href="guide.html" class="lang-btn" data-i18n="nav_guide">📖 新手教學</a>
     <a href="pricing.html" class="lang-btn" data-i18n="nav_pricing">定價</a>
     <a href="dashboard.html" class="lang-btn" data-i18n="nav_settings">⚙️ 我的專區</a>
     <button class="lang-btn" id="lang-toggle" onclick="toggleLang()">中文</button>
@@ -933,13 +933,13 @@ footer {
       <!-- Step 2c: Set password (first login after subscribing) -->
       <div id="set-pwd-step" style="display:none;">
         <div class="wb-card">
-          <div style="font-size:13px;color:#a5b4fc;font-weight:700;margin-bottom:6px;">🎉 訂閱確認！設定你的密碼</div>
+          <div style="font-size:13px;color:#a5b4fc;font-weight:700;margin-bottom:6px;" data-i18n="sp_heading">🎉 訂閱確認！設定你的密碼</div>
           <div id="sp-email-text" style="font-size:13px;color:rgba(255,255,255,0.55);margin-bottom:16px;word-break:break-all;"></div>
-          <input type="password" id="sp-pwd" class="plan-mini-input" placeholder="設定密碼（至少 6 位）" aria-label="設定密碼" style="margin-bottom:8px;">
-          <input type="password" id="sp-pwd2" class="plan-mini-input" placeholder="再輸入一次" aria-label="確認密碼" style="margin-bottom:12px;" onkeydown="if(event.key==='Enter')heroSetPassword()">
-          <button class="plan-mini-btn paid" id="sp-btn" onclick="heroSetPassword()" style="width:100%;">設定並進入 →</button>
+          <input type="password" id="sp-pwd" class="plan-mini-input" placeholder="設定密碼（至少 6 位）" aria-label="設定密碼" style="margin-bottom:8px;" data-i18n-placeholder="sp_pwd_placeholder">
+          <input type="password" id="sp-pwd2" class="plan-mini-input" placeholder="再輸入一次" aria-label="確認密碼" style="margin-bottom:12px;" onkeydown="if(event.key==='Enter')heroSetPassword()" data-i18n-placeholder="sp_pwd2_placeholder">
+          <button class="plan-mini-btn paid" id="sp-btn" onclick="heroSetPassword()" style="width:100%;" data-i18n="sp_btn">設定並進入 →</button>
           <div id="sp-err" style="display:none;margin-top:8px;font-size:12px;color:#fca5a5;"></div>
-          <button class="back-link" onclick="resetEmailStep()" style="margin-top:10px;">← 返回</button>
+          <button class="back-link" onclick="resetEmailStep()" style="margin-top:10px;" data-i18n="sp_back">← 返回</button>
         </div>
       </div>
 
@@ -1636,7 +1636,11 @@ const WORKER_URL = "https://marketdaily-webhook.delvin-12345678.workers.dev";
 
 const i18n = {
   en: {
-    nav_settings: "⚙️ My Account", nav_pricing: "Pricing",
+    nav_settings: "⚙️ My Account", nav_pricing: "Pricing", nav_guide: "📖 Getting Started",
+    sp_heading: "🎉 Subscription confirmed! Set your password",
+    sp_pwd_placeholder: "Set a password (at least 6 characters)",
+    sp_pwd2_placeholder: "Re-enter password",
+    sp_btn: "Set & Continue →", sp_back: "← Back",
     plan_free_badge: "Free", plan_free_btn: "Join Free →",
     invite_has_code: "🎁 Someone sent you an invite? Claim it here",
     invite_code_hint: "Enter the code a friend gave you — unlock the daily briefing free",
@@ -1745,7 +1749,11 @@ const i18n = {
     prev_why3: "💡 Lower oil = cost savings for airlines, shipping; watch EVA Air 2618.TW",
   },
   zh: {
-    nav_settings: "⚙️ 我的專區", nav_pricing: "定價",
+    nav_settings: "⚙️ 我的專區", nav_pricing: "定價", nav_guide: "📖 新手教學",
+    sp_heading: "🎉 訂閱確認！設定你的密碼",
+    sp_pwd_placeholder: "設定密碼（至少 6 位）",
+    sp_pwd2_placeholder: "再輸入一次",
+    sp_btn: "設定並進入 →", sp_back: "← 返回",
     plan_free_badge: "免費", plan_free_btn: "免費加入 →",
     invite_has_code: "🎁 有人送你邀請碼？點這裡領取",
     invite_code_hint: "輸入朋友送你的邀請碼，免費解鎖每日日報",

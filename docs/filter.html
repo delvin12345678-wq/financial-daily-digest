@@ -41,6 +41,14 @@
     padding: 8px 16px; border-radius: 9px;
     background: rgba(99,102,241,0.15); border: 1px solid rgba(99,102,241,0.32); color: #c7d2fe;
   }
+  .nav-right { display: flex; align-items: center; gap: 8px; }
+  .lang-btn {
+    font-size: 13px; font-weight: 700; font-family: inherit;
+    padding: 8px 14px; border-radius: 9px; cursor: pointer;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.14); color: var(--dim);
+    transition: all 0.2s;
+  }
+  .lang-btn:hover { background: rgba(99,102,241,0.15); border-color: rgba(99,102,241,0.32); color: #c7d2fe; }
 
   header { text-align: center; padding: 48px 0 8px; }
   .eyebrow {
@@ -151,24 +159,27 @@
     <img src="/logo-icon.svg" alt="MD">
     <span>MarketDaily</span>
   </a>
-  <a class="nav-cta" href="#join">免費訂閱</a>
+  <div class="nav-right">
+    <button class="lang-btn" onclick="toggleLang()">EN</button>
+    <a class="nav-cta" href="#join" data-i18n="nav_cta">免費訂閱</a>
+  </div>
 </nav>
 
 <div class="wrap">
 
   <header>
-    <span class="eyebrow">免費指南</span>
-    <h1>別再被「內線消息」<span class="hl">割韭菜</span></h1>
-    <p class="lead">
+    <span class="eyebrow" data-i18n="eyebrow">免費指南</span>
+    <h1 data-i18n-html="h1">別再被「內線消息」<span class="hl">割韭菜</span></h1>
+    <p class="lead" data-i18n-html="lead">
       你在 LINE 群組、PTT、財經內容農場看到的「明牌」,一半以上事後證明是錯的。
       這份指南教你用 <strong>5 個檢查點</strong>,30 秒分辨一則財經新聞能不能信。
     </p>
     <form class="capture" id="cap-top" onsubmit="event.preventDefault();subscribe('cap-top')">
       <input type="email" placeholder="your@email.com" aria-label="Email" required>
-      <button type="submit">免費訂閱日報</button>
+      <button type="submit" data-i18n="cap_btn">免費訂閱日報</button>
       <div class="cap-msg"></div>
     </form>
-    <p class="cap-note">免費 · 不需要信用卡 · 隨時取消</p>
+    <p class="cap-note" data-i18n="cap_note">免費 · 不需要信用卡 · 隨時取消</p>
   </header>
 
 </div>
@@ -176,14 +187,14 @@
 <div class="wrap">
 
   <section>
-    <div class="sec-num">為什麼你最容易中招</div>
-    <h2>假消息傳得比真相快</h2>
-    <p class="body">
+    <div class="sec-num" data-i18n="s1_num">為什麼你最容易中招</div>
+    <h2 data-i18n="s1_h2">假消息傳得比真相快</h2>
+    <p class="body" data-i18n-html="s1_p1">
       問題不是你不夠認真 —— 是這場遊戲對散戶不公平。
       <strong>情緒性的假消息天生比枯燥的事實更好轉發</strong>;內容農場靠你的點擊賺錢,標題當然越聳動越好;
       而你在群組裡看到的,早就是被轉了二十手、去頭去尾的版本。
     </p>
-    <p class="body">
+    <p class="body" data-i18n="s1_p2">
       好消息是:分辨真假不需要財經背景,只需要一套固定的檢查動作。以下 5 點,看完就能用。
     </p>
   </section>
@@ -191,66 +202,66 @@
   <div class="divider"></div>
 
   <section>
-    <div class="sec-num">核心 · 5 個檢查點</div>
-    <h2>30 秒驗證一則財經新聞</h2>
+    <div class="sec-num" data-i18n="s2_num">核心 · 5 個檢查點</div>
+    <h2 data-i18n="s2_h2">30 秒驗證一則財經新聞</h2>
 
     <div class="check">
       <div class="check-head">
         <div class="check-n">1</div>
-        <div class="check-t">看來源等級</div>
+        <div class="check-t" data-i18n="c1_t">看來源等級</div>
       </div>
-      <p>消息從哪來,決定它的可信度。先問:這是「機構級媒體」還是「轉發來的」?</p>
+      <p data-i18n="c1_p">消息從哪來,決定它的可信度。先問:這是「機構級媒體」還是「轉發來的」?</p>
       <div class="tag-row">
-        <div class="tag ok"><b>✅ 一線來源:</b>Reuters、Bloomberg、CNBC、WSJ、FT、AP;中文如中央社、經濟日報。有編輯把關、要為錯誤負責。</div>
-        <div class="tag bad"><b>⚠️ 紅燈:</b>LINE 群組轉發、沒有署名的「財經粉專」、標題農場、Telegram「老師」。沒有人為內容負責。</div>
+        <div class="tag ok" data-i18n-html="c1_ok"><b>✅ 一線來源:</b>Reuters、Bloomberg、CNBC、WSJ、FT、AP;中文如中央社、經濟日報。有編輯把關、要為錯誤負責。</div>
+        <div class="tag bad" data-i18n-html="c1_bad"><b>⚠️ 紅燈:</b>LINE 群組轉發、沒有署名的「財經粉專」、標題農場、Telegram「老師」。沒有人為內容負責。</div>
       </div>
     </div>
 
     <div class="check">
       <div class="check-head">
         <div class="check-n">2</div>
-        <div class="check-t">多來源交叉比對</div>
+        <div class="check-t" data-i18n="c2_t">多來源交叉比對</div>
       </div>
-      <p>真的大事,會有多家獨立媒體同時報。把標題關鍵字丟進搜尋,看誰也在講。</p>
+      <p data-i18n="c2_p">真的大事,會有多家獨立媒體同時報。把標題關鍵字丟進搜尋,看誰也在講。</p>
       <div class="tag-row">
-        <div class="tag ok"><b>✅ 可信:</b>三四家獨立媒體各自報導同一件事 → 大概率是真的。</div>
-        <div class="tag bad"><b>⚠️ 存疑:</b>只有一家在講,其他全是轉貼它的 → 先當作「尚未證實」,等別人跟進。</div>
+        <div class="tag ok" data-i18n-html="c2_ok"><b>✅ 可信:</b>三四家獨立媒體各自報導同一件事 → 大概率是真的。</div>
+        <div class="tag bad" data-i18n-html="c2_bad"><b>⚠️ 存疑:</b>只有一家在講,其他全是轉貼它的 → 先當作「尚未證實」,等別人跟進。</div>
       </div>
     </div>
 
     <div class="check">
       <div class="check-head">
         <div class="check-n">3</div>
-        <div class="check-t">抓「模糊語言」紅旗</div>
+        <div class="check-t" data-i18n="c3_t">抓「模糊語言」紅旗</div>
       </div>
-      <p>假消息最愛用沒有主體、無法究責的字眼,把空氣講得像事實。</p>
+      <p data-i18n="c3_p">假消息最愛用沒有主體、無法究責的字眼,把空氣講得像事實。</p>
       <div class="tag-row">
-        <div class="tag bad"><b>⚠️ 紅旗字眼:</b>「據傳」「消息人士透露」「知情人士」「專家預測」「市場盛傳」—— 誰說的?查得到嗎?</div>
-        <div class="tag ok"><b>✅ 紮實的寫法:</b>具名發言、具體數字、可查證的文件或財報。「台積電財報顯示 Q1 營收 5,926 億」是事實。</div>
+        <div class="tag bad" data-i18n-html="c3_bad"><b>⚠️ 紅旗字眼:</b>「據傳」「消息人士透露」「知情人士」「專家預測」「市場盛傳」—— 誰說的?查得到嗎?</div>
+        <div class="tag ok" data-i18n-html="c3_ok"><b>✅ 紮實的寫法:</b>具名發言、具體數字、可查證的文件或財報。「台積電財報顯示 Q1 營收 5,926 億」是事實。</div>
       </div>
     </div>
 
     <div class="check">
       <div class="check-head">
         <div class="check-n">4</div>
-        <div class="check-t">分清「事實」與「觀點」</div>
+        <div class="check-t" data-i18n="c4_t">分清「事實」與「觀點」</div>
       </div>
-      <p>標題最常見的手法,是把「某人的猜測」包裝成「即將發生的事」。</p>
+      <p data-i18n="c4_p">標題最常見的手法,是把「某人的猜測」包裝成「即將發生的事」。</p>
       <div class="tag-row">
-        <div class="tag ok"><b>✅ 事實:</b>「聯準會本次維持利率不變」—— 已經發生、可查證。</div>
-        <div class="tag bad"><b>⚠️ 觀點偽裝成事實:</b>「台積電要噴了」「這檔下週必漲」—— 這是預測,不是新聞。把它當成一個人的意見就好。</div>
+        <div class="tag ok" data-i18n-html="c4_ok"><b>✅ 事實:</b>「聯準會本次維持利率不變」—— 已經發生、可查證。</div>
+        <div class="tag bad" data-i18n-html="c4_bad"><b>⚠️ 觀點偽裝成事實:</b>「台積電要噴了」「這檔下週必漲」—— 這是預測,不是新聞。把它當成一個人的意見就好。</div>
       </div>
     </div>
 
     <div class="check">
       <div class="check-head">
         <div class="check-n">5</div>
-        <div class="check-t">看時間戳,小心舊聞翻炒</div>
+        <div class="check-t" data-i18n="c5_t">看時間戳,小心舊聞翻炒</div>
       </div>
-      <p>把半年前的舊聞拿掉日期、重新包裝再傳一次,是群組裡最常見的操作。</p>
+      <p data-i18n="c5_p">把半年前的舊聞拿掉日期、重新包裝再傳一次,是群組裡最常見的操作。</p>
       <div class="tag-row">
-        <div class="tag ok"><b>✅ 動作:</b>先找發布日期。沒有日期、或日期被刻意藏起來 → 高度可疑。</div>
-        <div class="tag bad"><b>⚠️ 常見陷阱:</b>「驚爆!某公司大裁員」其實是去年的事,被翻出來嚇你一波。</div>
+        <div class="tag ok" data-i18n-html="c5_ok"><b>✅ 動作:</b>先找發布日期。沒有日期、或日期被刻意藏起來 → 高度可疑。</div>
+        <div class="tag bad" data-i18n-html="c5_bad"><b>⚠️ 常見陷阱:</b>「驚爆!某公司大裁員」其實是去年的事,被翻出來嚇你一波。</div>
       </div>
     </div>
   </section>
@@ -258,21 +269,21 @@
   <div class="divider"></div>
 
   <section>
-    <div class="sec-num">進階 · 讀法</div>
-    <h2>30 秒讀懂一則新聞,只問 3 件事</h2>
-    <p class="body">確認新聞可信之後,別急著反應。用這 3 個問題快速判斷它跟你有沒有關係:</p>
+    <div class="sec-num" data-i18n="s3_num">進階 · 讀法</div>
+    <h2 data-i18n="s3_h2">30 秒讀懂一則新聞,只問 3 件事</h2>
+    <p class="body" data-i18n="s3_p">確認新聞可信之後,別急著反應。用這 3 個問題快速判斷它跟你有沒有關係:</p>
     <div class="framework">
       <div class="fw-q">
         <div class="q-n">①</div>
-        <div class="q-t"><b>發生了什麼?</b><span>用一句話講出「事實」—— 講不出來,代表這篇沒有真內容。</span></div>
+        <div class="q-t"><b data-i18n="fw1_b">發生了什麼?</b><span data-i18n="fw1_s">用一句話講出「事實」—— 講不出來,代表這篇沒有真內容。</span></div>
       </div>
       <div class="fw-q">
         <div class="q-n">②</div>
-        <div class="q-t"><b>這影響誰?</b><span>哪些公司、板塊、或我手上的持股,會被這件事直接影響?</span></div>
+        <div class="q-t"><b data-i18n="fw2_b">這影響誰?</b><span data-i18n="fw2_s">哪些公司、板塊、或我手上的持股,會被這件事直接影響?</span></div>
       </div>
       <div class="fw-q">
         <div class="q-n">③</div>
-        <div class="q-t"><b>我需要動作嗎?</b><span>多數時候答案是「不用」。能分辨「可以忽略的新聞」,比追每一則更值錢。</span></div>
+        <div class="q-t"><b data-i18n="fw3_b">我需要動作嗎?</b><span data-i18n="fw3_s">多數時候答案是「不用」。能分辨「可以忽略的新聞」,比追每一則更值錢。</span></div>
       </div>
     </div>
   </section>
@@ -283,29 +294,162 @@
 
   <section id="join">
     <div class="cta-box">
-      <div class="sec-num">每天早上,有人幫你做完</div>
-      <h2>這 5 件事,你每天都能自己做</h2>
-      <p class="body">
+      <div class="sec-num" data-i18n="cta_num">每天早上,有人幫你做完</div>
+      <h2 data-i18n="cta_h2">這 5 件事,你每天都能自己做</h2>
+      <p class="body" data-i18n-html="cta_p">
         但要對 30 篇美股 + 台股新聞、每天早上做一輪這種檢查 —— 很累,而且容易漏掉重要的。
         <strong>MarketDaily 每天早上 7 點幫你做完</strong>:每則新聞都標好來源等級與多源驗證,30 秒讀完今天該知道的。
       </p>
       <form class="capture" id="cap-end" onsubmit="event.preventDefault();subscribe('cap-end')">
         <input type="email" placeholder="your@email.com" aria-label="Email" required>
-        <button type="submit">免費訂閱日報</button>
+        <button type="submit" data-i18n="cap_btn">免費訂閱日報</button>
         <div class="cap-msg"></div>
       </form>
-      <p class="cap-note">免費 · 不需要信用卡 · 隨時取消</p>
+      <p class="cap-note" data-i18n="cap_note">免費 · 不需要信用卡 · 隨時取消</p>
     </div>
   </section>
 
 </div>
 
-<footer>
+<footer data-i18n-html="footer">
   本指南與 MarketDaily 日報內容僅供參考,不構成投資建議。<br>
   © MarketDaily · <a href="/index.html">marketdaily.ai</a> · <a href="/pricing.html">方案與定價</a>
 </footer>
 
 <script>
+/* ── i18n ── */
+const i18n = {
+  zh: {
+    page_title: "財經假新聞自保指南 — 5 個檢查點不再被割韭菜 | MarketDaily",
+    nav_cta: "免費訂閱",
+    eyebrow: "免費指南",
+    h1: "別再被「內線消息」<span class=\"hl\">割韭菜</span>",
+    lead: "你在 LINE 群組、PTT、財經內容農場看到的「明牌」,一半以上事後證明是錯的。這份指南教你用 <strong>5 個檢查點</strong>,30 秒分辨一則財經新聞能不能信。",
+    cap_btn: "免費訂閱日報",
+    cap_note: "免費 · 不需要信用卡 · 隨時取消",
+    s1_num: "為什麼你最容易中招",
+    s1_h2: "假消息傳得比真相快",
+    s1_p1: "問題不是你不夠認真 —— 是這場遊戲對散戶不公平。<strong>情緒性的假消息天生比枯燥的事實更好轉發</strong>;內容農場靠你的點擊賺錢,標題當然越聳動越好;而你在群組裡看到的,早就是被轉了二十手、去頭去尾的版本。",
+    s1_p2: "好消息是:分辨真假不需要財經背景,只需要一套固定的檢查動作。以下 5 點,看完就能用。",
+    s2_num: "核心 · 5 個檢查點",
+    s2_h2: "30 秒驗證一則財經新聞",
+    c1_t: "看來源等級",
+    c1_p: "消息從哪來,決定它的可信度。先問:這是「機構級媒體」還是「轉發來的」?",
+    c1_ok: "<b>✅ 一線來源:</b>Reuters、Bloomberg、CNBC、WSJ、FT、AP;中文如中央社、經濟日報。有編輯把關、要為錯誤負責。",
+    c1_bad: "<b>⚠️ 紅燈:</b>LINE 群組轉發、沒有署名的「財經粉專」、標題農場、Telegram「老師」。沒有人為內容負責。",
+    c2_t: "多來源交叉比對",
+    c2_p: "真的大事,會有多家獨立媒體同時報。把標題關鍵字丟進搜尋,看誰也在講。",
+    c2_ok: "<b>✅ 可信:</b>三四家獨立媒體各自報導同一件事 → 大概率是真的。",
+    c2_bad: "<b>⚠️ 存疑:</b>只有一家在講,其他全是轉貼它的 → 先當作「尚未證實」,等別人跟進。",
+    c3_t: "抓「模糊語言」紅旗",
+    c3_p: "假消息最愛用沒有主體、無法究責的字眼,把空氣講得像事實。",
+    c3_bad: "<b>⚠️ 紅旗字眼:</b>「據傳」「消息人士透露」「知情人士」「專家預測」「市場盛傳」—— 誰說的?查得到嗎?",
+    c3_ok: "<b>✅ 紮實的寫法:</b>具名發言、具體數字、可查證的文件或財報。「台積電財報顯示 Q1 營收 5,926 億」是事實。",
+    c4_t: "分清「事實」與「觀點」",
+    c4_p: "標題最常見的手法,是把「某人的猜測」包裝成「即將發生的事」。",
+    c4_ok: "<b>✅ 事實:</b>「聯準會本次維持利率不變」—— 已經發生、可查證。",
+    c4_bad: "<b>⚠️ 觀點偽裝成事實:</b>「台積電要噴了」「這檔下週必漲」—— 這是預測,不是新聞。把它當成一個人的意見就好。",
+    c5_t: "看時間戳,小心舊聞翻炒",
+    c5_p: "把半年前的舊聞拿掉日期、重新包裝再傳一次,是群組裡最常見的操作。",
+    c5_ok: "<b>✅ 動作:</b>先找發布日期。沒有日期、或日期被刻意藏起來 → 高度可疑。",
+    c5_bad: "<b>⚠️ 常見陷阱:</b>「驚爆!某公司大裁員」其實是去年的事,被翻出來嚇你一波。",
+    s3_num: "進階 · 讀法",
+    s3_h2: "30 秒讀懂一則新聞,只問 3 件事",
+    s3_p: "確認新聞可信之後,別急著反應。用這 3 個問題快速判斷它跟你有沒有關係:",
+    fw1_b: "發生了什麼?",
+    fw1_s: "用一句話講出「事實」—— 講不出來,代表這篇沒有真內容。",
+    fw2_b: "這影響誰?",
+    fw2_s: "哪些公司、板塊、或我手上的持股,會被這件事直接影響?",
+    fw3_b: "我需要動作嗎?",
+    fw3_s: "多數時候答案是「不用」。能分辨「可以忽略的新聞」,比追每一則更值錢。",
+    cta_num: "每天早上,有人幫你做完",
+    cta_h2: "這 5 件事,你每天都能自己做",
+    cta_p: "但要對 30 篇美股 + 台股新聞、每天早上做一輪這種檢查 —— 很累,而且容易漏掉重要的。<strong>MarketDaily 每天早上 7 點幫你做完</strong>:每則新聞都標好來源等級與多源驗證,30 秒讀完今天該知道的。",
+    footer: "本指南與 MarketDaily 日報內容僅供參考,不構成投資建議。<br>© MarketDaily · <a href=\"/index.html\">marketdaily.ai</a> · <a href=\"/pricing.html\">方案與定價</a>",
+    msg_invalid: "請輸入有效的 Email",
+    msg_sending: "送出中…",
+    msg_success: "✅ 訂閱成功!確認信已寄到你的信箱 —— 明早 7 點起,財經新聞有人幫你過濾好。",
+    msg_fail: "訂閱失敗,請稍後再試一次",
+    msg_neterr: "網路連線異常,請稍後再試"
+  },
+  en: {
+    page_title: "Financial Fake-News Survival Guide — 5 Checks to Stop Getting Played | MarketDaily",
+    nav_cta: "Subscribe Free",
+    eyebrow: "Free Guide",
+    h1: "Stop getting played by <span class=\"hl\">\"insider tips\"</span>",
+    lead: "More than half the \"hot picks\" you see in LINE groups, forums, and financial content farms turn out to be wrong. This guide teaches you <strong>5 checkpoints</strong> to judge whether a financial news story is trustworthy in 30 seconds.",
+    cap_btn: "Subscribe to the Daily",
+    cap_note: "Free · No credit card · Cancel anytime",
+    s1_num: "Why you're the easiest target",
+    s1_h2: "Fake news travels faster than the truth",
+    s1_p1: "The problem isn't that you're not careful enough — the game is rigged against retail investors. <strong>Emotional fake news is inherently more shareable than dull facts</strong>; content farms make money from your clicks, so the more sensational the headline the better; and what you see in group chats has already been forwarded twenty times, stripped of context.",
+    s1_p2: "The good news: telling real from fake doesn't require a finance background — just a fixed set of checks. The 5 below are ready to use the moment you finish reading.",
+    s2_num: "Core · 5 Checkpoints",
+    s2_h2: "Verify a financial news story in 30 seconds",
+    c1_t: "Check the source tier",
+    c1_p: "Where the news comes from determines how credible it is. First ask: is this an \"institutional-grade outlet\" or just \"something forwarded\"?",
+    c1_ok: "<b>✅ Top-tier sources:</b> Reuters, Bloomberg, CNBC, WSJ, FT, AP; in Chinese, outlets like CNA and Economic Daily News. They have editorial oversight and are accountable for errors.",
+    c1_bad: "<b>⚠️ Red flags:</b> LINE group forwards, unnamed \"finance fan pages\", headline farms, Telegram \"gurus\". No one is accountable for the content.",
+    c2_t: "Cross-check multiple sources",
+    c2_p: "Genuinely big news gets reported by several independent outlets at once. Drop the headline keywords into a search and see who else is covering it.",
+    c2_ok: "<b>✅ Credible:</b> three or four independent outlets each reporting the same thing → most likely true.",
+    c2_bad: "<b>⚠️ Doubtful:</b> only one outlet covering it, everyone else just reposting → treat it as \"unconfirmed\" and wait for others to follow up.",
+    c3_t: "Spot \"vague language\" red flags",
+    c3_p: "Fake news loves wording with no subject and no accountability, dressing up thin air as fact.",
+    c3_bad: "<b>⚠️ Red-flag phrases:</b> \"it is rumored\", \"sources reveal\", \"people familiar with the matter\", \"experts predict\", \"widely speculated in the market\" — who said it? Can you verify it?",
+    c3_ok: "<b>✅ Solid writing:</b> named statements, concrete numbers, verifiable documents or earnings reports. \"TSMC's earnings report shows Q1 revenue of NT$592.6B\" is a fact.",
+    c4_t: "Separate \"fact\" from \"opinion\"",
+    c4_p: "The most common headline trick is packaging \"someone's guess\" as \"something about to happen\".",
+    c4_ok: "<b>✅ Fact:</b> \"The Fed held interest rates unchanged this time\" — already happened, verifiable.",
+    c4_bad: "<b>⚠️ Opinion disguised as fact:</b> \"TSMC is about to surge\", \"this stock will definitely rise next week\" — these are predictions, not news. Treat them as one person's opinion.",
+    c5_t: "Check the timestamp — beware recycled old news",
+    c5_p: "Taking six-month-old news, stripping the date, repackaging it and resending is the most common move in group chats.",
+    c5_ok: "<b>✅ Action:</b> find the publication date first. No date, or a date deliberately hidden → highly suspicious.",
+    c5_bad: "<b>⚠️ Common trap:</b> \"Shocking! Company X announces massive layoffs\" is actually from last year, dug up to scare you.",
+    s3_num: "Advanced · How to Read",
+    s3_h2: "Understand a news story in 30 seconds — just ask 3 things",
+    s3_p: "Once you've confirmed the news is credible, don't rush to react. Use these 3 questions to quickly judge whether it's relevant to you:",
+    fw1_b: "What happened?",
+    fw1_s: "State the \"fact\" in one sentence — if you can't, the article has no real substance.",
+    fw2_b: "Who does it affect?",
+    fw2_s: "Which companies, sectors, or stocks in my own portfolio are directly affected by this?",
+    fw3_b: "Do I need to act?",
+    fw3_s: "Most of the time the answer is \"no\". Being able to identify \"news you can ignore\" is worth more than chasing every story.",
+    cta_num: "Every morning, someone does it for you",
+    cta_h2: "These 5 things — you can do them yourself every day",
+    cta_p: "But running this check on 30 US + TW news stories every single morning is exhausting, and it's easy to miss what matters. <strong>MarketDaily does it for you every morning at 7AM</strong>: every story is tagged with a source tier and multi-source verification, so you can read what matters today in 30 seconds.",
+    footer: "This guide and MarketDaily's daily content are for reference only and do not constitute investment advice.<br>© MarketDaily · <a href=\"/index.html\">marketdaily.ai</a> · <a href=\"/pricing.html\">Plans & Pricing</a>",
+    msg_invalid: "Please enter a valid email",
+    msg_sending: "Sending…",
+    msg_success: "✅ Subscribed! A confirmation email is on its way — from 7AM tomorrow, someone filters the financial news for you.",
+    msg_fail: "Subscription failed, please try again later",
+    msg_neterr: "Network error, please try again later"
+  }
+};
+let curLang = localStorage.getItem('md-lang-v2') || 'zh';
+const T = () => i18n[curLang] || i18n.zh;
+
+function applyLang(lang) {
+  curLang = lang;
+  const t = i18n[lang] || i18n.zh;
+  document.title = t.page_title;
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const v = t[el.dataset.i18n];
+    if (v !== undefined) el.textContent = v;
+  });
+  document.querySelectorAll('[data-i18n-html]').forEach(el => {
+    const v = t[el.dataset.i18nHtml];
+    if (v !== undefined) el.innerHTML = v;
+  });
+  const langBtn = document.querySelector('.lang-btn');
+  if (langBtn) langBtn.textContent = lang === 'zh' ? 'EN' : '中文';
+  document.documentElement.lang = lang === 'zh' ? 'zh-Hant' : 'en';
+  localStorage.setItem('md-lang-v2', lang);
+}
+function toggleLang() {
+  applyLang(curLang === 'zh' ? 'en' : 'zh');
+}
+
 const WORKER = "https://marketdaily-webhook.delvin-12345678.workers.dev";
 async function subscribe(formId) {
   const form = document.getElementById(formId);
@@ -315,10 +459,10 @@ async function subscribe(formId) {
   const email = input.value.trim();
   msg.textContent = ""; msg.className = "cap-msg";
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    msg.textContent = "請輸入有效的 Email"; msg.className = "cap-msg err"; return;
+    msg.textContent = T().msg_invalid; msg.className = "cap-msg err"; return;
   }
   const orig = btn.textContent;
-  btn.disabled = true; btn.textContent = "送出中…";
+  btn.disabled = true; btn.textContent = T().msg_sending;
   try {
     const ref = localStorage.getItem("md-ref") || "";
     const res = await fetch(WORKER + "/subscribe-free-direct", {
@@ -327,16 +471,18 @@ async function subscribe(formId) {
     });
     const data = await res.json();
     if (data.ok) {
-      form.innerHTML = '<div class="cap-done">✅ 訂閱成功!確認信已寄到你的信箱 —— 明早 7 點起,財經新聞有人幫你過濾好。</div>';
+      form.innerHTML = '<div class="cap-done">' + T().msg_success + '</div>';
     } else {
-      msg.textContent = "訂閱失敗,請稍後再試一次"; msg.className = "cap-msg err";
+      msg.textContent = T().msg_fail; msg.className = "cap-msg err";
       btn.disabled = false; btn.textContent = orig;
     }
   } catch (e) {
-    msg.textContent = "網路連線異常,請稍後再試"; msg.className = "cap-msg err";
+    msg.textContent = T().msg_neterr; msg.className = "cap-msg err";
     btn.disabled = false; btn.textContent = orig;
   }
 }
+
+applyLang(curLang);
 </script>
 </body>
 </html>

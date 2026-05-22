@@ -80,35 +80,92 @@
   .btn:hover { transform: translateY(-2px); box-shadow: 0 14px 34px rgba(99,102,241,0.55); }
   .note { margin-top: 18px; font-size: 12px; color: #7a7a92; line-height: 1.7; }
   .note a { color: #a5b4fc; text-decoration: none; }
+  .lang-btn {
+    position: absolute; top: 20px; right: 20px;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+    color: rgba(255,255,255,0.5); font-size: 12px; font-weight: 700; font-family: inherit;
+    padding: 6px 13px; border-radius: 20px; cursor: pointer; transition: all 0.2s;
+  }
+  .lang-btn:hover { background: rgba(99,102,241,0.12); border-color: rgba(99,102,241,0.28); color: #fff; }
 </style>
 </head>
 <body>
+  <button class="lang-btn" onclick="toggleLang()">EN</button>
   <div class="card">
     <div class="logo-row">
       <img src="/logo-icon.svg" alt="MD">
       <span>MarketDaily</span>
     </div>
     <div class="check">✓</div>
-    <h1>訂閱成功 🎉</h1>
-    <p class="sub">付款已完成，你的方案<strong>立即生效</strong>。<br>一封確認信正在寄往你的信箱。</p>
+    <h1 data-i18n="success_title">訂閱成功 🎉</h1>
+    <p class="sub" data-i18n-html="success_sub">付款已完成，你的方案<strong>立即生效</strong>。<br>一封確認信正在寄往你的信箱。</p>
 
     <div class="steps">
       <div class="step">
         <div class="n">1</div>
-        <div class="t"><b>收確認信</b> — 打開信箱（含垃圾信匣），找「訂閱成功」那封信。</div>
+        <div class="t" data-i18n-html="step1"><b>收確認信</b> — 打開信箱（含垃圾信匣），找「訂閱成功」那封信。</div>
       </div>
       <div class="step">
         <div class="n">2</div>
-        <div class="t"><b>設定密碼</b> — 第一次登入「我的專區」時設一組密碼。</div>
+        <div class="t" data-i18n-html="step2"><b>設定密碼</b> — 第一次登入「我的專區」時設一組密碼。</div>
       </div>
       <div class="step">
         <div class="n">3</div>
-        <div class="t"><b>挑你的股票</b> — 加入關注的美股／台股，明早 7 點的日報就會為你客製化。</div>
+        <div class="t" data-i18n-html="step3"><b>挑你的股票</b> — 加入關注的美股／台股，明早 7 點的日報就會為你客製化。</div>
       </div>
     </div>
 
-    <a class="btn" href="/dashboard.html">前往我的專區 →</a>
-    <p class="note">沒收到確認信？等 5 分鐘並檢查垃圾信匣，<br>仍沒有請寄信到 <a href="mailto:delvin.12345678@gmail.com">delvin.12345678@gmail.com</a></p>
+    <a class="btn" href="/dashboard.html" data-i18n="success_btn">前往我的專區 →</a>
+    <p class="note" data-i18n-html="success_note">沒收到確認信？等 5 分鐘並檢查垃圾信匣，<br>仍沒有請寄信到 <a href="mailto:delvin.12345678@gmail.com">delvin.12345678@gmail.com</a></p>
   </div>
+
+<script>
+const i18n = {
+  zh: {
+    page_title: "訂閱成功 — MarketDaily",
+    success_title: "訂閱成功 🎉",
+    success_sub: "付款已完成，你的方案<strong>立即生效</strong>。<br>一封確認信正在寄往你的信箱。",
+    step1: "<b>收確認信</b> — 打開信箱（含垃圾信匣），找「訂閱成功」那封信。",
+    step2: "<b>設定密碼</b> — 第一次登入「我的專區」時設一組密碼。",
+    step3: "<b>挑你的股票</b> — 加入關注的美股／台股，明早 7 點的日報就會為你客製化。",
+    success_btn: "前往我的專區 →",
+    success_note: "沒收到確認信？等 5 分鐘並檢查垃圾信匣，<br>仍沒有請寄信到 <a href=\"mailto:delvin.12345678@gmail.com\">delvin.12345678@gmail.com</a>"
+  },
+  en: {
+    page_title: "Subscription Confirmed — MarketDaily",
+    success_title: "You're All Set 🎉",
+    success_sub: "Payment complete — your plan is <strong>active immediately</strong>.<br>A confirmation email is on its way to your inbox.",
+    step1: "<b>Check your email</b> — Open your inbox (including spam) and find the “Subscription Confirmed” message.",
+    step2: "<b>Set a password</b> — Create a password the first time you log in to “My Account”.",
+    step3: "<b>Pick your stocks</b> — Add the US / TW stocks you follow, and tomorrow's 7AM digest will be tailored to you.",
+    success_btn: "Go to My Account →",
+    success_note: "Didn't get the confirmation email? Wait 5 minutes and check your spam folder.<br>Still nothing? Email us at <a href=\"mailto:delvin.12345678@gmail.com\">delvin.12345678@gmail.com</a>"
+  }
+};
+
+function applyLang(lang) {
+  const t = i18n[lang] || i18n.zh;
+  document.title = t.page_title;
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const v = t[el.dataset.i18n];
+    if (v !== undefined) el.textContent = v;
+  });
+  document.querySelectorAll('[data-i18n-html]').forEach(el => {
+    const v = t[el.dataset.i18nHtml];
+    if (v !== undefined) el.innerHTML = v;
+  });
+  const langBtn = document.querySelector('.lang-btn');
+  if (langBtn) langBtn.textContent = lang === 'zh' ? 'EN' : '中文';
+  document.documentElement.lang = lang === 'zh' ? 'zh-Hant' : 'en';
+  localStorage.setItem('md-lang-v2', lang);
+}
+
+function toggleLang() {
+  const cur = localStorage.getItem('md-lang-v2') || 'zh';
+  applyLang(cur === 'zh' ? 'en' : 'zh');
+}
+
+applyLang(localStorage.getItem('md-lang-v2') || 'zh');
+</script>
 </body>
 </html>
