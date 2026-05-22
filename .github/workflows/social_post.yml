@@ -1,0 +1,53 @@
+name: 社群每日自動發文
+
+on:
+  schedule:
+    - cron: "0 22 * * *"   # 約台灣 06:00（GitHub 排程有延遲，內容貼文可接受）
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "post=發下一篇 / check=只驗證權杖 / dry=只看下一篇不發"
+        type: choice
+        default: post
+        options: [post, check, dry]
+
+permissions:
+  contents: write
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: 執行發文
+        working-directory: marketing
+        env:
+          META_ACCESS_TOKEN: ${{ secrets.META_ACCESS_TOKEN }}
+          FB_PAGE_ID: ${{ secrets.FB_PAGE_ID }}
+          IG_USER_ID: ${{ secrets.IG_USER_ID }}
+          THREADS_ACCESS_TOKEN: ${{ secrets.THREADS_ACCESS_TOKEN }}
+          THREADS_USER_ID: ${{ secrets.THREADS_USER_ID }}
+          LINE_CHANNEL_ID: ${{ secrets.LINE_CHANNEL_ID }}
+          LINE_CHANNEL_SECRET: ${{ secrets.LINE_CHANNEL_SECRET }}
+          LINE_ADD_URL: ${{ secrets.LINE_ADD_URL }}
+          SITE_BASE: ${{ secrets.SITE_BASE }}
+        run: |
+          MODE="${{ github.event.inputs.mode || 'post' }}"
+          case "$MODE" in
+            check) python auto_post.py check ;;
+            dry)   python daily_run.py --dry ;;
+            *)     python daily_run.py ;;
+          esac
+
+      - name: 提交發文紀錄
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add marketing/social_out/post_log.jsonl
+          git diff --staged --quiet || git commit -m "chore: 更新社群發文紀錄 [skip ci]"
+          git push origin HEAD:main

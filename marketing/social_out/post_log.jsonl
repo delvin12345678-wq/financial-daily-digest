@@ -1,0 +1,5 @@
+{"ts": "2026-05-21T22:01:48.184849", "post": "teaser", "results": {"instagram": {"ok": true, "detail": "18473956176465167"}}}
+{"ts": "2026-05-21T22:11:38.302736", "post": "teaser", "results": {"facebook": {"ok": true, "detail": "1133333363197689_122093959533345835"}}}
+{"ts": "2026-05-22T14:28:28.531247", "post": "launch", "results": {"instagram": {"ok": true, "detail": "18374187196206656"}, "facebook": {"ok": true, "detail": "1133333363197689_122094385665345835"}, "threads": {"ok": false, "detail": "{'error': {'message': 'Invalid OAuth 2.0 Access Token', 'type': 'THApiException', 'code': 190, 'error_data': {}, 'fbtrace_id': 'Alg_N-Z2uqfVIEANDWBKvmr'}}"}}}
+{"ts": "2026-05-22T15:02:06.911606", "post": "launch", "results": {"threads": {"ok": true, "detail": "17937384453234807"}}}
+{"ts": "2026-05-22T15:20:32.436493", "post": "launch", "results": {"line": {"ok": true, "detail": "broadcast sent"}}}
