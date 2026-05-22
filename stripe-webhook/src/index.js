@@ -3,12 +3,22 @@ const ADMIN_EMAILS = ["delvin.12345678@gmail.com"];
 const INVITE_CODES = [
   "DELVIN-FE8FZ1","DELVIN-XKNJ4N","DELVIN-F4ONQQ","DELVIN-RBIG9S",
   "DELVIN-WYW4IP","DELVIN-BE2O13","DELVIN-OVMFHN","DELVIN-AV3VIB",
-  "DELVIN-06U59N","DELVIN-CVRBWF"
+  "DELVIN-06U59N","DELVIN-CVRBWF",
+  "MD-4SJWK4","MD-UN81FB","MD-F3KQ11","MD-3A111V","MD-HZBXA1",
+  "MD-O9GFBT","MD-3BVD3O","MD-XTKXU8","MD-XETLNK","MD-OAF39F"
 ];
 
 async function hashPassword(password) {
   const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(password));
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join("");
+}
+
+function generateRefCode(email) {
+  const prefix = email.replace(/[^a-z0-9]/gi, '').substring(0, 3).toUpperCase();
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let code = 'REF' + prefix;
+  for (let i = 0; i < 5; i++) code += chars[Math.floor(Math.random() * chars.length)];
+  return code;
 }
 
 const CORS_HEADERS = {
@@ -18,7 +28,7 @@ const CORS_HEADERS = {
 };
 
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     if (request.method === "OPTIONS") {
       return new Response(null, { status: 204, headers: CORS_HEADERS });
     }
@@ -89,6 +99,27 @@ export default {
 
       const isPaid = (contact.attributes?.PAID === true || contact.attributes?.PLAN === "paid");
       return json({ ok: true, plan: isPaid ? "paid" : "free", since: contact.createdAt || null });
+    }
+
+    // Change password (authenticated users)
+    if (url.pathname === "/change-password" && request.method === "POST") {
+      let body;
+      try { body = await request.json(); } catch { return json({ error: "Invalid request" }, 400); }
+      const email = (body.email || "").trim().toLowerCase();
+      const oldPassword = body.old_password || "";
+      const newPassword = body.new_password || "";
+      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json({ error: "invalid_email" }, 400);
+      if (newPassword.length < 6) return json({ error: "too_short" }, 400);
+
+      const storedHash = await env.USER_PREFS.get(`pwd:${email}`);
+      if (!storedHash) return json({ error: "not_found" }, 404);
+
+      const oldHash = await hashPassword(oldPassword);
+      if (oldHash !== storedHash) return json({ error: "wrong_password" }, 403);
+
+      const newHash = await hashPassword(newPassword);
+      await env.USER_PREFS.put(`pwd:${email}`, newHash);
+      return json({ ok: true });
     }
 
     // Admin stats
@@ -169,6 +200,36 @@ export default {
       return json(JSON.parse(raw));
     }
 
+    // Save a personalized digest HTML; returns a shareable web URL
+    if (url.pathname === "/save-digest" && request.method === "POST") {
+      let body;
+      try { body = await request.json(); } catch { return json({ error: "Invalid request" }, 400); }
+      const token = (body.token || "").trim();
+      const html = body.html || "";
+      if (!/^[A-Za-z0-9_-]{8,64}$/.test(token)) return json({ error: "invalid_token" }, 400);
+      if (!html || html.length > 5000000) return json({ error: "invalid_html" }, 400);
+      await env.USER_PREFS.put(`digest:${token}`, html, { expirationTtl: 86400 * 45 });
+      return json({ ok: true, url: `${url.origin}/digest/${token}` });
+    }
+
+    // Serve a hosted digest page by token
+    if (url.pathname.startsWith("/digest/") && request.method === "GET") {
+      const token = url.pathname.slice(8);
+      if (!/^[A-Za-z0-9_-]{8,64}$/.test(token)) {
+        return new Response("Not found", { status: 404 });
+      }
+      const html = await env.USER_PREFS.get(`digest:${token}`);
+      if (!html) {
+        return new Response(
+          "<meta charset=utf-8><p style='font-family:sans-serif;text-align:center;margin-top:60px;color:#555;'>這份日報連結已過期或不存在。</p>",
+          { status: 404, headers: { "Content-Type": "text/html; charset=utf-8" } }
+        );
+      }
+      return new Response(html, {
+        headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "public, max-age=3600" },
+      });
+    }
+
     // Free subscription endpoint
     if (url.pathname === "/free-subscribe" && request.method === "POST") {
       let body;
@@ -192,7 +253,236 @@ export default {
       const ok = await addToBrevo(email, env.BREVO_API_KEY, listId);
       if (!ok) return json({ error: "brevo_error" }, 500);
 
+      // Track referral conversion if ref code provided
+      const refCode = (body.ref || "").trim().toUpperCase();
+      if (refCode) {
+        const ownerEmail = await env.USER_PREFS.get(`referral:code:${refCode}`);
+        if (ownerEmail && ownerEmail !== email) {
+          const raw = await env.USER_PREFS.get(`referral:user:${ownerEmail}`);
+          if (raw) {
+            const data = JSON.parse(raw);
+            data.conversions = (data.conversions || 0) + 1;
+            await env.USER_PREFS.put(`referral:user:${ownerEmail}`, JSON.stringify(data));
+          }
+        }
+      }
+
       await sendWelcomeEmail(email, env.BREVO_API_KEY, false);
+      ctx.waitUntil(sendTodayDigestToAll(env.BREVO_API_KEY, parseInt(env.BREVO_LIST_ID) || 2, env.USER_PREFS));
+      return json({ ok: true });
+    }
+
+    // Market overview (indices + macro)
+    if (url.pathname === "/market-overview" && request.method === "GET") {
+      const markets = [
+        { sym: "^GSPC",   label: "S&P 500" },
+        { sym: "^TWII",   label: "台灣加權" },
+        { sym: "^VIX",    label: "VIX 恐慌" },
+        { sym: "BTC-USD", label: "Bitcoin" },
+        { sym: "GC=F",    label: "黃金" },
+      ];
+      const yfH = {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "application/json", "Referer": "https://finance.yahoo.com/"
+      };
+      const results = await Promise.allSettled(markets.map(async ({ sym, label }) => {
+        try {
+          const res = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?interval=1d&range=5d`, { headers: yfH });
+          if (!res.ok) return null;
+          const data = await res.json();
+          const meta = data?.chart?.result?.[0]?.meta;
+          if (!meta) return null;
+          const price = meta.regularMarketPrice ?? null;
+          const prev = meta.chartPreviousClose ?? null;
+          const change = (price !== null && prev !== null && prev !== 0) ? ((price - prev) / prev * 100) : null;
+          return { sym, label, price, change };
+        } catch { return null; }
+      }));
+      const overview = results.filter(r => r.status === "fulfilled" && r.value !== null).map(r => r.value);
+      return new Response(JSON.stringify({ overview }), {
+        headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*", "Cache-Control": "max-age=300" }
+      });
+    }
+
+    // Real-time stock quotes proxy (Yahoo Finance)
+    if (url.pathname === "/stock-quotes" && request.method === "GET") {
+      const raw = (url.searchParams.get("tickers") || "").split(",").map(t => t.trim()).filter(Boolean).slice(0, 20);
+      if (!raw.length) return json({ quotes: [] });
+      const fh = env.FINNHUB_API_KEY;
+      const yfHeaders = {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "application/json",
+        "Referer": "https://finance.yahoo.com/"
+      };
+      const results = await Promise.allSettled(raw.map(async (t) => {
+        const isTW = /^\d{4,6}$/.test(t);
+        // US stocks: Finnhub real-time last-trade quote (subrequest cached 15s to stay under rate limit)
+        if (fh && !isTW) {
+          try {
+            const r = await fetch(
+              `https://finnhub.io/api/v1/quote?symbol=${encodeURIComponent(t)}&token=${fh}`,
+              { cf: { cacheTtl: 15, cacheEverything: true } }
+            );
+            if (r.ok) {
+              const d = await r.json();
+              if (d && typeof d.c === "number" && d.c > 0) {
+                return { symbol: t, name: t, price: d.c, change: typeof d.dp === "number" ? d.dp : null };
+              }
+            }
+          } catch {}
+        }
+        // Yahoo: Taiwan stocks + fallback when Finnhub is unset or fails
+        const sym = isTW ? `${t}.TW` : t;
+        try {
+          const res = await fetch(
+            `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?interval=1d&range=5d`,
+            { headers: yfHeaders, cf: { cacheTtl: 15, cacheEverything: true } }
+          );
+          if (!res.ok) return { symbol: t, name: t, price: null, change: null };
+          const data = await res.json();
+          const meta = data?.chart?.result?.[0]?.meta;
+          if (!meta) return { symbol: t, name: t, price: null, change: null };
+          const price = meta.regularMarketPrice ?? null;
+          const prev = meta.chartPreviousClose ?? null;
+          const change = (price !== null && prev !== null && prev !== 0) ? ((price - prev) / prev * 100) : null;
+          return { symbol: t, name: meta.shortName || meta.longName || sym, price, change };
+        } catch { return { symbol: t, name: t, price: null, change: null }; }
+      }));
+      const quotes = results.map((r, i) => r.status === "fulfilled" ? r.value : { symbol: raw[i], name: raw[i], price: null, change: null });
+      return new Response(JSON.stringify({ quotes }), {
+        headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*", "Cache-Control": "max-age=15" }
+      });
+    }
+
+    // Historical chart series proxy (Yahoo Finance) — same source as /stock-quotes
+    if (url.pathname === "/stock-chart" && request.method === "GET") {
+      const t = (url.searchParams.get("ticker") || "").trim();
+      if (!t) return json({ error: "ticker required" }, 400);
+      const cfg = {
+        "1D": { interval: "5m",  range: "1d"  },
+        "5D": { interval: "30m", range: "5d"  },
+        "1M": { interval: "1d",  range: "1mo" },
+        "3M": { interval: "1d",  range: "3mo" },
+      }[url.searchParams.get("range") || "1M"] || { interval: "1d", range: "1mo" };
+      const sym = /^\d{4,6}$/.test(t) ? `${t}.TW` : t;
+      const yfHeaders = {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "application/json",
+        "Referer": "https://finance.yahoo.com/"
+      };
+      try {
+        const res = await fetch(
+          `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?interval=${cfg.interval}&range=${cfg.range}`,
+          { headers: yfHeaders }
+        );
+        if (!res.ok) return json({ error: "fetch failed" }, 502);
+        const data = await res.json();
+        const r = data?.chart?.result?.[0];
+        if (!r) return json({ error: "no data" }, 404);
+        const ts = r.timestamp || [];
+        const closes = r.indicators?.quote?.[0]?.close || [];
+        const points = [];
+        for (let i = 0; i < ts.length; i++) {
+          if (closes[i] !== null && closes[i] !== undefined) points.push({ t: ts[i], c: closes[i] });
+        }
+        return new Response(JSON.stringify({
+          symbol: t,
+          prevClose: r.meta?.chartPreviousClose ?? null,
+          price: r.meta?.regularMarketPrice ?? null,
+          points
+        }), {
+          headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*", "Cache-Control": "max-age=300" }
+        });
+      } catch {
+        return json({ error: "error" }, 500);
+      }
+    }
+
+    // Direct free signup (no invite code required)
+    if (url.pathname === "/subscribe-free-direct" && request.method === "POST") {
+      let body;
+      try { body = await request.json(); } catch { return json({ error: "Invalid request" }, 400); }
+      const email = (body.email || "").trim().toLowerCase();
+      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json({ error: "invalid_email" }, 400);
+      const listId = parseInt(env.BREVO_LIST_ID) || 2;
+      const ok = await addToBrevo(email, env.BREVO_API_KEY, listId);
+      if (!ok) return json({ error: "brevo_error" }, 500);
+      const refCode = (body.ref || "").trim().toUpperCase();
+      if (refCode) {
+        const ownerEmail = await env.USER_PREFS.get(`referral:code:${refCode}`);
+        if (ownerEmail && ownerEmail !== email) {
+          const raw = await env.USER_PREFS.get(`referral:user:${ownerEmail}`);
+          if (raw) {
+            const data = JSON.parse(raw);
+            data.conversions = (data.conversions || 0) + 1;
+            await env.USER_PREFS.put(`referral:user:${ownerEmail}`, JSON.stringify(data));
+          }
+        }
+      }
+      await sendWelcomeEmail(email, env.BREVO_API_KEY, false);
+      ctx.waitUntil(sendTodayDigestToAll(env.BREVO_API_KEY, parseInt(env.BREVO_LIST_ID) || 2, env.USER_PREFS));
+      return json({ ok: true });
+    }
+
+    // AI Customer Support endpoint
+    if (url.pathname === "/support" && request.method === "POST") {
+      let body;
+      try { body = await request.json(); } catch {
+        return json({ error: "Invalid request" }, 400);
+      }
+      const { name, email, topic, message } = body;
+      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || !message) {
+        return json({ error: "missing_fields" }, 400);
+      }
+
+      const aiReply = await generateSupportResponse(name, topic, message, env.ANTHROPIC_API_KEY);
+      await sendSupportReply(email, name, topic, message, aiReply, env.BREVO_API_KEY);
+      await notifyAdmin(email, name, topic, message, aiReply, env.BREVO_API_KEY);
+      return json({ ok: true });
+    }
+
+    // Get or generate referral code for a user
+    if (url.pathname === "/get-referral" && request.method === "POST") {
+      let body;
+      try { body = await request.json(); } catch { return json({ error: "Invalid request" }, 400); }
+      const email = (body.email || "").trim().toLowerCase();
+      if (!email) return json({ error: "invalid_email" }, 400);
+
+      let userData = await env.USER_PREFS.get(`referral:user:${email}`);
+      if (userData) {
+        return json(JSON.parse(userData));
+      }
+
+      // Generate new referral code
+      let code = generateRefCode(email);
+      // Ensure uniqueness
+      let existing = await env.USER_PREFS.get(`referral:code:${code}`);
+      if (existing) {
+        code = generateRefCode(email) + Math.floor(Math.random()*9);
+      }
+
+      const newData = { code, clicks: 0, conversions: 0, created_at: new Date().toISOString() };
+      await env.USER_PREFS.put(`referral:user:${email}`, JSON.stringify(newData));
+      await env.USER_PREFS.put(`referral:code:${code}`, email);
+      return json(newData);
+    }
+
+    // Track referral click (called from landing page when ?ref= param present)
+    if (url.pathname === "/track-referral-click" && request.method === "POST") {
+      let body;
+      try { body = await request.json(); } catch { return json({ error: "Invalid" }, 400); }
+      const code = (body.code || "").trim().toUpperCase();
+      if (!code) return json({ ok: false });
+
+      const ownerEmail = await env.USER_PREFS.get(`referral:code:${code}`);
+      if (!ownerEmail) return json({ ok: false, error: "invalid_code" });
+
+      const raw = await env.USER_PREFS.get(`referral:user:${ownerEmail}`);
+      if (raw) {
+        const data = JSON.parse(raw);
+        data.clicks = (data.clicks || 0) + 1;
+        await env.USER_PREFS.put(`referral:user:${ownerEmail}`, JSON.stringify(data));
+      }
       return json({ ok: true });
     }
 
@@ -216,6 +506,7 @@ export default {
       if (email) {
         await addToBrevo(email, env.BREVO_API_KEY, parseInt(env.BREVO_LIST_ID));
         await sendWelcomeEmail(email, env.BREVO_API_KEY, true);
+        ctx.waitUntil(sendTodayDigestToAll(env.BREVO_API_KEY, parseInt(env.BREVO_LIST_ID) || 2, env.USER_PREFS));
       }
     }
 
@@ -245,6 +536,79 @@ async function verifyStripeSignature(payload, sigHeader, secret) {
   return expected === signature;
 }
 
+function getTaiwanDate() {
+  const now = new Date();
+  return new Date(now.getTime() + 8 * 60 * 60 * 1000).toISOString().split("T")[0];
+}
+
+async function getAllBrevoSubscribers(apiKey, listId) {
+  const emails = [];
+  let offset = 0;
+  const limit = 100;
+  while (true) {
+    const res = await fetch(
+      `https://api.brevo.com/v3/contacts/lists/${listId}/contacts?limit=${limit}&offset=${offset}`,
+      { headers: { "api-key": apiKey } }
+    );
+    if (!res.ok) break;
+    const data = await res.json();
+    const contacts = data.contacts || [];
+    for (const c of contacts) if (c.email) emails.push(c.email);
+    if (contacts.length < limit) break;
+    offset += limit;
+  }
+  return emails;
+}
+
+async function sendTodayDigestToAll(apiKey, listId, kv) {
+  const today = getTaiwanDate();
+  const sentKey = `digest_sent:${today}`;
+
+  // 防重複：同一天只觸發一次
+  const alreadySent = await kv.get(sentKey);
+  if (alreadySent) return;
+
+  // 確認今天有 digest（讀 manifest）
+  try {
+    const manifestRes = await fetch(`https://marketdaily.ai/output/manifest.json?t=${Date.now()}`);
+    if (!manifestRes.ok) return;
+    const manifest = await manifestRes.json();
+    const dates = manifest.dates || [];
+    if (!dates.includes(today)) return; // 今天還沒有日報
+  } catch { return; }
+
+  // 抓今天的 digest HTML
+  let digestHtml;
+  try {
+    const res = await fetch(`https://marketdaily.ai/output/digest_${today}.html`);
+    if (!res.ok) return;
+    digestHtml = await res.text();
+    if (!digestHtml.includes('財經日報')) return; // SPA fallback guard
+  } catch { return; }
+
+  // 標記已發送（先標記防 race condition）
+  await kv.put(sentKey, "1", { expirationTtl: 86400 * 3 });
+
+  // 取全名單
+  const emails = await getAllBrevoSubscribers(apiKey, listId);
+  if (!emails.length) return;
+
+  // 批量寄送（平行，最多同時 20 個）
+  const subject = `📈 財經日報 ${today} — 今日市場速覽`;
+  const sender = { name: "MarketDaily 財經日報", email: "delvin.12345678@gmail.com" };
+  const chunks = [];
+  for (let i = 0; i < emails.length; i += 20) chunks.push(emails.slice(i, i + 20));
+  for (const chunk of chunks) {
+    await Promise.allSettled(chunk.map(email =>
+      fetch("https://api.brevo.com/v3/smtp/email", {
+        method: "POST",
+        headers: { "api-key": apiKey, "Content-Type": "application/json" },
+        body: JSON.stringify({ sender, to: [{ email }], subject, htmlContent: digestHtml }),
+      })
+    ));
+  }
+}
+
 async function addToBrevo(email, apiKey, listId) {
   const res = await fetch("https://api.brevo.com/v3/contacts", {
     method: "POST",
@@ -252,6 +616,124 @@ async function addToBrevo(email, apiKey, listId) {
     body: JSON.stringify({ email, listIds: [listId], updateEnabled: true })
   });
   return res.ok || res.status === 400; // 400 = contact already exists, still OK
+}
+
+async function generateSupportResponse(name, topic, message, apiKey) {
+  if (!apiKey) return "感謝您的來信！我們會盡快回覆您。如有緊急問題，請直接聯繫 delvin.12345678@gmail.com";
+  try {
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "claude-haiku-4-5-20251001",
+        max_tokens: 600,
+        system: `你是 MarketDaily（財經日報）的 AI 客服助理，服務態度親切專業。
+
+【服務說明】
+- 每天早上 7:00 AM（台灣時間）寄送 AI 財經日報
+- 內容：美股 + 台股新聞、假訊息過濾、30 秒摘要、板塊分析、BTC/ETH
+- 來源：Reuters、CNBC、Bloomberg、FT 等可信媒體
+
+【方案】
+- 免費方案：需邀請碼（親友邀請制）
+- Premium 方案：NT$500/月，隨時可取消
+
+【常見問題處理】
+- 帳號/訂閱問題：請用戶聯繫 delvin.12345678@gmail.com
+- 邀請碼問題：邀請碼由 Delvin 本人發出，數量有限
+- 退訂：在 Email 底部點取消訂閱，或聯繫客服
+
+請用繁體中文回覆，語氣友善，回答簡潔（3-5 句話即可）。`,
+        messages: [{
+          role: "user",
+          content: `用戶姓名：${name || "用戶"}\n問題類型：${topic || "一般問題"}\n問題內容：${message}`,
+        }],
+      }),
+    });
+    if (!res.ok) throw new Error("API error");
+    const data = await res.json();
+    return data.content?.[0]?.text || "感謝您的來信！我們會盡快回覆您。";
+  } catch {
+    return "感謝您的來信！我們收到了您的問題，會盡快為您處理。如有緊急問題，請直接聯繫 delvin.12345678@gmail.com";
+  }
+}
+
+async function sendSupportReply(email, name, topic, message, aiReply, apiKey) {
+  const html = `<!DOCTYPE html>
+<html lang="zh-Hant">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background:#f0f2f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+<div style="max-width:560px;margin:32px auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.08);">
+  <div style="background:linear-gradient(135deg,#0f0c29,#302b63,#24243e);padding:28px 28px 22px;">
+    <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="margin-bottom:18px;">
+      <tr>
+        <td width="52" valign="middle" style="padding-right:14px;">
+          <img src="https://marketdaily.ai/logo-icon.svg" width="46" height="46" alt="MD" style="display:block;border-radius:12px;">
+        </td>
+        <td valign="middle">
+          <div style="font-size:20px;font-weight:800;color:#ffffff;letter-spacing:-0.5px;line-height:1.2;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">MarketDaily</div>
+          <div style="font-size:10px;color:#a5b4fc;letter-spacing:3px;text-transform:uppercase;margin-top:3px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">客服回覆</div>
+        </td>
+      </tr>
+    </table>
+    <h1 style="margin:0 0 6px;font-size:22px;font-weight:800;color:#fde68a;">Hi ${name || "你"} 👋</h1>
+    <p style="margin:0;font-size:13px;color:#c4b5fd;">我們收到了你的問題，以下是回覆</p>
+  </div>
+  <div style="padding:28px;">
+    <div style="background:#f8fafc;border-left:4px solid #6366f1;border-radius:0 8px 8px 0;padding:14px 18px;margin-bottom:24px;">
+      <div style="font-size:11px;color:#888;font-weight:700;margin-bottom:6px;">你的問題</div>
+      <p style="margin:0;font-size:14px;color:#444;line-height:1.6;">${message.replace(/\n/g, "<br>")}</p>
+    </div>
+    <div style="font-size:14px;color:#222;line-height:1.8;">${aiReply.replace(/\n/g, "<br>")}</div>
+    <p style="margin-top:24px;font-size:13px;color:#888;line-height:1.7;">
+      如果還有其他問題，隨時回覆這封信或到網站聯絡我們。<br>
+      <a href="https://marketdaily.ai" style="color:#6366f1;text-decoration:none;font-weight:700;">marketdaily.ai</a>
+    </p>
+  </div>
+  <div style="background:#1a1a2e;padding:16px 28px;text-align:center;font-size:11px;color:rgba(255,255,255,0.3);">
+    財經日報 · AI 精選 · 假訊息過濾<br>
+    本回覆由 AI 生成，如有複雜問題請聯繫 delvin.12345678@gmail.com
+  </div>
+</div>
+</body></html>`;
+
+  await fetch("https://api.brevo.com/v3/smtp/email", {
+    method: "POST",
+    headers: { "api-key": apiKey, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      sender: { name: "財經日報客服", email: "delvin.12345678@gmail.com" },
+      to: [{ email, name: name || "" }],
+      subject: `Re: ${topic || "你的問題"} — 財經日報客服`,
+      htmlContent: html,
+    }),
+  });
+}
+
+async function notifyAdmin(userEmail, name, topic, message, aiReply, apiKey) {
+  const html = `<div style="font-family:sans-serif;max-width:560px;margin:0 auto;">
+  <h2 style="color:#6366f1;">📩 新客服來信</h2>
+  <p><strong>姓名：</strong>${name || "-"}</p>
+  <p><strong>Email：</strong>${userEmail}</p>
+  <p><strong>主題：</strong>${topic || "-"}</p>
+  <p><strong>問題：</strong><br>${message.replace(/\n/g, "<br>")}</p>
+  <hr>
+  <p><strong>AI 回覆：</strong><br>${aiReply.replace(/\n/g, "<br>")}</p>
+</div>`;
+
+  await fetch("https://api.brevo.com/v3/smtp/email", {
+    method: "POST",
+    headers: { "api-key": apiKey, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      sender: { name: "財經日報客服系統", email: "delvin.12345678@gmail.com" },
+      to: [{ email: "delvin.12345678@gmail.com" }],
+      subject: `[客服] ${name || userEmail}：${topic || "一般問題"}`,
+      htmlContent: html,
+    }),
+  });
 }
 
 async function sendWelcomeEmail(email, apiKey, isPaid = false) {
@@ -266,22 +748,72 @@ async function sendWelcomeEmail(email, apiKey, isPaid = false) {
 <body style="margin:0;padding:0;background:#f0f2f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
 <div style="max-width:560px;margin:32px auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.08);">
 
-  <div style="background:linear-gradient(135deg,#0f0c29,#302b63,#24243e);padding:32px 28px 24px;">
-    <div style="font-size:11px;color:#a5b4fc;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;font-weight:700;">財經日報</div>
-    <h1 style="margin:0;font-size:24px;font-weight:800;color:#fde68a;">📊 訂閱確認</h1>
-    <p style="margin:10px 0 0;font-size:14px;color:#c4b5fd;font-weight:600;letter-spacing:0.5px;">AI 精選 · 假訊息過濾 · 美股 + 台股</p>
+  <div style="background:linear-gradient(135deg,#0f0c29,#302b63,#24243e);padding:28px 28px 22px;">
+    <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="margin-bottom:18px;">
+      <tr>
+        <td width="52" valign="middle" style="padding-right:14px;">
+          <img src="https://marketdaily.ai/logo-icon.svg" width="46" height="46" alt="MD" style="display:block;border-radius:12px;">
+        </td>
+        <td valign="middle">
+          <div style="font-size:20px;font-weight:800;color:#ffffff;letter-spacing:-0.5px;line-height:1.2;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">MarketDaily</div>
+          <div style="font-size:10px;color:#a5b4fc;letter-spacing:3px;text-transform:uppercase;margin-top:3px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">AI 財經日報</div>
+        </td>
+      </tr>
+    </table>
+    <h1 style="margin:0 0 6px;font-size:22px;font-weight:800;color:#fde68a;">✅ 訂閱確認</h1>
+    <p style="margin:0;font-size:13px;color:#c4b5fd;font-weight:500;letter-spacing:0.5px;">AI 精選 · 假訊息過濾 · 美股 + 台股</p>
   </div>
 
   <div style="padding:28px;">
-    <p style="font-size:16px;font-weight:700;color:#1a1a1a;margin:0 0 12px;">嗨！歡迎加入 👋</p>
-    <p style="font-size:14px;color:#444;line-height:1.7;margin:0 0 20px;">
+    <p style="font-size:18px;font-weight:800;color:#1a1a1a;margin:0 0 12px;">嗨！歡迎加入 👋</p>
+    <p style="font-size:15px;color:#444;line-height:1.8;margin:0 0 22px;">
       ${planLine}<br>
-      從明天起，每天早上 <strong>7:00 AM（台灣時間）</strong>，你會收到一封財經日報，30 秒看完今天所有重要的市場動態。
+      從明天起，每天早上 <strong>7:00 AM（台灣時間）</strong>，你會收到一封財經日報，30 秒看完今天的市場重點。
     </p>
 
+    <!-- 3 步驟開始 -->
+    <div style="background:#f6f7fb;border:1px solid #e2e8f0;border-radius:14px;padding:22px 22px 12px;margin-bottom:20px;">
+      <p style="margin:0 0 16px;font-size:16px;font-weight:800;color:#1a1a1a;">🚀 三個步驟，馬上開始</p>
+      <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
+        <tr>
+          <td width="38" valign="top"><div style="width:28px;height:28px;border-radius:50%;background:#6366f1;color:#fff;font-size:15px;font-weight:800;text-align:center;line-height:28px;">1</div></td>
+          <td style="padding-bottom:14px;font-size:15px;color:#333;line-height:1.65;"><strong>設定密碼</strong><br><span style="color:#666;">第一次登入時，系統會請你設定一組密碼（至少 6 位），請寫在紙上收好。</span></td>
+        </tr>
+        <tr>
+          <td width="38" valign="top"><div style="width:28px;height:28px;border-radius:50%;background:#6366f1;color:#fff;font-size:15px;font-weight:800;text-align:center;line-height:28px;">2</div></td>
+          <td style="padding-bottom:14px;font-size:15px;color:#333;line-height:1.65;"><strong>登入「我的專區」</strong><br><span style="color:#666;">用 Email 和密碼登入，就能看到你的專屬頁面。</span></td>
+        </tr>
+        <tr>
+          <td width="38" valign="top"><div style="width:28px;height:28px;border-radius:50%;background:#6366f1;color:#fff;font-size:15px;font-weight:800;text-align:center;line-height:28px;">3</div></td>
+          <td style="font-size:15px;color:#333;line-height:1.65;"><strong>設定你的股票</strong><br><span style="color:#666;">搜尋你關注的股票加入清單，每日報告就會幫你客製化。</span></td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- 大按鈕 CTA -->
+    <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="margin-bottom:12px;">
+      <tr>
+        <td align="center">
+          <a href="https://marketdaily.ai/dashboard.html?email=${encodeURIComponent(email)}" style="display:block;padding:17px 24px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;font-size:17px;font-weight:800;text-decoration:none;border-radius:12px;">🔑 設定密碼並登入 →</a>
+        </td>
+      </tr>
+    </table>
+    <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="margin-bottom:24px;">
+      <tr>
+        <td align="center">
+          <a href="https://marketdaily.ai/guide.html" style="display:block;padding:15px 24px;background:#ffffff;border:2px solid #6366f1;color:#4f46e5;font-size:16px;font-weight:800;text-decoration:none;border-radius:12px;">📖 看完整圖文教學 →</a>
+        </td>
+      </tr>
+      <tr>
+        <td align="center" style="padding-top:8px;">
+          <span style="font-size:12px;color:#999;">不知道怎麼操作？點上面看一步步圖文說明</span>
+        </td>
+      </tr>
+    </table>
+
     <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:18px 20px;margin-bottom:20px;">
-      <p style="margin:0 0 10px;font-size:13px;font-weight:800;color:#333;letter-spacing:0.5px;">📬 每天報告包含</p>
-      <ul style="margin:0;padding-left:18px;font-size:13px;color:#555;line-height:2;">
+      <p style="margin:0 0 10px;font-size:14px;font-weight:800;color:#333;letter-spacing:0.5px;">📬 每天報告包含</p>
+      <ul style="margin:0;padding-left:18px;font-size:14px;color:#555;line-height:2;">
         <li>☕ 30 秒重點摘要</li>
         <li>📈 美股 + 台股大盤動向</li>
         <li>₿ BTC / ETH 加密貨幣</li>
@@ -290,6 +822,19 @@ async function sendWelcomeEmail(email, apiKey, isPaid = false) {
         <li>🔗 二階思考：美股如何影響台灣？</li>
         <li>📅 即將公布財報提醒</li>
       </ul>
+    </div>
+
+    <!-- 推薦好友區塊 -->
+    <div style="background:linear-gradient(135deg,rgba(99,102,241,0.08),rgba(139,92,246,0.08));border:1px solid rgba(99,102,241,0.2);border-radius:12px;padding:18px 20px;margin-bottom:20px;">
+      <p style="margin:0 0 8px;font-size:13px;font-weight:800;color:#4f46e5;">🎁 推薦好友，雙方各得 7 天 Pro</p>
+      <p style="margin:0 0 12px;font-size:12px;color:#666;line-height:1.6;">你有專屬推薦連結，分享給朋友後，朋友完成訂閱，你們雙方都自動延長 7 天 Pro 方案。</p>
+      <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
+        <tr>
+          <td align="center">
+            <a href="https://marketdaily.ai/dashboard.html" style="display:inline-block;padding:10px 24px;background:#4f46e5;color:#fff;font-size:13px;font-weight:700;text-decoration:none;border-radius:10px;">查看我的推薦連結 →</a>
+          </td>
+        </tr>
+      </table>
     </div>
 
     <p style="font-size:13px;color:#888;line-height:1.7;margin:0;">
@@ -301,9 +846,9 @@ async function sendWelcomeEmail(email, apiKey, isPaid = false) {
   <div style="background:#1a1a2e;padding:16px 28px;text-align:center;font-size:11px;color:rgba(255,255,255,0.3);line-height:2;">
     財經日報 · AI 精選 · 假訊息過濾<br>
     本報告為 AI 生成，僅供參考，不構成投資建議<br><br>
-    <a href="https://marketdaily.github.io/financial-daily-digest/" style="color:#6366f1;text-decoration:none;font-weight:700;">🌐 marketdaily.github.io/financial-daily-digest</a>
+    <a href="https://marketdaily.ai" style="color:#6366f1;text-decoration:none;font-weight:700;">🌐 marketdaily.ai</a>
     &nbsp;·&nbsp;
-    <a href="https://marketdaily.github.io/financial-daily-digest/dashboard.html" style="color:#a5b4fc;text-decoration:none;">⚙️ 我的專區</a>
+    <a href="https://marketdaily.ai/dashboard.html" style="color:#a5b4fc;text-decoration:none;">⚙️ 我的專區</a>
   </div>
 </div>
 </body>

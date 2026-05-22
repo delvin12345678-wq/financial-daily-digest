@@ -2,6 +2,7 @@ import os
 import re
 import json
 import time
+import secrets
 import logging
 import cssutils
 
@@ -9,7 +10,7 @@ cssutils.log.setLevel(logging.CRITICAL)
 
 from data_fetcher import fetch_all
 from fake_news_filter import filter_us_news, filter_tw_news
-from analyzer import generate_report
+from analyzer import generate_report, DIGEST_EMAIL_MAX_HOLDINGS
 from publisher import publish_to_brevo
 
 
@@ -344,6 +345,41 @@ def get_user_preferences(email: str) -> dict:
     return {"us_stocks": [], "tw_stocks": []}
 
 
+def save_hosted_digest(html: str) -> str:
+    """把完整日報 HTML 上傳到 Worker KV，回傳可分享的網頁連結；失敗回 None。"""
+    import requests
+    token = secrets.token_urlsafe(12)
+    try:
+        res = requests.post(
+            f"{WORKER_URL}/save-digest",
+            json={"token": token, "html": html},
+            timeout=20,
+        )
+        if res.ok:
+            return res.json().get("url")
+        print(f"   ⚠️ 網頁版上傳失敗（HTTP {res.status_code}）")
+    except Exception as e:
+        print(f"   ⚠️ 網頁版上傳失敗（{e}）")
+    return None
+
+
+def _web_view_banner(url: str, total_holdings: int = 0, shown: int = 0) -> str:
+    """email 頂部的「看網頁完整版」按鈕。"""
+    note = ""
+    if total_holdings and shown and total_holdings > shown:
+        note = (
+            '<div style="font-size:11px;color:#6b7280;margin-top:5px;line-height:1.6;">'
+            f'這封信顯示變動最大的 {shown} 支持倉；完整 {total_holdings} 支請看網頁版</div>'
+        )
+    return (
+        '<div style="margin:14px 20px 0;padding:13px 16px;background:#eef0ff;'
+        'border:1px solid #c7d2fe;border-radius:12px;text-align:center;">'
+        f'<a href="{url}" style="font-size:13px;font-weight:800;color:#4338ca;'
+        'text-decoration:none;">📱 在網頁上看完整日報（不會被截斷、可分享）→</a>'
+        f'{note}</div>'
+    )
+
+
 def run():
     from config import BREVO_API_KEY
     from publisher import get_list_id, check_subscriber_count, get_all_subscribers, send_transactional_email
@@ -396,7 +432,10 @@ def run():
     print("⑤ 儲存本地預覽（預設版）...")
     save_local(data["date"], default_report)
 
-    print("⑥ 個人化發送...")
+    print("⑥ 上傳預設版網頁...")
+    default_web_url = save_hosted_digest(build_email_html(data["date"], default_report))
+
+    print("⑦ 個人化發送...")
     from analyzer import get_personalized_subject
     success_count = 0
     ai_calls = 0
@@ -404,23 +443,42 @@ def run():
         prefs = subscriber_prefs[email]
         us_stocks = prefs.get("us_stocks") or []
         tw_stocks = prefs.get("tw_stocks") or []
+        total = len(us_stocks) + len(tw_stocks)
 
         subject = None
+        web_url = default_web_url
+        shown = total
         if us_stocks or tw_stocks:
             print(f"   {email} → 個人化（美股:{len(us_stocks)}, 台股:{len(tw_stocks)}）")
             try:
                 if ai_calls > 0:
                     time.sleep(5)  # 輕度間隔，避免觸發 Gemini 免費層每分鐘上限
-                inner = generate_report(data, us_stocks or None, tw_stocks or None)
+                full_inner = generate_report(data, us_stocks or None, tw_stocks or None)
                 ai_calls += 1
-                inner = _inject_ai_banner(inner, data["date"])
+                full_inner = _inject_ai_banner(full_inner, data["date"])
+                # 完整版（含全部持倉）上傳網頁
+                web_url = save_hosted_digest(build_email_html(data["date"], full_inner)) or default_web_url
+                # email 版：持倉超過上限時縮減，避免被 Gmail 截斷
+                if total > DIGEST_EMAIL_MAX_HOLDINGS:
+                    time.sleep(5)
+                    inner = generate_report(data, us_stocks or None, tw_stocks or None, email_safe=True)
+                    ai_calls += 1
+                    inner = _inject_ai_banner(inner, data["date"])
+                    shown = DIGEST_EMAIL_MAX_HOLDINGS
+                else:
+                    inner = full_inner
                 subject = get_personalized_subject(data, us_stocks, tw_stocks, data["date"])
             except Exception as e:
                 print(f"   ⚠️ {email} 個人化失敗，改用預設版（{e}）")
                 inner = default_report
                 subject = None
+                web_url = default_web_url
+                shown = total
         else:
             inner = default_report
+
+        if web_url:
+            inner = _web_view_banner(web_url, total, shown) + inner
 
         try:
             html = build_email_html(data["date"], inner)

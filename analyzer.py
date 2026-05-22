@@ -312,7 +312,30 @@ def _postprocess_html(html: str, data: dict) -> str:
     return html
 
 
-def generate_report(data: dict, user_us_stocks: list = None, user_tw_stocks: list = None) -> str:
+DIGEST_EMAIL_MAX_HOLDINGS = 12
+
+
+def generate_report(data: dict, user_us_stocks: list = None, user_tw_stocks: list = None,
+                    email_safe: bool = False) -> str:
+    # email 版：持倉太多時只留變動最大的 N 支，避免信件過長被 Gmail 截斷（完整版見網頁）
+    if email_safe:
+        us0 = list(user_us_stocks or [])
+        tw0 = list(user_tw_stocks or [])
+        if len(us0) + len(tw0) > DIGEST_EMAIL_MAX_HOLDINGS:
+            um = data.get("us_market", {})
+            tm = data.get("tw_market", {})
+
+            def _mv(sym, mkt):
+                return abs((mkt.get(sym) or {}).get("change_pct", 0) or 0)
+
+            ranked = sorted(
+                [(s, "us") for s in us0] + [(s, "tw") for s in tw0],
+                key=lambda x: _mv(x[0], um if x[1] == "us" else tm),
+                reverse=True,
+            )[:DIGEST_EMAIL_MAX_HOLDINGS]
+            user_us_stocks = [s for s, k in ranked if k == "us"]
+            user_tw_stocks = [s for s, k in ranked if k == "tw"]
+
     market_text = _format_market_data(data, user_us_stocks, user_tw_stocks)
     us_news_text = _format_news(data.get("us_news", []), max_items=6)
     tw_news_text = _format_news(data.get("tw_news", []), max_items=5)
