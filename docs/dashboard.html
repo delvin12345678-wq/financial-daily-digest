@@ -180,9 +180,9 @@ nav {
 .dash-hero-name { font-size: 26px; font-weight: 900; color: #fde68a; margin-bottom: 6px; letter-spacing: -0.5px; }
 .dash-hero-sub { font-size: 13px; color: #c4b5fd; line-height: 1.6; }
 .plan-badge {
-  display: inline-flex; align-items: center; gap: 6px; margin-top: 14px;
+  display: inline-flex; align-items: center; gap: 5px;
   background: rgba(99,102,241,0.2); border: 1px solid rgba(99,102,241,0.35);
-  color: #a5b4fc; font-size: 11px; font-weight: 700; padding: 5px 14px; border-radius: 20px;
+  color: #a5b4fc; font-size: 11px; font-weight: 800; padding: 4px 12px; border-radius: 20px;
 }
 .plan-badge.admin { background: rgba(245,158,11,0.18); border-color: rgba(245,158,11,0.38); color: #fde68a; }
 
@@ -212,7 +212,7 @@ nav {
 .admin-action-btn:hover { background: rgba(245,158,11,0.18); }
 
 /* Stats grid */
-.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
+.stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 20px; }
 .stat {
   background: var(--surface); border: 1px solid var(--border);
   border-radius: var(--radius); padding: 18px; transition: border-color 0.2s;
@@ -335,7 +335,6 @@ nav {
   .dash-hero { padding: 28px 20px 24px; }
   .container { padding: 24px 16px 60px; }
   .stats { grid-template-columns: 1fr 1fr; }
-  .stats .stat:last-child { grid-column: 1 / -1; }
   .admin-stats { grid-template-columns: 1fr; }
   .login-card { padding: 32px 24px; }
 }
@@ -529,7 +528,7 @@ nav {
     </a>
     <div class="nav-right">
       <span class="nav-email" id="nav-email"></span>
-      <span class="admin-badge" id="admin-badge" style="display:none;">👑 Admin</span>
+      <span class="plan-badge" id="plan-badge" style="display:none;">✅ 訂閱中</span>
       <button class="lang-btn" onclick="toggleLang()">EN</button>
       <button class="logout-btn" onclick="doLogout()" data-i18n="nav_logout">登出</button>
     </div>
@@ -540,7 +539,6 @@ nav {
       <div class="dash-hero-label" data-i18n="hero_label">財經日報 · 訂閱者專區</div>
       <div class="dash-hero-name" id="hero-name">👋 嗨！</div>
       <div class="dash-hero-sub" data-i18n="hero_sub">每天早上 7:00 AM，你的個人化財經日報會送到信箱</div>
-      <div class="plan-badge" id="plan-badge">✅ 訂閱中</div>
     </div>
   </div>
 
@@ -614,11 +612,6 @@ nav {
     <!-- Stats -->
     <div class="stats scene-reveal">
       <div class="stat">
-        <div class="stat-label" data-i18n="stat_status_label">訂閱狀態</div>
-        <div class="stat-value green" data-i18n="stat_status_value">✅ 啟用中</div>
-        <div class="stat-sub" id="stat-plan" data-i18n="plan_free">免費方案</div>
-      </div>
-      <div class="stat">
         <div class="stat-label" data-i18n="stat_us_label">美股追蹤</div>
         <div class="stat-value" id="stat-us">0 支</div>
         <div class="stat-sub" id="stat-us-list" data-i18n="not_set">尚未設定</div>
@@ -654,10 +647,6 @@ nav {
       </div>
     </div>
 
-    <div class="cap-bar" id="cap-bar">
-      <span class="cap-count" id="cap-count" data-i18n="cap_count_zero">已追蹤 0 檔</span>
-      <a href="pricing.html" class="cap-upgrade" id="cap-upgrade" style="display:none;" data-i18n="cap_upgrade">升級可追蹤更多 →</a>
-    </div>
     <div class="save-status" id="save-status" onclick="doAutoSave()" data-i18n="save_status_idle">你的選擇會自動儲存,不需要按任何按鈕。</div>
 
     <!-- LINE 即時提醒(Premium 專屬) -->
@@ -767,6 +756,9 @@ const WORKER_URL = "https://marketdaily-webhook.delvin-12345678.workers.dev";
 const i18n = {
   zh: {
     page_title: "訂閱者專區 · MarketDaily",
+    hdr_plan_admin: "👑 Admin",
+    hdr_plan_paid: "⭐ 付費方案",
+    hdr_plan_free: "免費版",
     chat_card_title: "💬 AI 投資助手",
     chat_card_desc: "問 AI 你的持股、大盤、財經概念 —— 它知道你正在追蹤的股票。Premium 專屬。",
     chat_locked_notice: "⚠️ AI 投資助手是 Premium 專屬功能。<a href=\"pricing.html\" style=\"color:#fbbf24;font-weight:700;\">升級 Premium →</a>",
@@ -914,6 +906,9 @@ const i18n = {
   },
   en: {
     page_title: "Subscriber Area · MarketDaily",
+    hdr_plan_admin: "👑 Admin",
+    hdr_plan_paid: "⭐ Paid",
+    hdr_plan_free: "Free",
     chat_card_title: "💬 AI Investment Assistant",
     chat_card_desc: "Ask AI about your holdings, the market and finance — it knows the stocks you track. Premium-only.",
     chat_locked_notice: "⚠️ The AI Investment Assistant is a Premium-only feature. <a href=\"pricing.html\" style=\"color:#fbbf24;font-weight:700;\">Upgrade to Premium →</a>",
@@ -1102,13 +1097,8 @@ function refreshDynamicLang() {
     const name = email.split("@")[0];
     const heroName = document.getElementById("hero-name");
     if (heroName) heroName.textContent = T('hero_name_greeting')(name);
-    if (plan === "admin") {
-      const sp = document.getElementById("stat-plan"); if (sp) sp.textContent = T('plan_admin');
-      const badge = document.getElementById("plan-badge"); if (badge) badge.textContent = T('badge_admin');
-    } else {
-      const sp = document.getElementById("stat-plan"); if (sp) sp.textContent = plan === "paid" ? T('plan_paid') : T('plan_free');
-      const badge = document.getElementById("plan-badge"); if (badge) badge.textContent = plan === "paid" ? T('badge_paid') : T('badge_free');
-    }
+    const badge = document.getElementById("plan-badge");
+    if (badge) badge.textContent = plan === "admin" ? T('hdr_plan_admin') : plan === "paid" ? T('hdr_plan_paid') : T('hdr_plan_free');
     renderTags("us"); renderTags("tw"); updateStats();
   }
 }
@@ -1190,8 +1180,12 @@ function updateStats() {
   const us = selected.us, tw = selected.tw;
   document.getElementById("stat-us").textContent = T('unit_count')(us.length);
   document.getElementById("stat-tw").textContent = T('unit_count')(tw.length);
-  document.getElementById("stat-us-list").textContent = us.length ? us.slice(0,3).map(s=>s.sym).join(" · ") + (us.length > 3 ? " ..." : "") : T('not_set');
-  document.getElementById("stat-tw-list").textContent = tw.length ? tw.slice(0,2).map(s=>s.sym).join(" · ") + (tw.length > 2 ? " ..." : "") : T('not_set');
+  const statNm = (s, isUS) => {
+    const zh = isUS && typeof US_ZH !== "undefined" ? (US_ZH[s.sym] || "") : "";
+    return zh || s.name || s.sym;
+  };
+  document.getElementById("stat-us-list").textContent = us.length ? us.slice(0,3).map(s=>statNm(s,true)).join(" · ") + (us.length > 3 ? " …" : "") : T('not_set');
+  document.getElementById("stat-tw-list").textContent = tw.length ? tw.slice(0,2).map(s=>statNm(s,false)).join(" · ") + (tw.length > 2 ? " …" : "") : T('not_set');
 
   const n = us.length + tw.length;
   const atCap = userCap !== Infinity && n >= userCap;
@@ -1308,15 +1302,15 @@ async function showDashboard(email, plan) {
   const name = email.split("@")[0];
   document.getElementById("hero-name").textContent = T('hero_name_greeting')(name);
   document.getElementById("nav-email").textContent = email;
+  const planBadge = document.getElementById("plan-badge");
+  if (planBadge) {
+    planBadge.textContent = plan === "admin" ? T('hdr_plan_admin') : plan === "paid" ? T('hdr_plan_paid') : T('hdr_plan_free');
+    planBadge.classList.toggle("admin", plan === "admin");
+    planBadge.style.display = "inline-flex";
+  }
   if (plan === "admin") {
-    document.getElementById("stat-plan").textContent = T('plan_admin');
-    const badge = document.getElementById("plan-badge"); badge.textContent = T('badge_admin'); badge.classList.add("admin");
-    document.getElementById("admin-badge").style.display = "inline-flex";
     document.getElementById("admin-panel").style.display = "block";
     loadAdminStats();
-  } else {
-    document.getElementById("stat-plan").textContent = plan === "paid" ? T('plan_paid') : T('plan_free');
-    document.getElementById("plan-badge").textContent = plan === "paid" ? T('badge_paid') : T('badge_free');
   }
   setupLineCard(email, plan);
   setupChatCard(email, plan);
