@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>新手教學 · MarketDaily</title>
+<meta name="theme-color" content="#6366f1">
+<link rel="icon" type="image/svg+xml" href="/logo-icon.svg">
+<link rel="apple-touch-icon" href="/logo-icon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #060611; --surface: rgba(255,255,255,0.03);
+  --border: rgba(255,255,255,0.08); --border2: rgba(255,255,255,0.14);
+  --primary: #6366f1; --primary-light: #818cf8; --violet: #8b5cf6;
+  --emerald: #10b981; --amber: #fbbf24;
+  --text: #f1f5f9; --text2: rgba(255,255,255,0.62); --text3: rgba(255,255,255,0.38);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:focus-visible { outline: 3px solid #818cf8; outline-offset: 2px; border-radius: 6px; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Noto Sans TC', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg); color: var(--text);
+  min-height: 100vh; -webkit-font-smoothing: antialiased;
+  font-size: 17px; line-height: 1.7;
+}
+body::before {
+  content: ''; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background-image:
+    linear-gradient(rgba(99,102,241,0.035) 1px, transparent 1px),
+    linear-gradient(90deg,rgba(99,102,241,0.035) 1px, transparent 1px);
+  background-size: 72px 72px;
+}
+
+nav {
+  position: sticky; top: 0; z-index: 100;
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 0 24px; height: 64px;
+  background: rgba(6,6,17,0.85);
+  backdrop-filter: blur(28px) saturate(1.8);
+  -webkit-backdrop-filter: blur(28px) saturate(1.8);
+  border-bottom: 1px solid var(--border);
+}
+.logo {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 18px; font-weight: 800; letter-spacing: -0.5px;
+  text-decoration: none; color: var(--text);
+}
+.logo-icon {
+  width: 32px; height: 32px;
+  background: linear-gradient(135deg, var(--primary), var(--violet));
+  border-radius: 9px; display: flex; align-items: center; justify-content: center;
+}
+.logo em { color: var(--primary-light); font-style: normal; }
+.nav-back {
+  font-size: 15px; font-weight: 700; color: var(--text2);
+  text-decoration: none; background: rgba(255,255,255,0.06);
+  border: 1px solid var(--border); padding: 9px 18px; border-radius: 22px;
+  transition: all 0.2s;
+}
+.nav-back:hover { color: var(--text); border-color: var(--border2); }
+
+.wrap { position: relative; z-index: 1; max-width: 680px; margin: 0 auto; padding: 0 20px; }
+
+.hero { text-align: center; padding: 56px 0 40px; }
+.hero-badge {
+  display: inline-block; font-size: 14px; font-weight: 700; color: var(--primary-light);
+  background: rgba(99,102,241,0.13); border: 1px solid rgba(99,102,241,0.3);
+  padding: 7px 16px; border-radius: 20px; margin-bottom: 22px;
+}
+.hero h1 {
+  font-size: 34px; font-weight: 900; line-height: 1.35; letter-spacing: -0.5px;
+  margin-bottom: 16px;
+}
+.hero h1 .grad {
+  background: linear-gradient(120deg, #a5b4fc, #c4b5fd);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.hero p { font-size: 18px; color: var(--text2); line-height: 1.8; }
+
+.step {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 22px; padding: 32px 26px; margin-bottom: 26px;
+}
+.step-head { display: flex; align-items: center; gap: 16px; margin-bottom: 18px; }
+.step-num {
+  flex-shrink: 0; width: 56px; height: 56px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary), var(--violet));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 28px; font-weight: 900; color: #fff;
+  box-shadow: 0 8px 22px rgba(99,102,241,0.42);
+}
+.step-title { font-size: 24px; font-weight: 800; line-height: 1.35; }
+
+.shot {
+  width: 100%; border-radius: 14px; border: 1px solid var(--border2);
+  background: linear-gradient(135deg, rgba(99,102,241,0.1), rgba(139,92,246,0.06));
+  display: block; margin-bottom: 18px; min-height: 120px;
+}
+.shot-cap {
+  font-size: 13px; color: var(--text3); text-align: center;
+  margin: -8px 0 18px;
+}
+
+.step-body { font-size: 18px; color: var(--text2); line-height: 1.85; margin-bottom: 22px; }
+.step-body b { color: var(--text); font-weight: 700; }
+
+.note {
+  display: flex; gap: 12px; align-items: flex-start;
+  background: rgba(251,191,36,0.09); border: 1px solid rgba(251,191,36,0.28);
+  border-radius: 14px; padding: 16px 18px; margin-bottom: 22px;
+}
+.note-icon { font-size: 22px; flex-shrink: 0; }
+.note-text { font-size: 16px; color: #fde68a; line-height: 1.75; }
+
+.cta {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 100%; min-height: 56px; padding: 16px 24px;
+  background: linear-gradient(135deg, var(--primary), var(--violet));
+  color: #fff; font-size: 18px; font-weight: 800;
+  text-decoration: none; border-radius: 14px;
+  box-shadow: 0 10px 30px rgba(99,102,241,0.4);
+  transition: transform 0.15s;
+}
+.cta:hover { transform: translateY(-2px); }
+.cta:active { transform: translateY(0); }
+
+.outro {
+  text-align: center; padding: 14px 0 64px;
+}
+.outro p { font-size: 17px; color: var(--text2); margin-bottom: 20px; line-height: 1.8; }
+.outro-link {
+  display: inline-flex; align-items: center; min-height: 52px; padding: 14px 32px;
+  background: rgba(255,255,255,0.06); border: 1px solid var(--border2);
+  color: var(--text); font-size: 17px; font-weight: 700;
+  text-decoration: none; border-radius: 14px;
+}
+.outro-link:hover { background: rgba(255,255,255,0.1); }
+
+@media (max-width: 560px) {
+  .hero h1 { font-size: 27px; }
+  .hero { padding: 40px 0 30px; }
+  .step { padding: 26px 20px; }
+  .step-num { width: 48px; height: 48px; font-size: 24px; }
+  .step-title { font-size: 21px; }
+  .step-body { font-size: 17px; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="logo" href="index.html">
+    <span class="logo-icon">
+      <svg width="17" height="17" viewBox="0 0 22 22" xmlns="http://www.w3.org/2000/svg">
+        <rect x="1" y="14" width="4" height="7" rx="1.5" fill="white" fill-opacity="0.55"/>
+        <rect x="7" y="9" width="4" height="12" rx="1.5" fill="white" fill-opacity="0.78"/>
+        <rect x="13" y="4" width="4" height="17" rx="1.5" fill="white"/>
+        <circle cx="20" cy="3" r="2" fill="#fde68a"/>
+      </svg>
+    </span>
+    Market<em>Daily</em>
+  </a>
+  <a class="nav-back" href="index.html">回首頁</a>
+</nav>
+
+<div class="wrap">
+
+  <header class="hero">
+    <span class="hero-badge">📖 新手教學</span>
+    <h1>跟著 4 個步驟<br><span class="grad">3 分鐘學會用 MarketDaily</span></h1>
+    <p>不用擔心,每一步都有圖片帶你做。<br>學會後,每天早上你的信箱就會收到股市報告。</p>
+  </header>
+
+  <section class="step">
+    <div class="step-head">
+      <div class="step-num">1</div>
+      <div class="step-title">怎麼註冊(開通帳號)</div>
+    </div>
+    <img class="shot" src="assets/guide/step1-register.png" alt="MarketDaily 首頁,輸入 Email 後選擇方案的畫面" loading="lazy">
+    <div class="shot-cap">↑ MarketDaily 首頁的註冊畫面</div>
+    <p class="step-body">
+      打開 MarketDaily 首頁,在輸入框打上你的<b>電子信箱(Email)</b>,按<b>「繼續」</b>。
+      接著畫面會請你選一個方案——選<b>免費方案</b>,就能每天收到股市報告。
+    </p>
+    <a class="cta" href="index.html">現在去註冊 →</a>
+  </section>
+
+  <section class="step">
+    <div class="step-head">
+      <div class="step-num">2</div>
+      <div class="step-title">設定你的密碼</div>
+    </div>
+    <img class="shot" src="assets/guide/step2-password.png" alt="第一次登入時設定密碼的畫面" loading="lazy">
+    <div class="shot-cap">↑ 第一次登入時的設定密碼畫面</div>
+    <p class="step-body">
+      第一次登入時,網頁會請你設定一組<b>密碼(至少 6 個字)</b>。
+      設定好以後,以後每次登入都會用到這組密碼。
+    </p>
+    <div class="note">
+      <span class="note-icon">📝</span>
+      <span class="note-text">重要:請把這組密碼<b style="color:#fff">寫在紙上收好</b>,不要只記在腦子裡。忘記密碼會比較麻煩。</span>
+    </div>
+  </section>
+
+  <section class="step">
+    <div class="step-head">
+      <div class="step-num">3</div>
+      <div class="step-title">在哪裡登入</div>
+    </div>
+    <img class="shot" src="assets/guide/step3-login.png" alt="MarketDaily 我的專區登入畫面" loading="lazy">
+    <div class="shot-cap">↑ 「我的專區」的登入畫面</div>
+    <p class="step-body">
+      以後想看你的專區,點網站上的<b>「我的專區」</b>。
+      在登入畫面輸入你的<b>Email</b> 和剛剛設定的<b>密碼</b>,按<b>「進入我的專區」</b>就可以了。
+    </p>
+    <a class="cta" href="dashboard.html">前往登入 →</a>
+  </section>
+
+  <section class="step">
+    <div class="step-head">
+      <div class="step-num">4</div>
+      <div class="step-title">設定你想追蹤的股票</div>
+    </div>
+    <img class="shot" src="assets/guide/step4-stocks.png" alt="在持倉區搜尋並加入股票的畫面" loading="lazy">
+    <div class="shot-cap">↑ 持倉區:搜尋並加入你的股票</div>
+    <p class="step-body">
+      進入專區後,在持倉區的搜尋框打<b>股票代號或公司名稱</b>(例如「台積電」「NVDA」),
+      看到要的就<b>點一下加入清單</b>,最後按<b>「儲存設定」</b>。
+      之後每天的報告,就會特別幫你分析這些股票。
+    </p>
+    <a class="cta" href="dashboard.html">去設定股票 →</a>
+  </section>
+
+  <footer class="outro">
+    <p>就這 4 步,完成了!<br>還是不太清楚?把這一頁存進書籤,隨時可以回來看。</p>
+    <a class="outro-link" href="index.html">← 回到首頁</a>
+  </footer>
+
+</div>
+
+</body>
+</html>

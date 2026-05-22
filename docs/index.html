@@ -1,780 +1,2430 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Market Daily — AI-Curated Financial News for Taiwan Investors</title>
-<meta name="description" content="Get your daily US & Taiwan stock market briefing every morning at 7AM. AI-filtered, fake-news-free, and written like a smart friend texting you.">
+<title>MarketDaily — 台灣投資人的每日 AI 財經日報</title>
+<meta name="description" content="每天早上 7 點，AI 為你精選美股與台股市場簡報。假訊息全過濾，像聰明朋友傳訊息給你一樣好懂，30 秒掌握市場大事。">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#6366f1">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="MarketDaily">
+<link rel="apple-touch-icon" href="/logo-icon.svg">
+<link rel="icon" type="image/svg+xml" href="/logo-icon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #060611;
+  --surface: rgba(255,255,255,0.03);
+  --primary: #6366f1;
+  --primary-light: #818cf8;
+  --primary-dim: rgba(99,102,241,0.12);
+  --primary-border: rgba(99,102,241,0.28);
+  --violet: #8b5cf6;
+  --sky: #38bdf8;
+  --emerald: #10b981;
+  --text: #f1f5f9;
+  --text-muted: rgba(255,255,255,0.48);
+  --text-dim: rgba(255,255,255,0.28);
+  --border: rgba(255,255,255,0.07);
+  --border-hover: rgba(99,102,241,0.38);
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+}
 
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    background: #0a0a12;
-    color: #fff;
-    min-height: 100vh;
-  }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-  /* Nav */
-  nav {
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 20px 40px; border-bottom: 1px solid rgba(255,255,255,0.07);
-  }
-  .logo { font-size: 18px; font-weight: 800; letter-spacing: -0.5px; }
-  .logo span { color: #6366f1; }
-  .nav-right { display: flex; align-items: center; gap: 12px; }
-  .nav-badge {
-    background: rgba(99,102,241,0.15); color: #a5b4fc;
-    font-size: 12px; font-weight: 600; padding: 5px 14px;
-    border-radius: 20px; border: 1px solid rgba(99,102,241,0.3);
-  }
-  .lang-btn {
-    background: rgba(255,255,255,0.08);
-    border: 1px solid rgba(255,255,255,0.15);
-    color: rgba(255,255,255,0.7);
-    font-size: 13px; font-weight: 700;
-    padding: 5px 14px; border-radius: 20px;
-    cursor: pointer; transition: all 0.2s;
-    letter-spacing: 0.5px;
-  }
-  .lang-btn:hover { background: rgba(99,102,241,0.2); border-color: rgba(99,102,241,0.4); color: #fff; }
+:focus-visible {
+  outline: 2px solid #818cf8;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
 
-  /* Hero */
-  .hero {
-    text-align: center;
-    padding: 100px 24px 60px;
-    background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(99,102,241,0.18) 0%, transparent 70%);
-  }
-  .hero-pill {
-    display: inline-block;
-    background: rgba(99,102,241,0.15);
-    border: 1px solid rgba(99,102,241,0.35);
-    color: #a5b4fc; font-size: 12px; font-weight: 700;
-    padding: 6px 16px; border-radius: 20px;
-    letter-spacing: 1px; text-transform: uppercase;
-    margin-bottom: 28px;
-  }
-  .hero h1 {
-    font-size: clamp(36px, 6vw, 64px);
-    font-weight: 900; letter-spacing: -2px;
-    line-height: 1.1; margin-bottom: 24px;
-  }
-  .hero h1 .gradient {
-    background: linear-gradient(135deg, #6366f1, #a78bfa, #38bdf8);
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-  .hero-sub {
-    font-size: 18px; color: rgba(255,255,255,0.55);
-    max-width: 520px; margin: 0 auto 48px;
-    line-height: 1.7;
-  }
+html { scroll-behavior: smooth; }
 
-  /* Subscribe form */
-  .subscribe-box {
-    display: flex; gap: 12px; justify-content: center;
-    flex-wrap: wrap; margin-bottom: 20px;
-  }
-  .subscribe-box input[type="email"] {
-    background: rgba(255,255,255,0.07);
-    border: 1px solid rgba(255,255,255,0.15);
-    color: #fff; font-size: 15px;
-    padding: 14px 20px; border-radius: 10px;
-    width: 300px; outline: none;
-    transition: border 0.2s;
-  }
-  .subscribe-box input[type="email"]::placeholder { color: rgba(255,255,255,0.35); }
-  .subscribe-box input[type="email"]:focus { border-color: #6366f1; }
-  .subscribe-box button {
-    background: #6366f1; color: #fff;
-    font-size: 15px; font-weight: 700;
-    padding: 14px 28px; border-radius: 10px;
-    border: none; cursor: pointer;
-    transition: background 0.2s, transform 0.1s;
-    white-space: nowrap;
-  }
-  .subscribe-box button:hover { background: #4f46e5; transform: translateY(-1px); }
-  .subscribe-box button:active { transform: translateY(0); }
-  .subscribe-note { font-size: 12px; color: rgba(255,255,255,0.3); margin-bottom: 16px; }
-  .success-msg {
-    display: none; background: rgba(34,197,94,0.15);
-    border: 1px solid rgba(34,197,94,0.3); color: #86efac;
-    padding: 14px 24px; border-radius: 10px; font-size: 14px;
-    font-weight: 600; margin: 0 auto; max-width: 400px;
-  }
-  .error-msg {
-    display: none; background: rgba(239,68,68,0.15);
-    border: 1px solid rgba(239,68,68,0.3); color: #fca5a5;
-    padding: 14px 24px; border-radius: 10px; font-size: 14px;
-    margin: 0 auto; max-width: 400px;
-  }
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
 
-  /* Stats */
-  .stats {
-    display: flex; justify-content: center; gap: 48px;
-    padding: 48px 24px; border-top: 1px solid rgba(255,255,255,0.06);
-    border-bottom: 1px solid rgba(255,255,255,0.06);
-  }
-  .stat-item { text-align: center; }
-  .stat-num { font-size: 32px; font-weight: 900; letter-spacing: -1px; color: #a5b4fc; }
-  .stat-label { font-size: 12px; color: rgba(255,255,255,0.4); margin-top: 4px; letter-spacing: 0.5px; }
+/* Grid background */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image:
+    linear-gradient(rgba(99,102,241,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(99,102,241,0.04) 1px, transparent 1px);
+  background-size: 72px 72px;
+  pointer-events: none; z-index: 0;
+}
 
-  /* Features */
-  .features { padding: 80px 24px; max-width: 960px; margin: 0 auto; }
-  .features h2 { text-align: center; font-size: 32px; font-weight: 800; margin-bottom: 48px; letter-spacing: -1px; }
-  .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; }
-  .feature-card {
-    background: rgba(255,255,255,0.04);
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 16px; padding: 28px;
-    transition: border-color 0.2s;
-  }
-  .feature-card:hover { border-color: rgba(99,102,241,0.4); }
-  .feature-icon { font-size: 28px; margin-bottom: 14px; }
-  .feature-title { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
-  .feature-desc { font-size: 14px; color: rgba(255,255,255,0.5); line-height: 1.6; }
+/* ── NAV ── */
+nav {
+  position: sticky; top: 0; z-index: 100;
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 0 40px; height: 62px;
+  background: rgba(6,6,17,0.75);
+  backdrop-filter: blur(28px) saturate(1.8);
+  -webkit-backdrop-filter: blur(28px) saturate(1.8);
+  border-bottom: 1px solid var(--border);
+}
+.logo {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 17px; font-weight: 800; letter-spacing: -0.5px;
+  text-decoration: none; color: var(--text);
+}
+.logo-icon {
+  width: 30px; height: 30px;
+  background: linear-gradient(135deg, var(--primary), var(--violet));
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; flex-shrink: 0;
+}
+.logo em { color: var(--primary-light); font-style: normal; }
+.nav-right { display: flex; align-items: center; gap: 8px; }
+.nav-badge {
+  background: var(--primary-dim); color: var(--primary-light);
+  font-size: 11px; font-weight: 700; padding: 5px 13px;
+  border-radius: 20px; border: 1px solid var(--primary-border); letter-spacing: 0.3px;
+}
+.lang-btn {
+  background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+  color: var(--text-muted); font-size: 12px; font-weight: 700; font-family: inherit;
+  padding: 6px 14px; border-radius: 20px;
+  cursor: pointer; transition: all 0.2s; letter-spacing: 0.4px;
+  text-decoration: none; display: inline-flex; align-items: center;
+  white-space: nowrap; flex-shrink: 0;
+}
+.lang-btn:hover { background: var(--primary-dim); border-color: var(--primary-border); color: var(--text); }
 
-  /* Pricing */
-  .pricing { padding: 80px 24px; max-width: 760px; margin: 0 auto; }
-  .pricing h2 { text-align: center; font-size: 32px; font-weight: 800; margin-bottom: 12px; letter-spacing: -1px; }
-  .pricing-sub { text-align: center; font-size: 15px; color: rgba(255,255,255,0.45); margin-bottom: 48px; }
-  .pricing-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-  .pricing-card {
-    border-radius: 20px; padding: 36px 32px;
-    border: 1px solid rgba(255,255,255,0.1);
-    background: rgba(255,255,255,0.04);
-    position: relative;
-  }
-  .pricing-card.featured {
-    background: linear-gradient(135deg, rgba(99,102,241,0.18), rgba(167,139,250,0.12));
-    border-color: rgba(99,102,241,0.45);
-  }
-  .pricing-badge {
-    display: inline-block; font-size: 11px; font-weight: 800;
-    padding: 4px 12px; border-radius: 20px; margin-bottom: 20px;
-    letter-spacing: 0.5px; text-transform: uppercase;
-  }
-  .pricing-badge.free-badge { background: rgba(34,197,94,0.15); color: #86efac; }
-  .pricing-badge.pro-badge { background: rgba(99,102,241,0.25); color: #a5b4fc; }
-  .pricing-price { font-size: 42px; font-weight: 900; letter-spacing: -2px; margin-bottom: 4px; }
-  .pricing-price span { font-size: 16px; font-weight: 500; color: rgba(255,255,255,0.45); letter-spacing: 0; }
-  .pricing-desc { font-size: 14px; color: rgba(255,255,255,0.45); margin-bottom: 28px; line-height: 1.6; }
-  .pricing-features { list-style: none; margin-bottom: 32px; }
-  .pricing-features li { font-size: 14px; color: rgba(255,255,255,0.7); padding: 7px 0; padding-left: 22px; position: relative; border-bottom: 1px solid rgba(255,255,255,0.05); }
-  .pricing-features li:last-child { border-bottom: none; }
-  .pricing-features li::before { content: "✓"; position: absolute; left: 0; color: #6366f1; font-weight: 800; }
-  .pricing-btn {
-    display: block; width: 100%; text-align: center;
-    padding: 14px; border-radius: 12px;
-    font-size: 15px; font-weight: 700; cursor: pointer;
-    border: none; transition: all 0.2s; text-decoration: none;
-  }
-  .pricing-btn.btn-free {
-    background: rgba(255,255,255,0.08);
-    color: rgba(255,255,255,0.6);
-    border: 1px solid rgba(255,255,255,0.12);
-    cursor: default;
-  }
-  .pricing-btn.btn-pro {
-    background: #6366f1; color: #fff;
-  }
-  .pricing-btn.btn-pro:hover { background: #4f46e5; transform: translateY(-1px); }
-  @media (max-width: 600px) { .pricing-grid { grid-template-columns: 1fr; } }
+/* ── HERO ── */
+.hero {
+  position: relative; text-align: center;
+  padding: 120px 24px 88px; overflow: hidden;
+}
+/* ── HERO + CARDS VIDEO BACKGROUND ── */
+.hero-section-wrap {
+  position: relative; overflow: hidden;
+}
+.hero-video {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  object-fit: cover; z-index: 0; opacity: 0.28;
+  pointer-events: none;
+}
+.hero-video-overlay {
+  position: absolute; inset: 0; z-index: 0; pointer-events: none;
+  background: linear-gradient(to bottom,
+    rgba(6,6,17,0.52) 0%,
+    rgba(6,6,17,0.18) 45%,
+    rgba(6,6,17,0.68) 100%);
+}
+/* Gradient orbs */
+.orb {
+  position: absolute; border-radius: 50%; pointer-events: none;
+  will-change: transform;
+}
+.orb-1 {
+  width: 700px; height: 700px;
+  background: radial-gradient(circle at 50% 50%, rgba(99,102,241,0.22), transparent 65%);
+  top: -280px; left: 50%; transform: translateX(-50%);
+  animation: orb-breathe 9s ease-in-out infinite;
+  filter: blur(1px);
+}
+.orb-2 {
+  width: 450px; height: 450px;
+  background: radial-gradient(circle at 50% 50%, rgba(139,92,246,0.18), transparent 65%);
+  top: -60px; right: -120px;
+  animation: orb-drift-r 13s ease-in-out infinite;
+  filter: blur(2px);
+}
+.orb-3 {
+  width: 320px; height: 320px;
+  background: radial-gradient(circle at 50% 50%, rgba(56,189,248,0.14), transparent 65%);
+  top: 80px; left: -80px;
+  animation: orb-drift-l 11s ease-in-out infinite 1.5s;
+  filter: blur(2px);
+}
+@keyframes orb-breathe {
+  0%, 100% { opacity: 1; transform: translateX(-50%) scale(1); }
+  50% { opacity: 0.7; transform: translateX(-50%) scale(1.12); }
+}
+@keyframes orb-drift-r {
+  0%, 100% { transform: translateY(0) scale(1); opacity: 0.8; }
+  50% { transform: translateY(40px) scale(1.08); opacity: 1; }
+}
+@keyframes orb-drift-l {
+  0%, 100% { transform: translateY(0); opacity: 0.7; }
+  50% { transform: translateY(-30px); opacity: 1; }
+}
 
-  /* Preview */
-  .preview { padding: 0 24px 80px; max-width: 680px; margin: 0 auto; }
-  .preview h2 { text-align: center; font-size: 28px; font-weight: 800; margin-bottom: 32px; letter-spacing: -0.5px; }
-  .preview-card {
-    background: #fff; border-radius: 20px;
-    overflow: hidden; box-shadow: 0 40px 80px rgba(0,0,0,0.5);
-  }
-  .preview-header {
-    background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
-    color: #fff; padding: 28px;
-  }
-  .preview-date { font-size: 11px; color: rgba(255,255,255,0.5); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; }
-  .preview-title { font-size: 22px; font-weight: 800; }
-  .preview-sub { font-size: 12px; color: rgba(255,255,255,0.4); margin-top: 4px; }
-  .preview-body { padding: 24px; color: #1a1a1a; }
-  .preview-tldr {
-    background: #fffbeb; border-left: 4px solid #f59e0b;
-    padding: 14px 16px; border-radius: 0 10px 10px 0; margin-bottom: 20px;
-  }
-  .preview-tldr-title { font-size: 12px; font-weight: 800; color: #92400e; margin-bottom: 8px; letter-spacing: 0.5px; }
-  .preview-tldr ul { list-style: none; }
-  .preview-tldr li { font-size: 13px; color: #555; padding: 3px 0 3px 14px; position: relative; }
-  .preview-tldr li::before { content: "→"; position: absolute; left: 0; color: #f59e0b; font-weight: 700; }
-  .preview-news-title { font-size: 11px; font-weight: 800; color: #999; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 12px; }
-  .preview-news-item { padding: 10px 0; border-bottom: 1px solid #f5f5f5; }
-  .preview-news-item:last-child { border-bottom: none; }
-  .preview-badge {
-    display: inline-block; font-size: 10px; font-weight: 700;
-    padding: 2px 8px; border-radius: 20px; margin-bottom: 4px;
-  }
-  .preview-badge.v { background: #dcfce7; color: #166534; }
-  .preview-badge.s { background: #fef9c3; color: #854d0e; }
-  .preview-news-text { font-size: 13px; font-weight: 600; color: #111; line-height: 1.4; margin-bottom: 4px; }
-  .preview-news-why { font-size: 12px; color: #666; background: #f0f7ff; padding: 6px 10px; border-radius: 6px; }
+.hero-inner { position: relative; z-index: 1; }
 
-  /* CTA bottom */
-  .cta-bottom {
-    text-align: center; padding: 80px 24px;
-    background: radial-gradient(ellipse 60% 80% at 50% 100%, rgba(99,102,241,0.15) 0%, transparent 70%);
-  }
-  .cta-bottom h2 { font-size: 32px; font-weight: 800; letter-spacing: -1px; margin-bottom: 12px; }
-  .cta-bottom p { font-size: 16px; color: rgba(255,255,255,0.45); margin-bottom: 36px; }
+.hero-pill {
+  display: inline-flex; align-items: center; gap: 10px;
+  background: var(--primary-dim); border: 1px solid var(--primary-border);
+  color: var(--primary-light); font-size: 12px; font-weight: 700;
+  padding: 7px 18px; border-radius: 40px; letter-spacing: 0.5px;
+  margin-bottom: 36px;
+  animation: fade-up 0.7s ease both;
+}
+.live-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--emerald); flex-shrink: 0;
+  box-shadow: 0 0 0 0 rgba(16,185,129,0.7);
+  animation: live-pulse 2.2s ease-in-out infinite;
+}
+@keyframes live-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(16,185,129,0.7); }
+  70% { box-shadow: 0 0 0 7px rgba(16,185,129,0); }
+  100% { box-shadow: 0 0 0 0 rgba(16,185,129,0); }
+}
 
-  /* Footer */
-  footer {
-    border-top: 1px solid rgba(255,255,255,0.06);
-    padding: 24px 40px; text-align: center;
-    font-size: 12px; color: rgba(255,255,255,0.25);
-    line-height: 1.8;
-  }
+.hero h1 {
+  font-size: clamp(42px, 7.5vw, 76px);
+  font-weight: 900; letter-spacing: -3px; line-height: 1.04;
+  margin-bottom: 28px;
+}
+/* Split text word reveal */
+.hero h1 .w-wrap {
+  display: inline-block; overflow: hidden;
+  vertical-align: bottom; line-height: 1.06;
+}
+.hero h1 .w-inner {
+  display: inline-block;
+  transform: translateY(115%); opacity: 0;
+  transition: transform 0.88s cubic-bezier(0.16,1,0.3,1), opacity 0.5s ease;
+}
+.hero h1 .w-inner.w-vis { transform: translateY(0); opacity: 1; }
+.hero h1 .gradient {
+  background: linear-gradient(135deg, #818cf8 0%, #a78bfa 45%, #38bdf8 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text; display: inline-block;
+}
+.hero-sub {
+  font-size: 18px; color: var(--text-muted); max-width: 500px;
+  margin: 0 auto 52px; line-height: 1.78; font-weight: 400;
+  animation: fade-up 0.7s ease 0.18s both;
+}
 
-  @media (max-width: 600px) {
-    nav { padding: 16px 20px; }
-    .hero { padding: 60px 16px 40px; }
-    .stats { gap: 24px; flex-wrap: wrap; }
-    .subscribe-box input[type="email"] { width: 100%; }
-    .subscribe-box button { width: 100%; }
-  }
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(22px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 
-  /* Netflix-style email flow */
-  .wb-card { background: rgba(99,102,241,0.12); border: 1px solid rgba(99,102,241,0.3); border-radius: 16px; padding: 24px 28px; max-width: 380px; margin: 0 auto; text-align: center; }
-  .back-link { background: none; border: none; color: rgba(255,255,255,0.4); font-size: 13px; cursor: pointer; margin-top: 12px; display: block; width: 100%; text-align: center; transition: color 0.2s; }
-  .back-link:hover { color: rgba(255,255,255,0.7); }
-  .plan-mini-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; max-width: 560px; margin: 0 auto; }
-  .plan-mini-card { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); border-radius: 16px; padding: 22px; text-align: left; }
-  .plan-mini-card.featured { background: rgba(99,102,241,0.12); border-color: rgba(99,102,241,0.35); }
-  .plan-mini-badge { font-size: 11px; font-weight: 800; padding: 4px 12px; border-radius: 20px; display: inline-block; margin-bottom: 14px; }
-  .plan-mini-price { font-size: 26px; font-weight: 900; margin-bottom: 16px; letter-spacing: -1px; }
-  .plan-mini-price span { font-size: 14px; font-weight: 400; color: rgba(255,255,255,0.4); letter-spacing: 0; }
-  .plan-mini-input { width: 100%; padding: 10px 12px; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.15); color: #fff; font-size: 14px; border-radius: 10px; outline: none; margin-bottom: 8px; transition: border 0.2s; }
-  .plan-mini-input:focus { border-color: #6366f1; }
-  .plan-mini-input::placeholder { color: rgba(255,255,255,0.35); }
-  .plan-mini-btn { display: block; width: 100%; text-align: center; padding: 12px; border-radius: 12px; font-size: 14px; font-weight: 700; border: none; cursor: pointer; transition: opacity 0.2s; text-decoration: none; margin-top: 4px; }
-  .plan-mini-btn.free { background: rgba(34,197,94,0.2); color: #86efac; border: 1px solid rgba(34,197,94,0.3); }
-  .plan-mini-btn.free:hover { opacity: 0.85; }
-  .plan-mini-btn.paid { background: #6366f1; color: #fff; }
-  .plan-mini-btn.paid:hover { opacity: 0.9; }
-  @media (max-width: 520px) { .plan-mini-grid { grid-template-columns: 1fr; } }
+/* Subscribe form */
+.hero-form-wrap { animation: fade-up 0.7s ease 0.26s both; }
+.subscribe-box {
+  display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-bottom: 14px;
+}
+.subscribe-box input[type="email"] {
+  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.11);
+  color: #fff; font-size: 15px; font-family: inherit;
+  padding: 15px 22px; border-radius: var(--radius-sm); width: 300px; outline: none;
+  transition: all 0.2s;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 2px 8px rgba(0,0,0,0.2);
+}
+.subscribe-box input[type="email"]::placeholder { color: rgba(255,255,255,0.28); }
+.subscribe-box input[type="email"]:focus {
+  border-color: var(--primary); background: rgba(99,102,241,0.08);
+  box-shadow: 0 0 0 3px rgba(99,102,241,0.18), inset 0 1px 0 rgba(255,255,255,0.04);
+}
+.subscribe-box button {
+  background: var(--primary); color: #fff;
+  font-size: 15px; font-weight: 700; font-family: inherit;
+  padding: 15px 28px; border-radius: var(--radius-sm); border: none;
+  cursor: pointer; transition: all 0.22s; white-space: nowrap;
+  box-shadow: 0 4px 20px rgba(99,102,241,0.42), inset 0 1px 0 rgba(255,255,255,0.12);
+}
+.subscribe-box button:hover { background: #4f46e5; transform: translateY(-2px); box-shadow: 0 8px 28px rgba(99,102,241,0.52); }
+.subscribe-box button:active { transform: translateY(0); }
+
+.subscribe-note { font-size: 12px; color: var(--text-dim); margin-bottom: 16px; }
+.success-msg {
+  display: none; background: rgba(16,185,129,0.1);
+  border: 1px solid rgba(16,185,129,0.25); color: #6ee7b7;
+  padding: 14px 24px; border-radius: var(--radius-sm); font-size: 14px;
+  font-weight: 600; margin: 0 auto; max-width: 400px;
+}
+.error-msg {
+  display: none; background: rgba(239,68,68,0.1);
+  border: 1px solid rgba(239,68,68,0.25); color: #fca5a5;
+  padding: 14px 24px; border-radius: var(--radius-sm); font-size: 14px;
+  margin: 0 auto; max-width: 400px;
+}
+
+/* Netflix flow */
+.wb-card {
+  background: rgba(13,13,26,0.92); border: 1px solid var(--primary-border);
+  backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+  border-radius: var(--radius-md); padding: 28px 32px;
+  max-width: 400px; margin: 0 auto; text-align: center;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.5), 0 0 0 1px rgba(99,102,241,0.1);
+}
+.back-link {
+  background: none; border: none; color: var(--text-dim); font-size: 13px;
+  cursor: pointer; margin-top: 14px; display: block; width: 100%; text-align: center;
+  transition: color 0.2s; font-family: inherit;
+}
+.back-link:hover { color: var(--text-muted); }
+.plan-mini-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; max-width: 740px; margin: 0 auto; }
+.plan-mini-card {
+  background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+  border-radius: var(--radius-md); padding: 24px; text-align: left; transition: border-color 0.2s;
+}
+.plan-mini-card:hover { border-color: rgba(255,255,255,0.14); }
+.plan-mini-card.featured { background: var(--primary-dim); border-color: var(--primary-border); }
+.plan-mini-badge { font-size: 11px; font-weight: 800; padding: 4px 12px; border-radius: 20px; display: inline-block; margin-bottom: 14px; }
+.plan-mini-price { font-size: 26px; font-weight: 900; margin-bottom: 16px; letter-spacing: -1px; }
+.plan-mini-price span { font-size: 14px; font-weight: 400; color: var(--text-muted); letter-spacing: 0; }
+.plan-mini-input {
+  width: 100%; padding: 11px 14px; background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.12); color: #fff; font-size: 14px; font-family: inherit;
+  border-radius: var(--radius-sm); outline: none; margin-bottom: 8px; transition: all 0.2s;
+}
+.plan-mini-input:focus { border-color: var(--primary); background: rgba(99,102,241,0.08); box-shadow: 0 0 0 3px rgba(99,102,241,0.16); }
+.plan-mini-input::placeholder { color: rgba(255,255,255,0.28); }
+.plan-mini-btn {
+  display: block; width: 100%; text-align: center; padding: 12px; border-radius: var(--radius-sm);
+  font-size: 14px; font-weight: 700; font-family: inherit; border: none; cursor: pointer;
+  transition: all 0.2s; text-decoration: none; margin-top: 4px;
+}
+.plan-mini-btn.free { background: rgba(16,185,129,0.14); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.24); }
+.plan-mini-btn.free:hover { background: rgba(16,185,129,0.24); }
+.plan-mini-btn.paid { background: var(--primary); color: #fff; box-shadow: 0 4px 16px rgba(99,102,241,0.38); }
+.plan-mini-btn.paid:hover { background: #4f46e5; }
+.plan-mini-btn.premium { background: linear-gradient(135deg,#7c3aed,#a855f7); color: #fff; box-shadow: 0 4px 16px rgba(168,85,247,0.35); border:none; }
+.plan-mini-btn.premium:hover { background: linear-gradient(135deg,#6d28d9,#9333ea); }
+
+/* ── 3D FLOATING CARDS ── */
+.cards-3d-section {
+  padding: 0 24px 64px; display: flex; justify-content: center;
+  perspective: 1200px; position: relative; z-index: 1;
+}
+.cards-3d-row {
+  display: flex; gap: 20px; align-items: flex-start;
+  transform: rotateX(6deg) rotateY(-4deg);
+  transform-style: preserve-3d;
+  filter: drop-shadow(0 40px 80px rgba(0,0,0,0.6));
+}
+
+/* Base card */
+.fc {
+  border-radius: 18px; padding: 20px 22px;
+  border: 1px solid rgba(255,255,255,0.1);
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  min-width: 180px; position: relative; overflow: hidden;
+  box-shadow: 0 24px 48px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.08);
+  transform-style: preserve-3d; cursor: default;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.fc:hover {
+  transform: translateZ(12px) scale(1.03);
+  box-shadow: 0 32px 64px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.12);
+}
+.fc::before {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.06) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+/* Card 1 – S&P 500 */
+.fc-sp {
+  background: linear-gradient(145deg, rgba(16,185,129,0.18) 0%, rgba(6,6,17,0.92) 100%);
+  border-color: rgba(16,185,129,0.25);
+  animation: fc-float-a 6s ease-in-out infinite;
+}
+/* Card 2 – NVDA */
+.fc-nvda {
+  background: linear-gradient(145deg, rgba(99,102,241,0.22) 0%, rgba(6,6,17,0.92) 100%);
+  border-color: rgba(99,102,241,0.28);
+  animation: fc-float-b 7s ease-in-out infinite 0.8s;
+  margin-top: 28px;
+}
+/* Card 3 – TSMC */
+.fc-tsmc {
+  background: linear-gradient(145deg, rgba(56,189,248,0.18) 0%, rgba(6,6,17,0.92) 100%);
+  border-color: rgba(56,189,248,0.25);
+  animation: fc-float-c 5.5s ease-in-out infinite 1.5s;
+  margin-top: -12px;
+}
+/* Card 4 – AI Verdict */
+.fc-ai {
+  background: linear-gradient(145deg, rgba(245,158,11,0.18) 0%, rgba(6,6,17,0.92) 100%);
+  border-color: rgba(245,158,11,0.25);
+  animation: fc-float-d 6.5s ease-in-out infinite 0.4s;
+  margin-top: 16px;
+}
+
+@keyframes fc-float-a { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+@keyframes fc-float-b { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-14px)} }
+@keyframes fc-float-c { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+@keyframes fc-float-d { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
+
+.fc-label {
+  font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.4);
+  letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 10px;
+  display: flex; align-items: center; gap: 6px;
+}
+.fc-label-dot {
+  width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0;
+}
+.fc-ticker { font-size: 18px; font-weight: 900; letter-spacing: -0.5px; margin-bottom: 4px; }
+.fc-price { font-size: 22px; font-weight: 800; letter-spacing: -1px; }
+.fc-change {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 13px; font-weight: 700; margin-top: 6px;
+  padding: 3px 10px; border-radius: 20px;
+}
+.fc-change.up { background: rgba(16,185,129,0.15); color: #4ade80; }
+.fc-change.dn { background: rgba(239,68,68,0.15); color: #f87171; }
+
+/* Mini sparkline SVG inside card */
+.fc-chart { margin-top: 14px; }
+.fc-chart svg { display: block; overflow: visible; }
+
+/* AI verdict card special */
+.fc-verdict-label { font-size: 11px; color: rgba(255,255,255,0.45); margin-bottom: 8px; font-weight: 600; }
+.fc-verdict-value { font-size: 20px; font-weight: 900; color: #fde68a; letter-spacing: -0.5px; }
+.fc-verdict-bar { height: 4px; border-radius: 2px; background: rgba(255,255,255,0.08); margin-top: 12px; overflow: hidden; }
+.fc-verdict-fill { height: 100%; border-radius: 2px; background: linear-gradient(90deg, #f59e0b, #fde68a); width: 72%; }
+.fc-sources { font-size: 11px; color: rgba(255,255,255,0.35); margin-top: 8px; }
+
+@media (max-width: 720px) {
+  .cards-3d-section { display: none; }
+}
+
+/* ── SOURCES MARQUEE ── */
+.sources-strip {
+  border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+  padding: 16px 0; overflow: hidden; position: relative;
+}
+.sources-strip::before, .sources-strip::after {
+  content: ''; position: absolute; top: 0; height: 100%; width: 140px; z-index: 2; pointer-events: none;
+}
+.sources-strip::before { left: 0; background: linear-gradient(to right, var(--bg) 20%, transparent); }
+.sources-strip::after { right: 0; background: linear-gradient(to left, var(--bg) 20%, transparent); }
+.sources-track { display: flex; align-items: center; gap: 0; animation: marquee 28s linear infinite; width: max-content; }
+@keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+.source-item {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 12px; font-weight: 700; color: rgba(255,255,255,0.28);
+  white-space: nowrap; letter-spacing: 0.8px; text-transform: uppercase;
+  padding: 0 32px; transition: color 0.3s;
+}
+.source-item:hover { color: rgba(255,255,255,0.6); }
+.source-sep { width: 3px; height: 3px; border-radius: 50%; background: rgba(255,255,255,0.15); flex-shrink: 0; }
+
+/* ── STATS ── */
+.stats-wrap { max-width: 860px; margin: 0 auto; padding: 72px 24px; }
+.stats {
+  display: flex; justify-content: center; align-items: center;
+}
+.stat-item { text-align: center; flex: 1; padding: 0 28px; position: relative; }
+.stat-item:not(:last-child)::after {
+  content: ''; position: absolute; right: 0; top: 15%; height: 70%;
+  width: 1px; background: linear-gradient(to bottom, transparent, var(--border), transparent);
+}
+.stat-num {
+  font-size: 44px; font-weight: 900; letter-spacing: -2.5px;
+  background: linear-gradient(135deg, var(--primary-light) 0%, #c4b5fd 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  display: block; line-height: 1;
+}
+.stat-label { font-size: 12px; color: var(--text-dim); margin-top: 8px; letter-spacing: 0.5px; font-weight: 500; }
+
+/* ── FEATURES ── */
+.section-head { text-align: center; margin-bottom: 56px; }
+.section-eyebrow {
+  display: inline-block; font-size: 11px; font-weight: 800; letter-spacing: 2px;
+  text-transform: uppercase; color: var(--primary-light); margin-bottom: 14px;
+}
+.section-head h2 { font-size: 36px; font-weight: 800; letter-spacing: -1.5px; margin-bottom: 12px; }
+.section-head p { font-size: 16px; color: var(--text-muted); max-width: 460px; margin: 0 auto; line-height: 1.72; }
+
+/* ── ABOUT INTERACTIVE ── */
+.about { padding: 0 24px 96px; max-width: 960px; margin: 0 auto; }
+.about-toggle-tabs { display: flex; gap: 0; justify-content: center; margin-bottom: 36px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); border-radius: 40px; padding: 5px; width: fit-content; margin-inline: auto; }
+.about-tab-btn { padding: 11px 32px; border-radius: 36px; border: none; background: none; color: rgba(255,255,255,0.45); font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.25s; font-family: inherit; white-space: nowrap; }
+.about-tab-btn.active { background: #6366f1; color: #fff; box-shadow: 0 4px 18px rgba(99,102,241,0.38); }
+.about-panel { display: none; }
+.about-panel.active { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; animation: ab-in 0.35s ease; }
+@keyframes ab-in { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+@media (max-width: 640px) { .about-panel.active { grid-template-columns: 1fr; } }
+.about-half { border-radius: 22px; padding: 32px 28px; border: 1px solid; }
+.about-half.problem { background: rgba(239,68,68,0.05); border-color: rgba(239,68,68,0.15); }
+.about-half.solution { background: rgba(16,185,129,0.05); border-color: rgba(16,185,129,0.18); }
+.about-half-eyebrow { font-size: 11px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 6px; }
+.about-half.problem .about-half-eyebrow { color: #f87171; }
+.about-half.solution .about-half-eyebrow { color: #34d399; }
+.about-time-badge { display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 20px; font-size: 14px; font-weight: 800; margin-bottom: 22px; }
+.about-half.problem .about-time-badge { background: rgba(239,68,68,0.12); color: #fca5a5; border: 1px solid rgba(239,68,68,0.2); }
+.about-half.solution .about-time-badge { background: rgba(16,185,129,0.12); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.2); }
+.about-check-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 14px; color: rgba(255,255,255,0.72); line-height: 1.55; }
+.about-check-item:last-child { border-bottom: none; padding-bottom: 0; }
+.about-check-icon { font-size: 15px; flex-shrink: 0; margin-top: 1px; }
+.about-bottom { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 20px; }
+@media (max-width: 640px) { .about-bottom { grid-template-columns: 1fr; } }
+.about-mini-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 18px; padding: 24px; transition: all 0.22s; }
+.about-mini-card:hover { border-color: rgba(99,102,241,0.25); background: rgba(99,102,241,0.05); }
+.about-mini-icon { font-size: 26px; margin-bottom: 12px; }
+.about-mini-card h3 { font-size: 16px; font-weight: 800; margin-bottom: 8px; letter-spacing: -0.3px; }
+.about-mini-card p { font-size: 13.5px; color: var(--text-muted); line-height: 1.75; }
+
+/* ── FEATURES INTERACTIVE ── */
+.features { padding: 0 24px 96px; max-width: 1040px; margin: 0 auto; }
+.feat-showcase { display: grid; grid-template-columns: 260px 1fr; gap: 16px; align-items: start; }
+@media (max-width: 768px) { .feat-showcase { grid-template-columns: 1fr; } }
+.feat-tabs { display: flex; flex-direction: column; gap: 4px; }
+.feat-tab-btn { display: flex; align-items: center; gap: 12px; padding: 13px 14px; border-radius: 14px; border: 1px solid transparent; background: transparent; cursor: pointer; text-align: left; transition: all 0.2s; font-family: inherit; width: 100%; }
+.feat-tab-btn:hover { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.07); }
+.feat-tab-btn.active { background: rgba(99,102,241,0.1); border-color: rgba(99,102,241,0.28); }
+.feat-tab-icon { font-size: 19px; flex-shrink: 0; }
+.feat-tab-text { font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.5); flex: 1; }
+.feat-tab-btn.active .feat-tab-text { color: #c7d2fe; }
+.feat-tab-arrow { color: rgba(255,255,255,0.15); font-size: 13px; transition: transform 0.2s, color 0.2s; }
+.feat-tab-btn.active .feat-tab-arrow { color: #818cf8; transform: translateX(3px); }
+.feat-tab-progress { height: 2px; background: rgba(99,102,241,0.15); border-radius: 2px; margin: 0 14px 6px; overflow: hidden; display: none; }
+.feat-tab-btn.active + .feat-tab-progress { display: block; }
+.feat-tab-fill { height: 100%; background: #6366f1; border-radius: 2px; width: 0%; transition: width linear; }
+.feat-detail { min-height: 380px; }
+.feat-panel { display: none; animation: feat-in 0.3s ease; }
+.feat-panel.active { display: block; }
+@keyframes feat-in { from { opacity: 0; transform: translateX(14px); } to { opacity: 1; transform: translateX(0); } }
+.feat-panel-inner { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 24px; padding: 44px 40px; position: relative; overflow: hidden; }
+.feat-panel-inner::after { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse 55% 55% at 85% 15%, rgba(99,102,241,0.09), transparent); pointer-events: none; }
+.feat-panel-icon-big { font-size: 52px; margin-bottom: 20px; display: block; line-height: 1; }
+.feat-panel-title { font-size: 28px; font-weight: 900; letter-spacing: -1.2px; margin-bottom: 12px; }
+.feat-panel-desc { font-size: 15px; color: rgba(255,255,255,0.62); line-height: 1.82; margin-bottom: 28px; max-width: 500px; }
+.feat-proof { display: flex; gap: 10px; flex-wrap: wrap; }
+.feat-proof-chip { display: inline-flex; align-items: center; gap: 6px; background: rgba(99,102,241,0.1); border: 1px solid rgba(99,102,241,0.22); border-radius: 20px; padding: 6px 14px; font-size: 12px; font-weight: 700; color: #a5b4fc; }
+.fi-indigo { background: rgba(99,102,241,0.15); }
+.fi-violet { background: rgba(139,92,246,0.15); }
+.fi-sky { background: rgba(56,189,248,0.15); }
+.fi-emerald { background: rgba(16,185,129,0.15); }
+.fi-amber { background: rgba(245,158,11,0.15); }
+.fi-rose { background: rgba(244,63,94,0.15); }
+
+/* ── EMAIL PREVIEW ── */
+.preview { padding: 0 24px 96px; max-width: 700px; margin: 0 auto; }
+.preview-window {
+  border-radius: 20px; overflow: hidden;
+  box-shadow: 0 48px 96px rgba(0,0,0,0.65), 0 0 0 1px rgba(255,255,255,0.07);
+  animation: float-up 7s ease-in-out infinite;
+}
+@keyframes float-up {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+.preview-browser-bar {
+  background: #161625; padding: 12px 18px;
+  display: flex; align-items: center; gap: 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.browser-dots { display: flex; gap: 6px; }
+.browser-dot { width: 11px; height: 11px; border-radius: 50%; }
+.bd-red { background: #ff5f57; } .bd-yellow { background: #febc2e; } .bd-green { background: #28c840; }
+.browser-bar-url {
+  flex: 1; background: rgba(255,255,255,0.05); border-radius: 6px;
+  padding: 5px 12px; font-size: 11px; color: rgba(255,255,255,0.38); text-align: center;
+  font-family: 'SF Mono', monospace;
+}
+.preview-email-header {
+  background: linear-gradient(135deg, #0f0c29 0%, #302b63 60%, #24243e 100%);
+  color: #fff; padding: 30px 34px; border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+.preview-date { font-size: 11px; color: rgba(255,255,255,0.4); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 10px; }
+.preview-title-text { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; }
+.preview-verdict {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.3);
+  color: #6ee7b7; font-size: 11px; font-weight: 700;
+  padding: 5px 14px; border-radius: 20px; margin-top: 14px; letter-spacing: 0.3px;
+}
+.preview-email-body { padding: 28px 34px; background: #0d0d1a; color: #e2e8f0; }
+.preview-tldr {
+  background: rgba(245,158,11,0.08); border-left: 3px solid #f59e0b;
+  padding: 16px 18px; border-radius: 0 10px 10px 0; margin-bottom: 24px;
+}
+.preview-tldr-title { font-size: 10px; font-weight: 800; color: #fbbf24; margin-bottom: 10px; letter-spacing: 1.5px; text-transform: uppercase; }
+.preview-tldr ul { list-style: none; }
+.preview-tldr li { font-size: 13px; color: rgba(226,232,240,0.75); padding: 4px 0 4px 18px; position: relative; line-height: 1.55; }
+.preview-tldr li::before { content: "→"; position: absolute; left: 0; color: #f59e0b; font-weight: 700; }
+.preview-news-label { font-size: 10px; font-weight: 800; color: rgba(255,255,255,0.28); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 14px; }
+.preview-news-item { padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.07); }
+.preview-news-item:last-child { border-bottom: none; }
+.preview-badge { display: inline-block; font-size: 10px; font-weight: 700; padding: 2px 9px; border-radius: 20px; margin-bottom: 5px; }
+.preview-badge.v { background: rgba(16,185,129,0.15); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.3); }
+.preview-badge.s { background: rgba(245,158,11,0.13); color: #fcd34d; border: 1px solid rgba(245,158,11,0.3); }
+.preview-news-text { font-size: 13px; font-weight: 600; color: #f1f5f9; line-height: 1.4; margin-bottom: 5px; }
+.preview-news-why { font-size: 12px; color: rgba(226,232,240,0.6); background: rgba(99,102,241,0.1); border: 1px solid rgba(99,102,241,0.15); padding: 7px 10px; border-radius: 7px; line-height: 1.55; }
+
+/* ── PRICING ── */
+.pricing { padding: 0 24px 96px; max-width: 840px; margin: 0 auto; }
+.pricing-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.pricing-card {
+  border-radius: var(--radius-lg); padding: 38px 34px;
+  border: 1px solid var(--border); background: var(--surface);
+  position: relative; transition: transform 0.28s, box-shadow 0.28s;
+}
+.pricing-card:hover { transform: translateY(-5px); }
+.pricing-card.featured {
+  background: linear-gradient(160deg, rgba(99,102,241,0.11) 0%, rgba(139,92,246,0.07) 100%);
+  border-color: var(--primary-border);
+  box-shadow: 0 0 0 1px rgba(99,102,241,0.18), 0 24px 72px rgba(99,102,241,0.15);
+}
+.pricing-card.featured:hover {
+  box-shadow: 0 0 0 1px rgba(99,102,241,0.28), 0 32px 96px rgba(99,102,241,0.25);
+}
+.pricing-badge {
+  display: inline-block; font-size: 11px; font-weight: 800;
+  padding: 5px 14px; border-radius: 20px; margin-bottom: 22px; letter-spacing: 0.5px; text-transform: uppercase;
+}
+.pricing-badge.free-badge { background: rgba(16,185,129,0.14); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.24); }
+.pricing-badge.pro-badge { background: var(--primary-dim); color: var(--primary-light); border: 1px solid var(--primary-border); }
+.pricing-price { font-size: 46px; font-weight: 900; letter-spacing: -2.5px; margin-bottom: 4px; }
+.pricing-price span { font-size: 16px; font-weight: 500; color: var(--text-muted); letter-spacing: 0; }
+.pricing-desc { font-size: 14px; color: var(--text-muted); margin-bottom: 28px; line-height: 1.68; }
+.pricing-divider { height: 1px; background: var(--border); margin-bottom: 22px; }
+.pricing-features { list-style: none; margin-bottom: 34px; }
+.pricing-features li {
+  font-size: 14px; color: rgba(255,255,255,0.72); padding: 9px 0 9px 26px; position: relative;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.pricing-features li:last-child { border-bottom: none; }
+.pricing-features li::before { content: "✓"; position: absolute; left: 0; color: var(--primary-light); font-weight: 800; font-size: 13px; }
+.pricing-btn {
+  display: block; width: 100%; text-align: center; padding: 15px;
+  border-radius: var(--radius-sm); font-size: 15px; font-weight: 700;
+  cursor: pointer; border: none; transition: all 0.22s; text-decoration: none; font-family: inherit;
+}
+.pricing-btn.btn-free { background: rgba(255,255,255,0.06); color: var(--text-muted); border: 1px solid var(--border); }
+.pricing-btn.btn-pro { background: var(--primary); color: #fff; box-shadow: 0 4px 20px rgba(99,102,241,0.42), inset 0 1px 0 rgba(255,255,255,0.1); }
+.pricing-btn.btn-pro:hover { background: #4f46e5; transform: translateY(-2px); box-shadow: 0 8px 28px rgba(99,102,241,0.52); }
+
+/* ── CTA BOTTOM ── */
+/* ── FOUNDER STORY ── */
+.founder-section { padding: 0 24px 80px; max-width: 760px; margin: 0 auto; }
+.founder-inner { background: linear-gradient(135deg, rgba(99,102,241,0.08), rgba(139,92,246,0.06)); border: 1px solid rgba(99,102,241,0.2); border-radius: 24px; padding: 48px 44px; position: relative; overflow: hidden; }
+.founder-inner::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse 60% 60% at 80% 20%, rgba(99,102,241,0.08), transparent); pointer-events: none; }
+.founder-quote-mark { font-size: 96px; font-weight: 900; color: rgba(99,102,241,0.18); line-height: 0.6; margin-bottom: 24px; font-family: Georgia, serif; }
+.founder-text { font-size: 18px; line-height: 1.85; color: rgba(255,255,255,0.82); font-style: italic; margin-bottom: 32px; }
+.founder-sig { display: flex; align-items: center; gap: 14px; }
+.founder-avatar { width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg,#6366f1,#8b5cf6); display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 800; color: #fff; flex-shrink: 0; }
+.founder-name { font-size: 14px; font-weight: 700; color: var(--text); }
+.founder-role { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+/* ── TESTIMONIALS ── */
+.testimonials-section { padding: 0 24px 96px; max-width: 1040px; margin: 0 auto; }
+.testimonials-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+@media (max-width: 768px) { .testimonials-grid { grid-template-columns: 1fr; } .founder-inner { padding: 32px 24px; } .founder-text { font-size: 16px; } }
+.tcard { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; padding: 24px; display: flex; flex-direction: column; gap: 14px; transition: transform 0.22s ease, border-color 0.22s ease; }
+.tcard:hover { transform: translateY(-4px); border-color: rgba(99,102,241,0.3); }
+.tcard-stars { color: #f59e0b; font-size: 14px; letter-spacing: 2px; }
+.tcard-text { font-size: 14px; line-height: 1.75; color: rgba(255,255,255,0.72); flex: 1; }
+.tcard-author { display: flex; align-items: center; gap: 12px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.06); }
+.tcard-avatar { width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 800; color: #fff; flex-shrink: 0; }
+.tcard-name { font-size: 13px; font-weight: 700; color: var(--text); }
+.tcard-role { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+.cta-bottom { text-align: center; padding: 100px 24px; position: relative; overflow: hidden; }
+.cta-bottom::before {
+  content: ''; position: absolute; inset: 0;
+  background: radial-gradient(ellipse 70% 90% at 50% 100%, rgba(99,102,241,0.22) 0%, transparent 70%);
+  pointer-events: none;
+}
+.cta-inner { position: relative; z-index: 1; }
+.cta-bottom h2 { font-size: 42px; font-weight: 900; letter-spacing: -2px; margin-bottom: 14px; }
+.cta-bottom p { font-size: 17px; color: var(--text-muted); margin-bottom: 42px; }
+.cta-btn {
+  display: inline-block; background: var(--primary); color: #fff;
+  font-size: 16px; font-weight: 700; font-family: inherit;
+  padding: 18px 48px; border-radius: var(--radius-sm); text-decoration: none;
+  transition: all 0.22s;
+  box-shadow: 0 4px 24px rgba(99,102,241,0.45), inset 0 1px 0 rgba(255,255,255,0.12);
+}
+.cta-btn:hover { background: #4f46e5; transform: translateY(-3px); box-shadow: 0 12px 40px rgba(99,102,241,0.55); }
+.cta-btn.line { background: #06C755; box-shadow: 0 4px 24px rgba(6,199,85,0.42), inset 0 1px 0 rgba(255,255,255,0.18); }
+.cta-btn.line:hover { background: #05a948; transform: translateY(-3px); box-shadow: 0 12px 40px rgba(6,199,85,0.5); }
+
+/* ── FOOTER ── */
+footer {
+  border-top: 1px solid var(--border); padding: 32px 40px;
+  display: flex; justify-content: space-between; align-items: center;
+  flex-wrap: wrap; gap: 16px; position: relative; z-index: 1;
+}
+.footer-brand { font-size: 14px; font-weight: 700; color: rgba(255,255,255,0.35); }
+.footer-note { font-size: 12px; color: var(--text-dim); line-height: 1.85; text-align: right; }
+
+/* ── SCROLL REVEAL (base) ── */
+.reveal { opacity: 0; transform: translateY(26px); transition: opacity 0.65s ease, transform 0.65s ease; }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+.reveal-d1 { transition-delay: 0.1s; }
+.reveal-d2 { transition-delay: 0.18s; }
+.reveal-d3 { transition-delay: 0.26s; }
+
+/* ── IMMERSIVE SCENE REVEALS ── */
+.scene-reveal {
+  opacity: 0;
+  transform: perspective(1200px) rotateX(12deg) translateY(55px) scale(0.96);
+  transform-origin: center bottom;
+  will-change: transform, opacity;
+  transition: opacity 0.95s cubic-bezier(0.16, 1, 0.3, 1), transform 0.95s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.scene-reveal.visible { opacity: 1; transform: perspective(1200px) rotateX(0deg) translateY(0) scale(1); }
+.scene-reveal-d1 { transition-delay: 0.07s; }
+.scene-reveal-d2 { transition-delay: 0.14s; }
+.scene-reveal-d3 { transition-delay: 0.21s; }
+.scene-reveal-d4 { transition-delay: 0.28s; }
+.scene-reveal-d5 { transition-delay: 0.35s; }
+.scene-reveal-d6 { transition-delay: 0.42s; }
+
+.scene-from-left {
+  opacity: 0; transform: translateX(-64px) rotateY(14deg);
+  will-change: transform, opacity;
+  transition: opacity 0.82s ease, transform 0.82s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.scene-from-left.visible { opacity: 1; transform: none; }
+
+.scene-from-right {
+  opacity: 0; transform: translateX(64px) rotateY(-14deg);
+  will-change: transform, opacity;
+  transition: opacity 0.82s ease, transform 0.82s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.scene-from-right.visible { opacity: 1; transform: none; }
+
+.scene-zoom-in {
+  opacity: 0; transform: scale(0.87) translateY(20px);
+  will-change: transform, opacity;
+  transition: opacity 0.8s ease, transform 0.8s cubic-bezier(0.34, 1.36, 0.64, 1);
+}
+.scene-zoom-in.visible { opacity: 1; transform: scale(1) translateY(0); }
+
+/* ── 3D FEATURE SLIDER ── */
+.slider-section {
+  padding: 80px 0 100px;
+  overflow: hidden; position: relative; z-index: 1;
+}
+.slider-scene-bg {
+  position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(ellipse 80% 55% at 50% 50%, rgba(99,102,241,0.07) 0%, transparent 70%);
+}
+.slider-layout {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 60px; align-items: center;
+  max-width: 1200px; margin: 0 auto; padding: 0 48px;
+}
+.slider-left { text-align: center; }
+.slider-head { max-width: 500px; margin: 0 auto 0; }
+
+/* FAQ right column */
+.faq-col { text-align: left; }
+.faq-col-eyebrow {
+  font-size: 11px; font-weight: 700; letter-spacing: 2px;
+  color: #6366f1; text-transform: uppercase; margin-bottom: 14px;
+}
+.faq-col h2 {
+  font-size: 28px; font-weight: 800; letter-spacing: -1px;
+  color: #fff; margin-bottom: 28px; line-height: 1.25;
+}
+.faq-item-acc {
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+.faq-q-btn {
+  width: 100%; background: none; border: none;
+  padding: 16px 0; cursor: pointer;
+  display: flex; justify-content: space-between; align-items: center;
+  gap: 12px; text-align: left;
+}
+.faq-q-btn span {
+  font-size: 14px; font-weight: 600; color: #e2e8f0; line-height: 1.4;
+}
+.faq-chevron {
+  flex-shrink: 0; width: 20px; height: 20px;
+  border: 1px solid rgba(255,255,255,0.15); border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; color: rgba(255,255,255,0.4);
+  transition: transform 0.3s, background 0.2s;
+}
+.faq-item-acc.open .faq-chevron {
+  transform: rotate(180deg);
+  background: rgba(99,102,241,0.2); border-color: rgba(99,102,241,0.4); color: #a5b4fc;
+}
+.faq-a-body {
+  overflow: hidden; max-height: 0;
+  transition: max-height 0.35s cubic-bezier(0.4,0,0.2,1);
+}
+.faq-item-acc.open .faq-a-body { max-height: 200px; }
+.faq-a-body p {
+  font-size: 13px; color: rgba(226,232,240,0.55);
+  line-height: 1.75; padding-bottom: 16px;
+}
+.faq-a-body a { color: #818cf8; text-decoration: none; }
+.faq-contact-link {
+  margin-top: 24px; font-size: 13px; color: rgba(226,232,240,0.4);
+}
+.faq-contact-link a { color: #818cf8; text-decoration: none; font-weight: 600; }
+
+.slider-track-outer {
+  position: relative; height: 300px;
+  perspective: 1600px; perspective-origin: 50% 46%;
+  margin: 56px 0 40px; overflow: visible; cursor: grab;
+}
+.slider-track-outer:active { cursor: grabbing; }
+.slider-track-inner {
+  position: absolute; left: 50%; top: 50%; width: 0; height: 0;
+  transform-style: preserve-3d;
+}
+
+.slide-card {
+  position: absolute;
+  width: 260px; height: 205px;
+  margin-left: -130px; margin-top: -102px;
+  border-radius: 22px; padding: 22px 24px;
+  border: 1px solid rgba(255,255,255,0.09);
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  background: linear-gradient(145deg, rgba(18,18,38,0.96), rgba(6,6,17,0.99));
+  cursor: pointer;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.06);
+  will-change: transform, opacity;
+  transition: transform 0.72s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+              opacity 0.72s ease, box-shadow 0.4s ease, filter 0.5s ease;
+  user-select: none; overflow: hidden;
+}
+.slide-card::before {
+  content: ''; position: absolute; inset: 0; border-radius: 22px;
+  background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, transparent 55%);
+  pointer-events: none;
+}
+.slide-card.active { box-shadow: 0 36px 90px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.1); }
+
+.slide-icon { font-size: 30px; margin-bottom: 9px; display: block; line-height: 1; }
+.slide-title { font-size: 15px; font-weight: 800; letter-spacing: -0.3px; margin-bottom: 6px; color: #fff; }
+.slide-desc { font-size: 12px; color: rgba(255,255,255,0.48); line-height: 1.66; }
+.slide-tag {
+  display: inline-block; font-size: 9.5px; font-weight: 700;
+  padding: 3px 10px; border-radius: 20px; letter-spacing: 0.6px; margin-top: 11px; text-transform: uppercase;
+}
+
+.slider-controls { display: flex; align-items: center; justify-content: center; gap: 18px; }
+.slider-btn {
+  width: 40px; height: 40px; border-radius: 50%;
+  background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.55); font-size: 15px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: all 0.22s; flex-shrink: 0;
+}
+.slider-btn:hover { background: var(--primary-dim); border-color: var(--primary-border); color: #fff; }
+.slider-dots { display: flex; gap: 7px; align-items: center; }
+.slider-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: rgba(255,255,255,0.18); cursor: pointer; transition: all 0.3s;
+}
+.slider-dot.active { width: 22px; border-radius: 3px; background: var(--primary); }
+
+
+
+#chest-particles { position: fixed; inset: 0; z-index: 17; pointer-events: none; }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 900px) {
+  .slider-layout { grid-template-columns: 1fr; gap: 40px; padding: 0 24px; }
+  .faq-col { padding-top: 0; }
+}
+@media (max-width: 600px) {
+  nav { padding: 0 14px; }
+  .nav-right { gap: 6px; }
+  .lang-btn { padding: 6px 10px; font-size: 11px; letter-spacing: 0.2px; }
+  .logo { font-size: 15px; }
+  .hero { padding: 80px 18px 64px; }
+  .hero h1 { letter-spacing: -2px; }
+  .stats { flex-wrap: wrap; }
+  .stat-item { flex: 1 1 50%; padding: 16px 8px; }
+  .stat-item:not(:last-child)::after { display: none; }
+  .pricing-grid { grid-template-columns: 1fr !important; }
+  .plan-mini-grid { grid-template-columns: 1fr; }
+  .subscribe-box input[type="email"] { width: 100%; }
+  .subscribe-box button { width: 100%; }
+  footer { flex-direction: column; align-items: center; text-align: center; padding: 24px; }
+  .footer-note { text-align: center; }
+}
 </style>
 </head>
 <body>
 
 <!-- Nav -->
 <nav>
-  <div class="logo">Market<span>Daily</span></div>
+  <a class="logo" href="index.html">
+    <div class="logo-icon">
+      <svg width="16" height="16" viewBox="0 0 22 22" xmlns="http://www.w3.org/2000/svg">
+        <rect x="1" y="14" width="4" height="7" rx="1.5" fill="white" fill-opacity="0.55"/>
+        <rect x="7" y="9" width="4" height="12" rx="1.5" fill="white" fill-opacity="0.78"/>
+        <rect x="13" y="4" width="4" height="17" rx="1.5" fill="white"/>
+        <circle cx="20" cy="3" r="2" fill="#fde68a"/>
+      </svg>
+    </div>
+    Market<em>Daily</em>
+  </a>
   <div class="nav-right">
-
-    <a href="dashboard.html" class="lang-btn" style="text-decoration:none;" data-i18n="nav_settings">⚙️ 我的專區</a>
+    <a href="guide.html" class="lang-btn">📖 新手教學</a>
+    <a href="pricing.html" class="lang-btn" data-i18n="nav_pricing">定價</a>
+    <a href="dashboard.html" class="lang-btn" data-i18n="nav_settings">⚙️ 我的專區</a>
     <button class="lang-btn" id="lang-toggle" onclick="toggleLang()">中文</button>
   </div>
 </nav>
 
+<!-- Hero + Cards shared video background -->
+<div class="hero-section-wrap">
+<video class="hero-video" autoplay muted loop playsinline>
+  <source src="hero-bg.mp4" type="video/mp4">
+</video>
+<div class="hero-video-overlay"></div>
+
 <!-- Hero -->
 <div class="hero">
-  <div class="hero-pill" data-i18n="pill">📊 AI-Curated · Fake-News Filtered · Daily 7AM</div>
-  <h1 data-i18n-html="hero_h1">Your daily stock market<br><span class="gradient">briefing in 30 seconds</span></h1>
-  <p class="hero-sub" data-i18n="hero_sub">
-    Every morning at 7AM Taiwan time — AI-curated US & Taiwan market news,
-    fake-news filtered, written like a smart friend texting you.
-  </p>
-  <!-- Step 1: Email entry -->
-  <div id="email-step">
-    <div class="subscribe-box">
-      <input type="email" id="hero-email" placeholder="your@email.com" data-i18n-placeholder="placeholder_email" onkeydown="if(event.key==='Enter')checkEmail()">
-      <button onclick="checkEmail()" id="hero-check-btn" data-i18n="hero_btn_check">繼續 →</button>
-    </div>
-    <label style="display:inline-flex;align-items:center;gap:7px;font-size:13px;color:rgba(255,255,255,0.4);cursor:pointer;margin-top:10px;user-select:none;">
-      <input type="checkbox" id="hero-remember" style="width:15px;height:15px;accent-color:#6366f1;cursor:pointer;">
-      <span data-i18n="remember_email">記住我的 Email</span>
-    </label>
-    <p class="subscribe-note" style="margin-top:8px;" data-i18n="sub_note_netflix">已訂閱？輸入你的 Email 直接登入</p>
-    <div class="error-msg" id="error-email-msg" style="display:none;" data-i18n="error_email">Please enter a valid email address.</div>
-  </div>
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
 
-  <!-- Step 2a: Returning subscriber -->
-  <div id="returning-step" style="display:none;">
-    <div class="wb-card">
-      <div style="font-size:13px;color:#a5b4fc;font-weight:700;margin-bottom:8px;" data-i18n="wb_found">✅ 找到你的訂閱了！</div>
-      <div id="wb-email" style="font-size:14px;color:rgba(255,255,255,0.7);margin-bottom:20px;word-break:break-all;"></div>
-      <a id="wb-signin-btn" href="dashboard.html" style="display:block;background:#6366f1;color:#fff;font-size:15px;font-weight:700;padding:13px;border-radius:12px;text-decoration:none;margin-bottom:4px;" data-i18n="hero_btn_signin">前往我的專區 →</a>
-      <button class="back-link" onclick="resetEmailStep()" data-i18n="hero_btn_back">← 不是你？重新輸入</button>
+  <div class="hero-inner">
+    <div class="hero-pill">
+      <span class="live-dot"></span>
+      <span data-i18n="pill">📊 AI-Curated · Fake-News Filtered · Daily 7AM</span>
+    </div>
+    <h1 data-i18n-html="hero_h1">Your daily stock market<br><span class="gradient">briefing in 30 seconds</span></h1>
+    <p class="hero-sub" data-i18n="hero_sub">
+      Every morning at 7AM Taiwan time — AI-curated US & Taiwan market news,
+      fake-news filtered, written like a smart friend texting you.
+    </p>
+
+    <div class="hero-form-wrap">
+      <!-- Step 1: Email entry -->
+      <div id="email-step">
+        <div class="subscribe-box">
+          <input type="email" id="hero-email" placeholder="your@email.com" aria-label="Email" data-i18n-placeholder="placeholder_email" onkeydown="if(event.key==='Enter')checkEmail()">
+          <button onclick="checkEmail()" id="hero-check-btn" data-i18n="hero_btn_check">繼續 →</button>
+        </div>
+        <label style="display:inline-flex;align-items:center;gap:7px;font-size:13px;color:rgba(255,255,255,0.38);cursor:pointer;margin-top:8px;user-select:none;">
+          <input type="checkbox" id="hero-remember" style="width:15px;height:15px;accent-color:#6366f1;cursor:pointer;">
+          <span data-i18n="remember_email">記住我的 Email</span>
+        </label>
+        <p class="subscribe-note" style="margin-top:8px;" data-i18n="sub_note_netflix">已訂閱？輸入你的 Email 直接登入</p>
+        <div class="error-msg" id="error-email-msg" style="display:none;" data-i18n="error_email">Please enter a valid email address.</div>
+      </div>
+
+      <!-- Step 2a: Returning subscriber -->
+      <div id="returning-step" style="display:none;">
+        <div class="wb-card">
+          <div style="font-size:13px;color:#a5b4fc;font-weight:700;margin-bottom:8px;" data-i18n="wb_found">✅ 找到你的訂閱了！</div>
+          <div id="wb-email" style="font-size:14px;color:rgba(255,255,255,0.65);margin-bottom:22px;word-break:break-all;"></div>
+          <a id="wb-signin-btn" href="dashboard.html" style="display:block;background:#6366f1;color:#fff;font-size:15px;font-weight:700;padding:14px;border-radius:12px;text-decoration:none;margin-bottom:4px;box-shadow:0 4px 18px rgba(99,102,241,0.38);" data-i18n="hero_btn_signin">前往我的專區 →</a>
+          <button class="back-link" onclick="resetEmailStep()" data-i18n="hero_btn_back">← 不是你？重新輸入</button>
+        </div>
+      </div>
+
+      <!-- Step 2c: Set password (first login after subscribing) -->
+      <div id="set-pwd-step" style="display:none;">
+        <div class="wb-card">
+          <div style="font-size:13px;color:#a5b4fc;font-weight:700;margin-bottom:6px;">🎉 訂閱確認！設定你的密碼</div>
+          <div id="sp-email-text" style="font-size:13px;color:rgba(255,255,255,0.55);margin-bottom:16px;word-break:break-all;"></div>
+          <input type="password" id="sp-pwd" class="plan-mini-input" placeholder="設定密碼（至少 6 位）" aria-label="設定密碼" style="margin-bottom:8px;">
+          <input type="password" id="sp-pwd2" class="plan-mini-input" placeholder="再輸入一次" aria-label="確認密碼" style="margin-bottom:12px;" onkeydown="if(event.key==='Enter')heroSetPassword()">
+          <button class="plan-mini-btn paid" id="sp-btn" onclick="heroSetPassword()" style="width:100%;">設定並進入 →</button>
+          <div id="sp-err" style="display:none;margin-top:8px;font-size:12px;color:#fca5a5;"></div>
+          <button class="back-link" onclick="resetEmailStep()" style="margin-top:10px;">← 返回</button>
+        </div>
+      </div>
+
+      <!-- Step 2b: New user - choose plan -->
+      <div id="new-user-step" style="display:none;">
+        <div style="font-size:13px;color:#a5b4fc;font-weight:700;margin-bottom:20px;text-align:center;" data-i18n="choose_plan">選擇你的方案</div>
+        <div class="plan-mini-grid">
+          <!-- Free -->
+          <div class="plan-mini-card">
+            <div class="plan-mini-badge" style="background:rgba(16,185,129,0.14);color:#6ee7b7;border:1px solid rgba(16,185,129,0.24);" data-i18n="plan_free_badge">免費</div>
+            <div class="plan-mini-price">NT$0 <span data-i18n="price_mo">/月</span></div>
+            <ul style="list-style:none;margin-bottom:14px;">
+              <li style="font-size:12px;color:rgba(255,255,255,0.55);padding:4px 0 4px 16px;position:relative;"><span style="position:absolute;left:0;color:#6ee7b7;font-weight:800;">✓</span><span data-i18n="pf1">每日 AI 財經日報</span></li>
+              <li style="font-size:12px;color:rgba(255,255,255,0.55);padding:4px 0 4px 16px;position:relative;"><span style="position:absolute;left:0;color:#6ee7b7;font-weight:800;">✓</span><span data-i18n="pf2">美股 + 台股</span></li>
+              <li style="font-size:12px;color:rgba(255,255,255,0.55);padding:4px 0 4px 16px;position:relative;"><span style="position:absolute;left:0;color:#6ee7b7;font-weight:800;">✓</span><span data-i18n="pf4">30 秒快速摘要</span></li>
+            </ul>
+            <input type="email" id="new-invite-email" class="plan-mini-input" placeholder="your@email.com" aria-label="Email" data-i18n-placeholder="placeholder_email">
+            <button class="plan-mini-btn free" id="free-signup-btn" style="margin-top:10px;width:100%;" onclick="subscribeFree()" data-i18n="plan_free_btn">免費加入 →</button>
+            <div id="free-error" style="display:none;margin-top:8px;font-size:12px;color:#fca5a5;"></div>
+            <div id="free-success" style="display:none;margin-top:8px;font-size:12px;color:#6ee7b7;"></div>
+          </div>
+          <!-- Pro: featured -->
+          <div class="plan-mini-card featured">
+            <div class="plan-mini-badge" style="background:rgba(99,102,241,0.22);color:#a5b4fc;border:1px solid rgba(99,102,241,0.35);" data-i18n="price_pro_badge">Pro ⭐ 最受歡迎</div>
+            <div class="plan-mini-price">NT$199 <span data-i18n="price_mo2">/月</span></div>
+            <ul style="list-style:none;margin-bottom:16px;">
+              <li style="font-size:12px;color:rgba(255,255,255,0.72);padding:4px 0 4px 16px;position:relative;"><span style="position:absolute;left:0;color:#818cf8;font-weight:800;">✓</span><span data-i18n="pp1">包含免費所有功能</span></li>
+              <li style="font-size:12px;color:rgba(255,255,255,0.72);padding:4px 0 4px 16px;position:relative;"><span style="position:absolute;left:0;color:#818cf8;font-weight:800;">✓</span><span data-i18n="pp2">個人化持股 AI 分析</span></li>
+              <li style="font-size:12px;color:rgba(255,255,255,0.72);padding:4px 0 4px 16px;position:relative;"><span style="position:absolute;left:0;color:#818cf8;font-weight:800;">✓</span><span data-i18n="pp3">買/賣/持有操作建議</span></li>
+              <li style="font-size:12px;color:rgba(255,255,255,0.72);padding:4px 0 4px 16px;position:relative;"><span style="position:absolute;left:0;color:#818cf8;font-weight:800;">✓</span><span data-i18n="pp4">優先客服支援</span></li>
+            </ul>
+            <a id="stripe-plan-btn" href="https://buy.stripe.com/dRmaEW60B3bCfpM6Va4Ja01" target="_blank" rel="noopener noreferrer" class="plan-mini-btn paid" style="width:100%;display:block;text-align:center;" data-i18n="price_pro_btn">立即訂閱 →</a>
+          </div>
+          <!-- Premium -->
+          <div class="plan-mini-card">
+            <div class="plan-mini-badge" style="background:rgba(168,85,247,0.15);color:#d8b4fe;border:1px solid rgba(168,85,247,0.3);" data-i18n="price_premium_badge">Premium</div>
+            <div class="plan-mini-price">NT$499 <span data-i18n="price_mo2">/月</span></div>
+            <ul style="list-style:none;margin-bottom:16px;">
+              <li style="font-size:12px;color:rgba(255,255,255,0.55);padding:4px 0 4px 16px;position:relative;"><span style="position:absolute;left:0;color:#d8b4fe;font-weight:800;">✓</span><span data-i18n="pe1">包含 Pro 所有功能</span></li>
+              <li style="font-size:12px;color:rgba(255,255,255,0.55);padding:4px 0 4px 16px;position:relative;"><span style="position:absolute;left:0;color:#d8b4fe;font-weight:800;">✓</span><span data-i18n="pe2">深度市場分析報告</span></li>
+              <li style="font-size:12px;color:rgba(255,255,255,0.55);padding:4px 0 4px 16px;position:relative;"><span style="position:absolute;left:0;color:#d8b4fe;font-weight:800;">✓</span><span data-i18n="pe3">月度投資組合健檢</span></li>
+              <li style="font-size:12px;color:rgba(255,255,255,0.55);padding:4px 0 4px 16px;position:relative;"><span style="position:absolute;left:0;color:#d8b4fe;font-weight:800;">✓</span><span data-i18n="pe4">重大新聞即時推播</span></li>
+            </ul>
+            <a href="https://buy.stripe.com/fZu5kC88Jh2selI3IY4Ja02" target="_blank" rel="noopener noreferrer" class="plan-mini-btn premium" style="width:100%;display:block;text-align:center;text-decoration:none;" data-i18n="price_pro_btn">立即訂閱 →</a>
+          </div>
+        </div>
+        <!-- Invite code collapsible -->
+        <div style="margin-top:16px;text-align:center;">
+          <button onclick="toggleInviteSection()" id="invite-toggle" style="background:none;border:1px solid rgba(165,180,252,0.2);color:#a5b4fc;font-size:12px;cursor:pointer;padding:6px 14px;border-radius:20px;transition:border-color .2s;" data-i18n="invite_has_code">🎁 有人送你邀請碼？點這裡領取</button>
+          <div id="invite-code-section" style="display:none;margin-top:12px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:16px;text-align:left;">
+            <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:10px;text-align:center;" data-i18n="invite_code_hint">輸入朋友送你的邀請碼，免費解鎖每日日報</div>
+            <input type="email" id="invite-sec-email" class="plan-mini-input" placeholder="your@email.com" aria-label="Email" data-i18n-placeholder="placeholder_email">
+            <input type="text" id="invite-sec-code" class="plan-mini-input" placeholder="邀請碼" aria-label="邀請碼" style="text-transform:uppercase;margin-top:6px;" data-i18n-placeholder="invite_placeholder" onkeydown="if(event.key==='Enter')subscribeInvite()">
+            <button class="plan-mini-btn free" id="invite-sec-btn" style="margin-top:10px;width:100%;" onclick="subscribeInvite()" data-i18n="btn_use_invite">使用邀請碼 →</button>
+            <div id="invite-error" style="display:none;margin-top:8px;font-size:12px;color:#fca5a5;"></div>
+            <div id="invite-success" style="display:none;margin-top:8px;font-size:12px;color:#6ee7b7;"></div>
+          </div>
+        </div>
+        <button class="back-link" onclick="resetEmailStep()" data-i18n="hero_btn_back">← 返回</button>
+      </div>
     </div>
   </div>
+</div>
 
-  <!-- Step 2b: New user - choose plan -->
-  <div id="new-user-step" style="display:none;">
-    <div style="font-size:14px;color:#a5b4fc;font-weight:700;margin-bottom:20px;text-align:center;" data-i18n="choose_plan">選擇你的方案</div>
-    <div class="plan-mini-grid">
-      <div class="plan-mini-card">
-        <div class="plan-mini-badge" style="background:rgba(34,197,94,0.15);color:#86efac;" data-i18n="price_free_badge">親友方案</div>
-        <div class="plan-mini-price">$0 <span data-i18n="price_mo">/月</span></div>
-        <input type="email" id="new-invite-email" class="plan-mini-input" placeholder="your@email.com" data-i18n-placeholder="placeholder_email">
-        <input type="text" id="new-invite-code" class="plan-mini-input" placeholder="DELVIN-XXXXXX" style="text-transform:uppercase;" onkeydown="if(event.key==='Enter')subscribeInvite()">
-        <button class="plan-mini-btn free" onclick="subscribeInvite()" data-i18n="btn_use_invite">使用邀請碼 →</button>
-        <div id="invite-error" style="display:none;margin-top:8px;font-size:12px;color:#fca5a5;"></div>
-        <div id="invite-success" style="display:none;margin-top:8px;font-size:12px;color:#86efac;"></div>
-      </div>
-      <div class="plan-mini-card featured">
-        <div class="plan-mini-badge" style="background:rgba(99,102,241,0.2);color:#a5b4fc;" data-i18n="price_pro_badge">Premium</div>
-        <div class="plan-mini-price">NT$500 <span data-i18n="price_mo2">/月</span></div>
-        <ul style="list-style:none;margin-bottom:20px;">
-          <li style="font-size:13px;color:rgba(255,255,255,0.65);padding:5px 0 5px 18px;position:relative;"><span style="position:absolute;left:0;color:#6366f1;font-weight:800;">✓</span><span data-i18n="pp1">Everything in Free</span></li>
-          <li style="font-size:13px;color:rgba(255,255,255,0.65);padding:5px 0 5px 18px;position:relative;"><span style="position:absolute;left:0;color:#6366f1;font-weight:800;">✓</span><span data-i18n="pp2">Priority support</span></li>
-          <li style="font-size:13px;color:rgba(255,255,255,0.65);padding:5px 0 5px 18px;position:relative;"><span style="position:absolute;left:0;color:#6366f1;font-weight:800;">✓</span><span data-i18n="pp3">Cancel anytime</span></li>
-        </ul>
-        <a id="stripe-plan-btn" href="https://buy.stripe.com/9B6aEW2Op6nO4L87Ze4Ja00" target="_blank" class="plan-mini-btn paid" data-i18n="price_pro_btn">立即訂閱 →</a>
+<!-- 3D Floating Financial Cards -->
+<div class="cards-3d-section">
+  <div class="cards-3d-row">
+
+    <!-- S&P 500 -->
+    <div class="fc fc-sp">
+      <div class="fc-label"><span class="fc-label-dot" style="background:#4ade80;"></span>US INDEX</div>
+      <div class="fc-ticker">S&amp;P 500</div>
+      <div class="fc-price">5,847</div>
+      <div class="fc-change up">↑ +1.24%</div>
+      <div class="fc-chart">
+        <svg width="136" height="36" viewBox="0 0 136 36">
+          <defs>
+            <linearGradient id="sg1" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#4ade80" stop-opacity="0.3"/>
+              <stop offset="100%" stop-color="#4ade80" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <path d="M0,28 L8,26 L16,24 L24,22 L32,20 L40,18 L48,22 L56,20 L64,16 L72,14 L80,12 L88,10 L96,8 L104,6 L112,9 L120,7 L128,5 L136,3" fill="none" stroke="#4ade80" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M0,28 L8,26 L16,24 L24,22 L32,20 L40,18 L48,22 L56,20 L64,16 L72,14 L80,12 L88,10 L96,8 L104,6 L112,9 L120,7 L128,5 L136,3 L136,36 L0,36 Z" fill="url(#sg1)"/>
+        </svg>
       </div>
     </div>
-    <button class="back-link" onclick="resetEmailStep()" data-i18n="hero_btn_back">← 返回</button>
+
+    <!-- NVDA -->
+    <div class="fc fc-nvda">
+      <div class="fc-label"><span class="fc-label-dot" style="background:#818cf8;"></span>NASDAQ</div>
+      <div class="fc-ticker">NVDA</div>
+      <div class="fc-price">$1,142</div>
+      <div class="fc-change up">↑ +3.47%</div>
+      <div class="fc-chart">
+        <svg width="136" height="36" viewBox="0 0 136 36">
+          <defs>
+            <linearGradient id="sg2" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#818cf8" stop-opacity="0.3"/>
+              <stop offset="100%" stop-color="#818cf8" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <path d="M0,30 L8,28 L16,26 L24,30 L32,24 L40,22 L48,20 L56,16 L64,14 L72,18 L80,12 L88,8 L96,10 L104,6 L112,4 L120,6 L128,3 L136,2" fill="none" stroke="#818cf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M0,30 L8,28 L16,26 L24,30 L32,24 L40,22 L48,20 L56,16 L64,14 L72,18 L80,12 L88,8 L96,10 L104,6 L112,4 L120,6 L128,3 L136,2 L136,36 L0,36 Z" fill="url(#sg2)"/>
+        </svg>
+      </div>
+    </div>
+
+    <!-- TSMC -->
+    <div class="fc fc-tsmc">
+      <div class="fc-label"><span class="fc-label-dot" style="background:#38bdf8;"></span>TWSE</div>
+      <div class="fc-ticker">2330.TW</div>
+      <div class="fc-price">NT$1,025</div>
+      <div class="fc-change up">↑ +1.85%</div>
+      <div class="fc-chart">
+        <svg width="136" height="36" viewBox="0 0 136 36">
+          <defs>
+            <linearGradient id="sg3" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.3"/>
+              <stop offset="100%" stop-color="#38bdf8" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <path d="M0,26 L8,24 L16,28 L24,22 L32,20 L40,18 L48,16 L56,18 L64,14 L72,12 L80,16 L88,10 L96,8 L104,10 L112,6 L120,8 L128,5 L136,4" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M0,26 L8,24 L16,28 L24,22 L32,20 L40,18 L48,16 L56,18 L64,14 L72,12 L80,16 L88,10 L96,8 L104,10 L112,6 L120,8 L128,5 L136,4 L136,36 L0,36 Z" fill="url(#sg3)"/>
+        </svg>
+      </div>
+    </div>
+
+    <!-- AI Verdict -->
+    <div class="fc fc-ai">
+      <div class="fc-label"><span class="fc-label-dot" style="background:#f59e0b;"></span>AI VERDICT</div>
+      <div class="fc-verdict-label">Today's Market Outlook</div>
+      <div class="fc-verdict-value">📈 Bullish</div>
+      <div class="fc-verdict-bar"><div class="fc-verdict-fill"></div></div>
+      <div class="fc-sources" style="margin-top:10px;">Confidence: 72%</div>
+      <div class="fc-sources">Based on 75+ sources</div>
+    </div>
+
+  </div>
+</div>
+
+</div><!-- /hero-section-wrap -->
+
+<!-- Sources Marquee -->
+<div class="sources-strip">
+  <div class="sources-track">
+    <span class="source-item">Reuters</span><span class="source-sep"></span>
+    <span class="source-item">Bloomberg</span><span class="source-sep"></span>
+    <span class="source-item">CNBC</span><span class="source-sep"></span>
+    <span class="source-item">Financial Times</span><span class="source-sep"></span>
+    <span class="source-item">Wall Street Journal</span><span class="source-sep"></span>
+    <span class="source-item">MarketWatch</span><span class="source-sep"></span>
+    <span class="source-item">Seeking Alpha</span><span class="source-sep"></span>
+    <span class="source-item">Yahoo Finance</span><span class="source-sep"></span>
+    <span class="source-item">Barron's</span><span class="source-sep"></span>
+    <span class="source-item">Forbes</span><span class="source-sep"></span>
+    <span class="source-item">The Economist</span><span class="source-sep"></span>
+    <span class="source-item">經濟日報</span><span class="source-sep"></span>
+    <span class="source-item">工商時報</span><span class="source-sep"></span>
+    <!-- duplicate for seamless loop -->
+    <span class="source-item">Reuters</span><span class="source-sep"></span>
+    <span class="source-item">Bloomberg</span><span class="source-sep"></span>
+    <span class="source-item">CNBC</span><span class="source-sep"></span>
+    <span class="source-item">Financial Times</span><span class="source-sep"></span>
+    <span class="source-item">Wall Street Journal</span><span class="source-sep"></span>
+    <span class="source-item">MarketWatch</span><span class="source-sep"></span>
+    <span class="source-item">Seeking Alpha</span><span class="source-sep"></span>
+    <span class="source-item">Yahoo Finance</span><span class="source-sep"></span>
+    <span class="source-item">Barron's</span><span class="source-sep"></span>
+    <span class="source-item">Forbes</span><span class="source-sep"></span>
+    <span class="source-item">The Economist</span><span class="source-sep"></span>
+    <span class="source-item">經濟日報</span><span class="source-sep"></span>
+    <span class="source-item">工商時報</span><span class="source-sep"></span>
   </div>
 </div>
 
 <!-- Stats -->
-<div class="stats">
-  <div class="stat-item">
-    <div class="stat-num">7AM</div>
-    <div class="stat-label" data-i18n="stat1">Taiwan Time Daily</div>
+<div class="stats-wrap reveal">
+  <div class="stats">
+    <div class="stat-item">
+      <span class="stat-num" data-count-to="7" data-suffix="AM">7AM</span>
+      <div class="stat-label" data-i18n="stat1">Taiwan Time Daily</div>
+    </div>
+    <div class="stat-item">
+      <span class="stat-num" data-count-to="75" data-suffix="+">75+</span>
+      <div class="stat-label" data-i18n="stat2">News Sources Scanned</div>
+    </div>
+    <div class="stat-item">
+      <span class="stat-num" data-count-to="0">0</span>
+      <div class="stat-label" data-i18n="stat3">Fake News Got Through</div>
+    </div>
+    <div class="stat-item">
+      <span class="stat-num" data-i18n="stat4_num">30s</span>
+      <div class="stat-label" data-i18n="stat4">Morning Briefing</div>
+    </div>
   </div>
-  <div class="stat-item">
-    <div class="stat-num">75+</div>
-    <div class="stat-label" data-i18n="stat2">News Sources Scanned</div>
+</div>
+
+<!-- About -->
+<div class="about">
+  <div class="section-head scene-reveal">
+    <div class="section-eyebrow">About</div>
+    <h2 data-i18n="about_title">About MarketDaily</h2>
+    <p data-i18n="about_sub">Why we built this — and who it's for</p>
   </div>
-  <div class="stat-item">
-    <div class="stat-num">0</div>
-    <div class="stat-label" data-i18n="stat3">Fake News Through</div>
+
+  <div class="about-toggle-tabs">
+    <button class="about-tab-btn active" onclick="switchAbout('problem',this)" data-i18n="about_tab_problem">😩 The Problem</button>
+    <button class="about-tab-btn" onclick="switchAbout('solution',this)" data-i18n="about_tab_solution">✅ Our Solution</button>
   </div>
-  <div class="stat-item">
-    <div class="stat-num" data-i18n="stat4_num">30s</div>
-    <div class="stat-label" data-i18n="stat4">Morning Briefing</div>
+
+  <div class="about-panel active" id="about-problem">
+    <div class="about-half problem">
+      <div class="about-half-eyebrow" data-i18n="about_prob_eye">Your morning right now</div>
+      <div class="about-time-badge">⏱ <span data-i18n="about_prob_time">60+ minutes wasted</span></div>
+      <div class="about-check-item"><span class="about-check-icon">❌</span><span data-i18n="about_p1">Open Bloomberg, CNBC, PTT, Reddit, Yahoo Finance... one by one</span></div>
+      <div class="about-check-item"><span class="about-check-icon">❌</span><span data-i18n="about_p2">Half the news is noise with no relevance to your portfolio</span></div>
+      <div class="about-check-item"><span class="about-check-icon">❌</span><span data-i18n="about_p3">Some stories are flat-out fake — you can't tell which</span></div>
+      <div class="about-check-item"><span class="about-check-icon">❌</span><span data-i18n="about_p4">After an hour, you still don't know what to do with your stocks</span></div>
+    </div>
+    <div class="about-half problem" style="display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;gap:12px;">
+      <div style="font-size:64px;">😩</div>
+      <div style="font-size:18px;font-weight:800;color:#fca5a5;" data-i18n="about_prob_quote">"I spend an hour every morning and still feel confused."</div>
+      <div style="font-size:13px;color:rgba(255,255,255,0.4);" data-i18n="about_prob_attr">— every investor before MarketDaily</div>
+    </div>
+  </div>
+
+  <div class="about-panel" id="about-solution">
+    <div class="about-half solution">
+      <div class="about-half-eyebrow" data-i18n="about_sol_eye">Your morning with MarketDaily</div>
+      <div class="about-time-badge">⚡ <span data-i18n="about_sol_time">5 minutes. Done.</span></div>
+      <div class="about-check-item"><span class="about-check-icon">✅</span><span data-i18n="about_s1">75+ sources scanned overnight while you sleep</span></div>
+      <div class="about-check-item"><span class="about-check-icon">✅</span><span data-i18n="about_s2">Fake news filtered — every story cross-checked and labeled</span></div>
+      <div class="about-check-item"><span class="about-check-icon">✅</span><span data-i18n="about_s3">Only your stocks analyzed — nothing irrelevant</span></div>
+      <div class="about-check-item"><span class="about-check-icon">✅</span><span data-i18n="about_s4">Clear Buy / Hold / Sell signal with target price and confidence</span></div>
+    </div>
+    <div class="about-half solution" style="display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;gap:12px;">
+      <div style="font-size:64px;">📩</div>
+      <div style="font-size:18px;font-weight:800;color:#6ee7b7;" data-i18n="about_sol_quote">"It's already in my inbox. I read it with coffee. Done."</div>
+      <div style="font-size:13px;color:rgba(255,255,255,0.4);" data-i18n="about_sol_attr">— MarketDaily subscriber</div>
+    </div>
+  </div>
+
+  <div class="about-bottom">
+    <div class="about-mini-card scene-from-left">
+      <div class="about-mini-icon">🎯</div>
+      <h3 data-i18n="about_who_title">Who it's for</h3>
+      <p data-i18n="about_who_desc">Busy professionals and investors in Taiwan who hold US or Taiwan stocks and want to make smarter decisions — without spending an hour reading financial news every morning.</p>
+    </div>
+    <div class="about-mini-card scene-from-right">
+      <div class="about-mini-icon">🛡️</div>
+      <h3 data-i18n="about_trust_title">Our commitment</h3>
+      <p data-i18n="about_trust_desc">Every story is cross-checked across multiple trusted sources. We clearly label what's verified and what isn't. No hype, no clickbait — just the facts that matter to your portfolio.</p>
+    </div>
   </div>
 </div>
 
 <!-- Features -->
 <div class="features">
-  <h2 data-i18n="feat_title">Built for busy people</h2>
-  <div class="features-grid">
-    <div class="feature-card">
-      <div class="feature-icon">☕</div>
-      <div class="feature-title" data-i18n="f1_title">30-Second Summary</div>
-      <div class="feature-desc" data-i18n="f1_desc">3 bullet points at the top. Catch the most important thing even on your most hectic morning.</div>
+  <div class="section-head scene-reveal">
+    <div class="section-eyebrow">Why MarketDaily</div>
+    <h2 data-i18n="feat_title">Built for busy people</h2>
+    <p data-i18n="feat_sub">Everything you need to start your morning smarter. Nothing you don't.</p>
+  </div>
+  <div class="feat-showcase">
+    <div class="feat-tabs">
+      <button class="feat-tab-btn active" onclick="switchFeat(0,this)" id="ft0">
+        <span class="feat-tab-icon">☕</span>
+        <span class="feat-tab-text" data-i18n="f1_title">30-Second Summary</span>
+        <span class="feat-tab-arrow">›</span>
+      </button>
+      <div class="feat-tab-progress"><div class="feat-tab-fill" id="fp0"></div></div>
+      <button class="feat-tab-btn" onclick="switchFeat(1,this)" id="ft1">
+        <span class="feat-tab-icon">🛡️</span>
+        <span class="feat-tab-text" data-i18n="f2_title">Fake News Filtered</span>
+        <span class="feat-tab-arrow">›</span>
+      </button>
+      <div class="feat-tab-progress"><div class="feat-tab-fill" id="fp1"></div></div>
+      <button class="feat-tab-btn" onclick="switchFeat(2,this)" id="ft2">
+        <span class="feat-tab-icon">💡</span>
+        <span class="feat-tab-text" data-i18n="f3_title">"Why It Matters"</span>
+        <span class="feat-tab-arrow">›</span>
+      </button>
+      <div class="feat-tab-progress"><div class="feat-tab-fill" id="fp2"></div></div>
+      <button class="feat-tab-btn" onclick="switchFeat(3,this)" id="ft3">
+        <span class="feat-tab-icon">🇺🇸</span>
+        <span class="feat-tab-text" data-i18n="f4_title">US + Taiwan Markets</span>
+        <span class="feat-tab-arrow">›</span>
+      </button>
+      <div class="feat-tab-progress"><div class="feat-tab-fill" id="fp3"></div></div>
+      <button class="feat-tab-btn" onclick="switchFeat(4,this)" id="ft4">
+        <span class="feat-tab-icon">🤖</span>
+        <span class="feat-tab-text" data-i18n="f5_title">AI That Speaks Human</span>
+        <span class="feat-tab-arrow">›</span>
+      </button>
+      <div class="feat-tab-progress"><div class="feat-tab-fill" id="fp4"></div></div>
+      <button class="feat-tab-btn" onclick="switchFeat(5,this)" id="ft5">
+        <span class="feat-tab-icon">🎯</span>
+        <span class="feat-tab-text" data-i18n="f6_title">Daily Verdict</span>
+        <span class="feat-tab-arrow">›</span>
+      </button>
+      <div class="feat-tab-progress"><div class="feat-tab-fill" id="fp5"></div></div>
     </div>
-    <div class="feature-card">
-      <div class="feature-icon">🛡️</div>
-      <div class="feature-title" data-i18n="f2_title">Fake News Filtered</div>
-      <div class="feature-desc" data-i18n="f2_desc">Only news from Reuters, CNBC, Bloomberg, FT and other verified sources. Every story is cross-checked.</div>
+    <div class="feat-detail">
+      <div class="feat-panel active" id="fp-panel-0">
+        <div class="feat-panel-inner fi-amber">
+          <span class="feat-panel-icon-big">☕</span>
+          <div class="feat-panel-title" data-i18n="f1_title">30-Second Summary</div>
+          <div class="feat-panel-desc" data-i18n="f1_desc">3 bullet points at the top. Catch the most important thing even on your most hectic morning.</div>
+          <div class="feat-proof">
+            <span class="feat-proof-chip">⚡ 30 seconds</span>
+            <span class="feat-proof-chip">📌 Top 3 items</span>
+            <span class="feat-proof-chip">✅ No fluff</span>
+          </div>
+        </div>
+      </div>
+      <div class="feat-panel" id="fp-panel-1">
+        <div class="feat-panel-inner fi-emerald">
+          <span class="feat-panel-icon-big">🛡️</span>
+          <div class="feat-panel-title" data-i18n="f2_title">Fake News Filtered</div>
+          <div class="feat-panel-desc" data-i18n="f2_desc">Only news from Reuters, CNBC, Bloomberg, FT and other verified sources. Every story is cross-checked.</div>
+          <div class="feat-proof">
+            <span class="feat-proof-chip">✅ Multi-source verified</span>
+            <span class="feat-proof-chip">75+ sources</span>
+            <span class="feat-proof-chip">0% fake news</span>
+          </div>
+        </div>
+      </div>
+      <div class="feat-panel" id="fp-panel-2">
+        <div class="feat-panel-inner fi-sky">
+          <span class="feat-panel-icon-big">💡</span>
+          <div class="feat-panel-title" data-i18n="f3_title">"Why It Matters" Explained</div>
+          <div class="feat-panel-desc" data-i18n="f3_desc">Every headline comes with one line explaining how it actually affects your stocks. No more guessing.</div>
+          <div class="feat-proof">
+            <span class="feat-proof-chip">📰 Every headline</span>
+            <span class="feat-proof-chip">💡 Plain language</span>
+            <span class="feat-proof-chip">📈 Portfolio impact</span>
+          </div>
+        </div>
+      </div>
+      <div class="feat-panel" id="fp-panel-3">
+        <div class="feat-panel-inner fi-violet">
+          <span class="feat-panel-icon-big">🇺🇸</span>
+          <div class="feat-panel-title" data-i18n="f4_title">US + Taiwan Markets</div>
+          <div class="feat-panel-desc" data-i18n="f4_desc">S&P500, NASDAQ, TWSE, individual stocks — all in one place. No tab-switching.</div>
+          <div class="feat-proof">
+            <span class="feat-proof-chip">🇺🇸 US stocks</span>
+            <span class="feat-proof-chip">🇹🇼 Taiwan stocks</span>
+            <span class="feat-proof-chip">📊 Indices</span>
+          </div>
+        </div>
+      </div>
+      <div class="feat-panel" id="fp-panel-4">
+        <div class="feat-panel-inner fi-indigo">
+          <span class="feat-panel-icon-big">🤖</span>
+          <div class="feat-panel-title" data-i18n="f5_title">AI That Speaks Human</div>
+          <div class="feat-panel-desc" data-i18n="f5_desc">Not a stiff analyst report. Written in plain language, like a knowledgeable friend giving you the rundown.</div>
+          <div class="feat-proof">
+            <span class="feat-proof-chip">🤖 Claude AI</span>
+            <span class="feat-proof-chip">💬 Plain language</span>
+            <span class="feat-proof-chip">😊 No jargon</span>
+          </div>
+        </div>
+      </div>
+      <div class="feat-panel" id="fp-panel-5">
+        <div class="feat-panel-inner fi-rose">
+          <span class="feat-panel-icon-big">🎯</span>
+          <div class="feat-panel-title" data-i18n="f6_title">Daily Verdict</div>
+          <div class="feat-panel-desc" data-i18n="f6_desc">Bullish / Bearish / Neutral — what the AI thinks about today's market, with reasons. Make better decisions.</div>
+          <div class="feat-proof">
+            <span class="feat-proof-chip">📈 Bullish</span>
+            <span class="feat-proof-chip">📉 Bearish</span>
+            <span class="feat-proof-chip">😐 Neutral</span>
+          </div>
+        </div>
+      </div>
     </div>
-    <div class="feature-card">
-      <div class="feature-icon">💡</div>
-      <div class="feature-title" data-i18n="f3_title">"Why It Matters" Explained</div>
-      <div class="feature-desc" data-i18n="f3_desc">Every headline comes with one line explaining how it actually affects your stocks. No more guessing.</div>
+  </div>
+</div>
+
+<!-- How It Works -->
+<style>
+.howto { padding: 0 24px 96px; max-width: 1100px; margin: 0 auto; }
+.howto-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 22px; }
+.howto-step { display: flex; flex-direction: column; }
+.howto-shot {
+  position: relative; aspect-ratio: 16 / 10; border-radius: 14px; overflow: hidden;
+  border: 1px solid var(--border); background: var(--surface);
+  box-shadow: 0 20px 44px rgba(0,0,0,0.42);
+}
+.howto-shot img { width: 100%; height: 100%; object-fit: cover; object-position: top center; display: block; }
+.howto-num {
+  position: absolute; top: 10px; left: 10px; width: 32px; height: 32px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px; font-weight: 800; color: #fff; border-radius: 10px;
+  background: linear-gradient(135deg, var(--violet), var(--primary));
+  box-shadow: 0 8px 18px rgba(99,102,241,0.5);
+}
+.howto-step h3 { font-size: 17px; font-weight: 700; margin: 18px 0 6px; }
+.howto-step p { font-size: 14px; color: var(--text-muted); line-height: 1.66; }
+@media (max-width: 880px) { .howto-grid { grid-template-columns: 1fr 1fr; gap: 18px; } }
+@media (max-width: 520px) { .howto-grid { grid-template-columns: 1fr; } }
+</style>
+<div class="howto">
+  <div class="section-head scene-reveal">
+    <div class="section-eyebrow" data-i18n="howto_eyebrow">How It Works</div>
+    <h2 data-i18n="howto_title">Four steps to your daily digest</h2>
+    <p data-i18n="howto_sub">Three minutes to set up. Delivered every morning after that.</p>
+  </div>
+  <div class="howto-grid">
+    <div class="howto-step scene-reveal">
+      <div class="howto-shot"><span class="howto-num">1</span>
+        <img src="/assets/howto/step1.jpg" alt="Sign up" loading="lazy"></div>
+      <h3 data-i18n="howto_step1_title">Sign up</h3>
+      <p data-i18n="howto_step1_desc">Enter your email and pick a plan — done in 30 seconds.</p>
     </div>
-    <div class="feature-card">
-      <div class="feature-icon">🇺🇸 🇹🇼</div>
-      <div class="feature-title" data-i18n="f4_title">US + Taiwan Markets</div>
-      <div class="feature-desc" data-i18n="f4_desc">S&P500, NASDAQ, TWSE, individual stocks — all in one place. No tab-switching.</div>
+    <div class="howto-step scene-reveal" style="transition-delay:.09s">
+      <div class="howto-shot"><span class="howto-num">2</span>
+        <img src="/assets/howto/step2.jpg" alt="Pick your stocks" loading="lazy"></div>
+      <h3 data-i18n="howto_step2_title">Pick your stocks</h3>
+      <p data-i18n="howto_step2_desc">Choose the US and Taiwan stocks you follow in Preferences.</p>
     </div>
-    <div class="feature-card">
-      <div class="feature-icon">🤖</div>
-      <div class="feature-title" data-i18n="f5_title">AI That Speaks Human</div>
-      <div class="feature-desc" data-i18n="f5_desc">Not a stiff analyst report. Written in plain language, like a knowledgeable friend giving you the rundown.</div>
+    <div class="howto-step scene-reveal" style="transition-delay:.18s">
+      <div class="howto-shot"><span class="howto-num">3</span>
+        <img src="/assets/howto/step3.jpg" alt="Check your dashboard" loading="lazy"></div>
+      <h3 data-i18n="howto_step3_title">Check your dashboard</h3>
+      <p data-i18n="howto_step3_desc">See your preference summary at a glance in the dashboard.</p>
     </div>
-    <div class="feature-card">
-      <div class="feature-icon">🎯</div>
-      <div class="feature-title" data-i18n="f6_title">Daily Verdict</div>
-      <div class="feature-desc" data-i18n="f6_desc">Bullish / Bearish / Neutral — what the AI thinks about today's market, with reasons. Make better decisions.</div>
+    <div class="howto-step scene-reveal" style="transition-delay:.27s">
+      <div class="howto-shot"><span class="howto-num">4</span>
+        <img src="/assets/howto/step4.jpg" alt="Get your digest" loading="lazy"></div>
+      <h3 data-i18n="howto_step4_title">Get your digest</h3>
+      <p data-i18n="howto_step4_desc">Every morning at 7AM — with a buy / hold / sell call and AI confidence score for each stock.</p>
     </div>
   </div>
 </div>
 
 <!-- Pricing -->
 <div class="pricing">
-  <h2 data-i18n="price_title">Simple, transparent pricing</h2>
-  <p class="pricing-sub" data-i18n="price_sub">Start free. Upgrade anytime.</p>
-  <div class="pricing-grid">
-
-    <div class="pricing-card">
-      <div class="pricing-badge free-badge" data-i18n="price_free_badge">Friends & Family</div>
-      <div class="pricing-price">$0 <span data-i18n="price_mo">/ mo</span></div>
-      <p class="pricing-desc" data-i18n="price_free_desc">By invitation only. For people Delvin personally invites.</p>
+  <div class="section-head scene-reveal">
+    <div class="section-eyebrow">Pricing</div>
+    <h2 data-i18n="price_title">Simple, transparent pricing</h2>
+    <p data-i18n="price_sub">Start free. Upgrade anytime.</p>
+  </div>
+  <div class="pricing-grid" style="grid-template-columns:repeat(3,1fr);max-width:840px;margin:0 auto;">
+    <!-- Free -->
+    <div class="pricing-card scene-from-left">
+      <div class="pricing-badge free-badge" data-i18n="price_free_badge">親友方案</div>
+      <div class="pricing-price">NT$0 <span data-i18n="price_mo">/ mo</span></div>
+      <p class="pricing-desc" data-i18n="price_free_desc">邀請碼方案，由好友邀請入場。</p>
+      <div class="pricing-divider"></div>
       <ul class="pricing-features">
-        <li data-i18n="pf1">Daily 7AM briefing</li>
-        <li data-i18n="pf2">US + Taiwan markets</li>
-        <li data-i18n="pf3">AI fake-news filter</li>
-        <li data-i18n="pf4">30-second summary</li>
+        <li data-i18n="pf1">每日 AI 財經日報</li>
+        <li data-i18n="pf2">美股 + 台股</li>
+        <li data-i18n="pf3">AI 假訊息過濾</li>
+        <li data-i18n="pf4">30 秒快速摘要</li>
       </ul>
-      <div class="pricing-btn btn-free" data-i18n="price_free_btn">Invite Only</div>
+      <button class="pricing-btn btn-free" onclick="window.scrollTo({top:0,behavior:'smooth'})" data-i18n="price_free_btn">使用邀請碼 ↑</button>
+    </div>
+    <!-- Pro (featured) -->
+    <div class="pricing-card featured scene-zoom-in">
+      <div class="pricing-badge pro-badge" data-i18n="price_pro_badge">Pro ⭐ 最受歡迎</div>
+      <div class="pricing-price">NT$199 <span data-i18n="price_mo2">/ mo</span></div>
+      <p class="pricing-desc" data-i18n="price_pro_desc">每天早上讀更聰明，投資更有把握。</p>
+      <div class="pricing-divider"></div>
+      <ul class="pricing-features">
+        <li data-i18n="pp1">包含免費方案所有功能</li>
+        <li data-i18n="pp2">個人化持股 AI 分析</li>
+        <li data-i18n="pp3">AI 操作建議（買/賣/持有）</li>
+        <li data-i18n="pp4">優先客服支援</li>
+      </ul>
+      <a class="pricing-btn btn-pro" href="https://buy.stripe.com/dRmaEW60B3bCfpM6Va4Ja01" target="_blank" rel="noopener noreferrer" data-i18n="price_pro_btn">立即訂閱 →</a>
+    </div>
+    <!-- Premium -->
+    <div class="pricing-card scene-from-right">
+      <div class="pricing-badge" style="background:rgba(168,85,247,0.15);color:#d8b4fe;border:1px solid rgba(168,85,247,0.3);" data-i18n="price_premium_badge">Premium</div>
+      <div class="pricing-price">NT$499 <span data-i18n="price_mo2">/ mo</span></div>
+      <p class="pricing-desc" data-i18n="price_premium_desc">全功能解鎖，進階投資者首選。</p>
+      <div class="pricing-divider"></div>
+      <ul class="pricing-features">
+        <li data-i18n="pe1">包含 Pro 所有功能</li>
+        <li data-i18n="pe2">更深度市場分析報告</li>
+        <li data-i18n="pe3">月度投資組合健檢</li>
+        <li data-i18n="pe4">重大新聞即時推播</li>
+      </ul>
+      <a class="pricing-btn" href="pricing.html" style="background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;border:none;box-shadow:0 4px 18px rgba(168,85,247,0.35);" data-i18n="price_premium_btn">了解更多 →</a>
+    </div>
+  </div>
+  <p style="text-align:center;margin-top:20px;font-size:13px;color:var(--text-dim);"><a href="pricing.html" style="color:#a5b4fc;text-decoration:none;" data-i18n="price_compare_link">查看完整方案比較 →</a></p>
+</div>
+
+<!-- 3D Feature Slider -->
+<section class="slider-section">
+  <div class="slider-scene-bg"></div>
+  <div class="slider-layout">
+
+    <!-- Left: Slider -->
+    <div class="slider-left">
+      <div class="slider-head scene-reveal" id="slider-head">
+        <div class="section-eyebrow">What's Inside</div>
+        <h2 style="font-size:34px;font-weight:800;letter-spacing:-1.5px;margin-bottom:12px;" data-i18n="slider_title">每日簡報包含什麼</h2>
+        <p style="font-size:15px;color:var(--text-muted);max-width:400px;margin:0 auto;line-height:1.72;" data-i18n="slider_sub">5 sections curated by AI. Delivered every morning at 7AM Taiwan time.</p>
+      </div>
+      <div class="slider-track-outer" id="slider-outer">
+        <div class="slider-track-inner" id="slider-track"></div>
+      </div>
+      <div class="slider-controls">
+        <button class="slider-btn" id="slider-prev" aria-label="Previous">&#8592;</button>
+        <div class="slider-dots" id="slider-dots"></div>
+        <button class="slider-btn" id="slider-next" aria-label="Next">&#8594;</button>
+      </div>
     </div>
 
-    <div class="pricing-card featured">
-      <div class="pricing-badge pro-badge" data-i18n="price_pro_badge">Premium</div>
-      <div class="pricing-price">NT$500 <span data-i18n="price_mo2">/ mo</span></div>
-      <p class="pricing-desc" data-i18n="price_pro_desc">Full access for anyone who wants to invest smarter every morning.</p>
-      <ul class="pricing-features">
-        <li data-i18n="pp1">Everything in Free</li>
-        <li data-i18n="pp2">Priority support</li>
-        <li data-i18n="pp3">Cancel anytime</li>
-        <li data-i18n="pp4">No credit card trial</li>
-      </ul>
-      <a class="pricing-btn btn-pro" href="https://buy.stripe.com/9B6aEW2Op6nO4L87Ze4Ja00" target="_blank" data-i18n="price_pro_btn">Subscribe Now →</a>
+    <!-- Right: FAQ -->
+    <div class="faq-col scene-reveal">
+      <div class="faq-col-eyebrow" data-i18n="faq_eyebrow">FAQ</div>
+      <h2 data-i18n="faq_title">常見問題</h2>
+
+      <div class="faq-item-acc">
+        <button class="faq-q-btn" onclick="toggleFaq(this)">
+          <span data-i18n="faq_q1">幾點收到日報？</span>
+          <span class="faq-chevron">▾</span>
+        </button>
+        <div class="faq-a-body"><p data-i18n="faq_a1">每天早上 7:00 AM 台灣時間準時發送。如果沒收到，請先確認垃圾郵件資料夾。</p></div>
+      </div>
+
+      <div class="faq-item-acc">
+        <button class="faq-q-btn" onclick="toggleFaq(this)">
+          <span data-i18n="faq_q2">日報涵蓋哪些內容？</span>
+          <span class="faq-chevron">▾</span>
+        </button>
+        <div class="faq-a-body"><p data-i18n="faq_a2">30 秒 TL;DR 摘要、今日頭條（假訊息過濾）、AI 操作建議（每支持股 買/賣/持有 + 目標價 + 信心百分比）、市場情緒儀表板，以及你的個人持倉動態分析。</p></div>
+      </div>
+
+      <div class="faq-item-acc">
+        <button class="faq-q-btn" onclick="toggleFaq(this)">
+          <span data-i18n="faq_q5">三個方案差在哪裡？</span>
+          <span class="faq-chevron">▾</span>
+        </button>
+        <div class="faq-a-body"><p data-i18n="faq_a5">免費方案需要邀請碼，提供每日 AI 財經日報基本版。Pro（NT$199/月）加上個人化持股 AI 分析與買/賣/持有操作建議，是大多數投資人的首選。Premium（NT$499/月）再加深度市場報告、月度投資組合健檢與重大新聞即時推播。</p></div>
+      </div>
+
+      <div class="faq-item-acc">
+        <button class="faq-q-btn" onclick="toggleFaq(this)">
+          <span data-i18n="faq_q4">如何取消訂閱？</span>
+          <span class="faq-chevron">▾</span>
+        </button>
+        <div class="faq-a-body"><p data-i18n="faq_a4">在任何一封日報 Email 底部點「取消訂閱」即可立即生效，完全不需要聯繫客服。</p></div>
+      </div>
+
+      <div class="faq-contact-link" data-i18n-html="faq_contact">
+        還有其他問題？<a href="contact.html">聯絡 AI 客服 →</a>
+      </div>
     </div>
 
   </div>
+</section>
+
+<!-- Founder Story -->
+<div class="founder-section scene-reveal">
+  <div class="founder-inner">
+    <div class="founder-quote-mark">"</div>
+    <div class="founder-story">
+      <p class="founder-text" data-i18n="founder_text">I used to spend an hour every morning reading Bloomberg, CNBC, and PTT — just to figure out what happened overnight to my stocks. Half the news was noise. Some of it was flat-out wrong. I built MarketDaily because I was tired of doing that work myself. Now it just shows up in my inbox, already filtered, already personalized. I haven't opened a financial news app in months.</p>
+      <div class="founder-sig">
+        <div class="founder-avatar">M</div>
+        <div>
+          <div class="founder-name" data-i18n="founder_name">The Founder</div>
+          <div class="founder-role" data-i18n="founder_role">Investor · Engineer · Built this for himself first</div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
-<!-- About -->
-<div style="padding: 80px 24px; max-width: 860px; margin: 0 auto;">
-  <h2 style="text-align:center; font-size:32px; font-weight:800; letter-spacing:-1px; margin-bottom:12px;" data-i18n="about_title">About MarketDaily</h2>
-  <p style="text-align:center; font-size:15px; color:rgba(255,255,255,0.45); margin-bottom:56px;" data-i18n="about_sub">Why we built this — and who it's for</p>
-
-  <div style="display:grid; grid-template-columns:1fr 1fr; gap:32px;">
-
-    <div style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:20px; padding:32px;">
-      <div style="font-size:32px; margin-bottom:16px;">💡</div>
-      <h3 style="font-size:18px; font-weight:800; margin-bottom:12px;" data-i18n="about_problem_title">The problem</h3>
-      <p style="font-size:14px; color:rgba(255,255,255,0.55); line-height:1.8;" data-i18n="about_problem_desc">Every morning, thousands of news articles flood the internet. Most are noise. Some are fake. And the few that actually matter — the ones that move markets — are buried under clickbait and speculation.</p>
+<!-- Testimonials -->
+<div class="testimonials-section">
+  <div class="section-head scene-reveal">
+    <div class="section-eyebrow" data-i18n="testimonials_eyebrow">Early Users</div>
+    <h2 data-i18n="testimonials_title">用過的人說什麼</h2>
+  </div>
+  <div class="testimonials-grid">
+    <div class="tcard scene-from-left">
+      <div class="tcard-stars">★★★★★</div>
+      <p class="tcard-text" data-i18n="t1_text">「以前每天花一小時看財經新聞，現在五分鐘看完重點。最重要的是它只分析我自己的持倉，不是在講跟我無關的股票。」</p>
+      <div class="tcard-author">
+        <div class="tcard-avatar" style="background:linear-gradient(135deg,#6366f1,#8b5cf6);">J</div>
+        <div>
+          <div class="tcard-name" data-i18n="t1_name">Jason L.</div>
+          <div class="tcard-role" data-i18n="t1_role">軟體工程師，持有 NVDA / TSLA / 台積電</div>
+        </div>
+      </div>
     </div>
-
-    <div style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:20px; padding:32px;">
-      <div style="font-size:32px; margin-bottom:16px;">🤖</div>
-      <h3 style="font-size:18px; font-weight:800; margin-bottom:12px;" data-i18n="about_solution_title">Our solution</h3>
-      <p style="font-size:14px; color:rgba(255,255,255,0.55); line-height:1.8;" data-i18n="about_solution_desc">MarketDaily scans 75+ verified sources every night, filters out fake news, and uses AI to write a plain-language briefing — delivered to your inbox every morning at 7AM Taiwan time.</p>
+    <div class="tcard scene-reveal" style="transition-delay:0.1s;">
+      <div class="tcard-stars">★★★★★</div>
+      <p class="tcard-text" data-i18n="t2_text">「假訊息過濾這個功能讓我最有感。之前在 PTT 看到的消息一半是假的，現在收到的每則新聞都有來源標記，安心很多。」</p>
+      <div class="tcard-author">
+        <div class="tcard-avatar" style="background:linear-gradient(135deg,#10b981,#06b6d4);">C</div>
+        <div>
+          <div class="tcard-name" data-i18n="t2_name">Claire W.</div>
+          <div class="tcard-role" data-i18n="t2_role">金融業，美股長期投資者</div>
+        </div>
+      </div>
     </div>
-
-    <div style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:20px; padding:32px;">
-      <div style="font-size:32px; margin-bottom:16px;">🎯</div>
-      <h3 style="font-size:18px; font-weight:800; margin-bottom:12px;" data-i18n="about_who_title">Who it's for</h3>
-      <p style="font-size:14px; color:rgba(255,255,255,0.55); line-height:1.8;" data-i18n="about_who_desc">Busy professionals and investors in Taiwan who hold US or Taiwan stocks and want to make smarter decisions — without spending an hour reading financial news every morning.</p>
+    <div class="tcard scene-from-right">
+      <div class="tcard-stars">★★★★★</div>
+      <p class="tcard-text" data-i18n="t3_text">「一開始以為跟 ChatGPT 差不多，試了才知道差很多。它主動送到你面前，還知道你在乎哪幾支。完全不一樣的體驗。」</p>
+      <div class="tcard-author">
+        <div class="tcard-avatar" style="background:linear-gradient(135deg,#f59e0b,#ef4444);">A</div>
+        <div>
+          <div class="tcard-name" data-i18n="t3_name">Alex K.</div>
+          <div class="tcard-role" data-i18n="t3_role">創業者，追蹤美股科技板塊</div>
+        </div>
+      </div>
     </div>
+  </div>
+</div>
 
-    <div style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:20px; padding:32px;">
-      <div style="font-size:32px; margin-bottom:16px;">🛡️</div>
-      <h3 style="font-size:18px; font-weight:800; margin-bottom:12px;" data-i18n="about_trust_title">Our commitment</h3>
-      <p style="font-size:14px; color:rgba(255,255,255,0.55); line-height:1.8;" data-i18n="about_trust_desc">Every story is cross-checked across multiple trusted sources. We clearly label what's verified and what isn't. No hype, no clickbait — just the facts that matter to your portfolio.</p>
+<!-- Email Preview -->
+<div class="preview scene-zoom-in">
+  <div class="section-head" style="margin-bottom:40px;">
+    <div class="section-eyebrow">Sample Issue</div>
+    <h2 data-i18n="preview_title">What it looks like 👇</h2>
+  </div>
+  <div class="preview-window">
+    <div class="preview-browser-bar">
+      <div class="browser-dots">
+        <div class="browser-dot bd-red"></div>
+        <div class="browser-dot bd-yellow"></div>
+        <div class="browser-dot bd-green"></div>
+      </div>
+      <div class="browser-bar-url" data-i18n="prev_bar">📩 MarketDaily · 2026-05-20 Morning Briefing</div>
     </div>
-
+    <div class="preview-email-header">
+      <div class="preview-date" data-i18n="prev_date">Wednesday · May 20, 2026</div>
+      <div class="preview-title-text" data-i18n="prev_title">📈 Morning Briefing · US &amp; Taiwan Markets</div>
+      <div class="preview-verdict" data-i18n="prev_verdict">📊 Verdict: Cautiously Bullish</div>
+    </div>
+    <div class="preview-email-body">
+      <div class="preview-tldr">
+        <div class="preview-tldr-title" data-i18n="prev_tldr_title">⚡ TL;DR — 30 seconds</div>
+        <ul>
+          <li data-i18n="prev_li1">Fed hints at rate pause → tech stocks rallied overnight</li>
+          <li data-i18n="prev_li2">TSMC beats Q1 forecast → TWSE opens strong</li>
+          <li data-i18n="prev_li3">Oil drops 2% on inventory data → airline & logistics stocks up</li>
+        </ul>
+      </div>
+      <div class="preview-news-label" data-i18n="prev_news_label">Today's Top Stories</div>
+      <div class="preview-news-item">
+        <div class="preview-badge v" data-i18n="prev_badge_v">✅ Multi-source</div>
+        <div class="preview-news-text" data-i18n="prev_news1">Fed Chair signals potential pause in rate hike cycle at Jackson Hole</div>
+        <div class="preview-news-why" data-i18n="prev_why1">💡 Lower rates → cheaper borrowing → good for growth stocks like NVDA, AAPL</div>
+      </div>
+      <div class="preview-news-item">
+        <div class="preview-badge v" data-i18n="prev_badge_v">✅ Multi-source</div>
+        <div class="preview-news-text" data-i18n="prev_news2">TSMC Q1 revenue beats estimates by 8%, raises full-year outlook</div>
+        <div class="preview-news-why" data-i18n="prev_why2">💡 Good news for 2330.TW holders — strong AI chip demand continues into H2</div>
+      </div>
+      <div class="preview-news-item">
+        <div class="preview-badge s" data-i18n="prev_badge_s">⚠️ Single source</div>
+        <div class="preview-news-text" data-i18n="prev_news3">Crude oil falls 2.3% on surprise inventory build</div>
+        <div class="preview-news-why" data-i18n="prev_why3">💡 Lower oil = cost savings for airlines, shipping; watch EVA Air 2618.TW</div>
+      </div>
+    </div>
   </div>
 </div>
 
 <!-- CTA Bottom -->
-<div class="cta-bottom">
-  <h2 data-i18n="cta_title">Start your mornings smarter</h2>
-  <p data-i18n="cta_sub">NT$500/month. Cancel anytime.</p>
-  <a href="https://buy.stripe.com/9B6aEW2Op6nO4L87Ze4Ja00" target="_blank" style="display:inline-block;background:#6366f1;color:#fff;font-size:16px;font-weight:700;padding:16px 40px;border-radius:12px;text-decoration:none;" data-i18n="cta_btn">Subscribe Now →</a>
-  <p style="margin-top:16px;font-size:13px;color:rgba(255,255,255,0.3);" data-i18n="cta_invite_hint">Invited by a friend? <span style="color:#a5b4fc;cursor:pointer;" onclick="window.scrollTo({top:0,behavior:'smooth'});" data-i18n="cta_invite_link">Use your invite code ↑</span></p>
+<div class="cta-bottom scene-zoom-in">
+  <div class="cta-inner">
+    <h2 data-i18n="cta_title">讓每個早晨更聰明</h2>
+    <p data-i18n="cta_sub">從 NT$199/月起 · 隨時取消</p>
+    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:16px;">
+      <a href="https://buy.stripe.com/dRmaEW60B3bCfpM6Va4Ja01" target="_blank" rel="noopener noreferrer" class="cta-btn" data-i18n="cta_btn">立即訂閱 Pro →</a>
+      <a href="pricing.html" class="cta-btn" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.8);" data-i18n="cta_see_plans">查看所有方案</a>
+      <a href="https://line.me/R/ti/p/@516nponm" target="_blank" rel="noopener noreferrer" class="cta-btn line" data-i18n="cta_line">💬 追蹤我們的 LINE</a>
+    </div>
+    <p style="margin-top:4px;font-size:13px;color:var(--text-dim);" data-i18n-html="cta_invite_full">有朋友邀請？<span style="color:#a5b4fc;cursor:pointer;" onclick="window.scrollTo({top:0,behavior:'smooth'});">在上方輸入邀請碼免費加入 ↑</span></p>
+  </div>
 </div>
 
 <!-- Footer -->
 <footer>
-  <span data-i18n="footer1">MarketDaily · AI-curated US & Taiwan financial news</span><br>
-  <span data-i18n="footer2">✅ Multi-source verified &nbsp;|&nbsp; ⚠️ Single source — read with caution</span><br>
-  <span data-i18n="footer3">For informational purposes only. Not financial advice.</span>
+  <div class="footer-brand">Market<span style="color:#818cf8;">Daily</span></div>
+  <div class="footer-note">
+    <span data-i18n="footer2">✅ Multi-source verified &nbsp;|&nbsp; ⚠️ Single source — read with caution</span><br>
+    <span data-i18n="footer3">For informational purposes only. Not financial advice.</span><br><br>
+    <a href="contact.html" style="color:#818cf8;text-decoration:none;font-weight:600;" data-i18n="footer_contact">聯絡我們 / 客服</a>
+  </div>
 </footer>
 
 <script>
-  const WORKER_URL = "https://marketdaily-webhook.delvin-12345678.workers.dev";
+const WORKER_URL = "https://marketdaily-webhook.delvin-12345678.workers.dev";
 
-  const i18n = {
-    en: {
-      nav_settings: "⚙️ My Account",
-      nav_badge: "🇹🇼 Taiwan Investors",
-      pill: "📊 AI-Curated · Fake-News Filtered · Daily 7AM",
-      hero_btn_paid: "Subscribe NT$500/mo →",
-      hero_btn_invite: "Have an invite code?",
-      cta_btn: "Subscribe Now →",
-      cta_invite_hint: "Invited by a friend?",
-      cta_invite_link: "Use your invite code above ↑",
-      hero_h1: 'Your daily stock market<br><span class="gradient">briefing in 30 seconds</span>',
-      hero_sub: "Every morning at 7AM Taiwan time — AI-curated US & Taiwan market news, fake-news filtered, written like a smart friend texting you.",
-      btn_sub1: "Subscribe Free →",
-      placeholder_email: "your@email.com",
-      sub_note: "Join readers getting smarter about their portfolio every morning.",
-      success1: "🎉 You're in! First issue arrives tomorrow at 7AM Taiwan time.",
-      success_msg: "✅ One more step — confirm your subscription in the email we just sent!",
-      error: "Invalid invite code. Please check and try again.",
-      error_email: "Please enter a valid email address.",
-      stat1: "Taiwan Time Daily",
-      stat2: "News Sources Scanned",
-      stat3: "Fake News Through",
-      stat4_num: "30s",
-      stat4: "Morning Briefing",
-      feat_title: "Built for busy people",
-      f1_title: "30-Second Summary",
-      f1_desc: "3 bullet points at the top. Catch the most important thing even on your most hectic morning.",
-      f2_title: "Fake News Filtered",
-      f2_desc: "Only news from Reuters, CNBC, Bloomberg, FT and other verified sources. Every story is cross-checked.",
-      f3_title: '"Why It Matters" Explained',
-      f3_desc: "Every headline comes with one line explaining how it actually affects your stocks. No more guessing.",
-      f4_title: "US + Taiwan Markets",
-      f4_desc: "S&P500, NASDAQ, TWSE, individual stocks — all in one place. No tab-switching.",
-      f5_title: "AI That Speaks Human",
-      f5_desc: "Not a stiff analyst report. Written in plain language, like a knowledgeable friend giving you the rundown.",
-      f6_title: "Daily Verdict",
-      f6_desc: "Bullish / Bearish / Neutral — what the AI thinks about today's market, with reasons. Make better decisions.",
-      preview_title: "What it looks like 👇",
-      cta_title: "Start your mornings smarter",
-      cta_sub: "NT$500/month. Cancel anytime.",
-      hero_btn_check: "Get Started →",
-      hero_btn_signin: "Go to My Account →",
-      hero_btn_back: "← Not you? Change email",
-      wb_found: "✅ Found your subscription!",
-      choose_plan: "Choose your plan",
-      btn_use_invite: "Use Invite Code →",
-      sub_note_netflix: "Already subscribed? Enter your email to sign in.",
-      remember_email: "Remember my email",
-      btn_sub2: "Subscribe Free →",
-      success2: "🎉 You're in! See you tomorrow at 7AM.",
-      error2: "Oops, something went wrong. Please try again.",
-      about_title: "About MarketDaily",
-      about_sub: "Why we built this — and who it's for",
-      about_problem_title: "The problem",
-      about_problem_desc: "Every morning, thousands of news articles flood the internet. Most are noise. Some are fake. And the few that actually matter — the ones that move markets — are buried under clickbait and speculation.",
-      about_solution_title: "Our solution",
-      about_solution_desc: "MarketDaily scans 75+ verified sources every night, filters out fake news, and uses AI to write a plain-language briefing — delivered to your inbox every morning at 7AM Taiwan time.",
-      about_who_title: "Who it's for",
-      about_who_desc: "Busy professionals and investors in Taiwan who hold US or Taiwan stocks and want to make smarter decisions — without spending an hour reading financial news every morning.",
-      about_trust_title: "Our commitment",
-      about_trust_desc: "Every story is cross-checked across multiple trusted sources. We clearly label what's verified and what isn't. No hype, no clickbait — just the facts that matter to your portfolio.",
-      price_title: "Simple, transparent pricing",
-      price_sub: "Start free. Upgrade anytime.",
-      price_free_badge: "Friends & Family",
-      price_mo: "/ mo",
-      price_free_desc: "By invitation only. For people Delvin personally invites.",
-      pf1: "Daily 7AM briefing",
-      pf2: "US + Taiwan markets",
-      pf3: "AI fake-news filter",
-      pf4: "30-second summary",
-      price_free_btn: "Invite Only",
-      price_pro_badge: "Premium",
-      price_mo2: "/ mo",
-      price_pro_desc: "Full access for anyone who wants to invest smarter every morning.",
-      pp1: "Everything in Free",
-      pp2: "Priority support",
-      pp3: "Cancel anytime",
-      pp4: "No credit card trial",
-      price_pro_btn: "Subscribe Now →",
-      footer1: "MarketDaily · AI-curated US & Taiwan financial news",
-      footer2: "✅ Multi-source verified &nbsp;|&nbsp; ⚠️ Single source — read with caution",
-      footer3: "For informational purposes only. Not financial advice.",
-    },
-    zh: {
-      nav_settings: "⚙️ 我的專區",
-      nav_badge: "🇹🇼 台灣投資人",
-      pill: "📊 AI 精選 · 假訊息過濾 · 每天早上 7 點",
-      hero_btn_paid: "立即訂閱 NT$500/月 →",
-      hero_btn_invite: "有邀請碼？",
-      cta_btn: "立即訂閱 →",
-      cta_invite_hint: "朋友邀請你加入？",
-      cta_invite_link: "在上方輸入邀請碼 ↑",
-      hero_h1: '每天早上 7 點<br><span class="gradient">30 秒看完財經大事</span>',
-      hero_sub: "每天早上 7 點準時送達，AI 精選美股 + 台股新聞，假訊息全過濾，像聰明朋友傳訊息給你一樣好懂。",
-      btn_sub1: "免費訂閱 →",
-      placeholder_email: "你的Email",
-      sub_note: "加入每天早上讀更聰明的投資人行列。",
-      success1: "🎉 訂閱成功！明天早上 7 點見。",
-      success_msg: "✅ 訂閱完成！請到信箱點一下確認連結，明天早上 7 點見。",
-      error: "邀請碼不對，請再確認一次。",
-      error_email: "請輸入有效的 Email 地址。",
-      stat1: "台灣時間每日發送",
-      stat2: "新聞來源掃描數",
-      stat3: "假新聞通過率",
-      stat4_num: "30s",
-      stat4: "每日早晨摘要",
-      feat_title: "專為忙碌的人打造",
-      f1_title: "30 秒快速摘要",
-      f1_desc: "最上方三個重點，再忙的早晨也能在 30 秒內掌握市場大事。",
-      f2_title: "假訊息過濾",
-      f2_desc: "只採用 Reuters、CNBC、Bloomberg、FT 等可信媒體，每則新聞交叉比對。",
-      f3_title: "「為什麼重要」一句話說清楚",
-      f3_desc: "每則新聞都附上一句話，直接告訴你這件事對你持股的影響，不用猜。",
-      f4_title: "美股 + 台股同步覆蓋",
-      f4_desc: "S&P500、NASDAQ、台灣加權指數、個股全都有，一個地方看完。",
-      f5_title: "AI 說人話",
-      f5_desc: "不是生硬的分析報告，用生活化的語言，像懂財經的朋友跟你說重點。",
-      f6_title: "每日市場結論",
-      f6_desc: "偏多 / 偏空 / 觀望 — AI 給出今日市場判斷並說明理由，幫你做更好的決策。",
-      preview_title: "長這個樣子 👇",
-      cta_title: "讓每個早晨更聰明",
-      cta_sub: "NT$500/月，隨時取消。",
-      hero_btn_check: "繼續 →",
-      hero_btn_signin: "前往我的專區 →",
-      hero_btn_back: "← 不是你？重新輸入",
-      wb_found: "✅ 找到你的訂閱了！",
-      choose_plan: "選擇你的方案",
-      btn_use_invite: "使用邀請碼 →",
-      sub_note_netflix: "已訂閱？輸入你的 Email 直接登入",
-      remember_email: "記住我的 Email",
-      btn_sub2: "免費訂閱 →",
-      success2: "🎉 訂閱成功！明天早上 7 點見。",
-      error2: "出了點問題，請再試一次。",
-      about_title: "關於財經日報",
-      about_sub: "我們是誰，我們在做什麼",
-      about_problem_title: "問題在哪裡",
-      about_problem_desc: "每天早上，網路上充斥著成千上萬篇財經新聞。大多數都是雜訊，有些甚至是假新聞。真正影響股市的關鍵訊息，往往被埋在標題黨和謠言之下。",
-      about_solution_title: "我們的解法",
-      about_solution_desc: "財經日報每晚掃描 75+ 個可信來源，過濾假新聞，再由 AI 用生活化的語言寫成摘要，每天早上 7 點準時送進你的收件匣。",
-      about_who_title: "適合誰看",
-      about_who_desc: "持有美股或台股、想做出更聰明投資決策的台灣上班族與投資人。不想每天花一個小時讀財經新聞，但又不想錯過重要消息的人。",
-      about_trust_title: "我們的承諾",
-      about_trust_desc: "每則新聞都經過多個可信來源交叉比對，並明確標示「多源確認」或「單一來源」。不炒作、不標題黨，只給你真正影響持股的事實。",
-      price_title: "簡單透明的定價",
-      price_sub: "先免費試用，隨時升級。",
-      price_free_badge: "親友方案",
-      price_mo: "/ 月",
-      price_free_desc: "僅限受邀，由 Delvin 親自邀請的家人與朋友。",
-      pf1: "每天早上 7 點日報",
-      pf2: "美股 + 台股",
-      pf3: "AI 假訊息過濾",
-      pf4: "30 秒快速摘要",
-      price_free_btn: "僅限受邀",
-      price_pro_badge: "Premium 方案",
-      price_mo2: "/ 月",
-      price_pro_desc: "想每天早上讀更聰明，完整方案都包含在內。",
-      pp1: "包含免費方案所有功能",
-      pp2: "優先客服支援",
-      pp3: "隨時取消，無綁約",
-      pp4: "無需信用卡即可試用",
-      price_pro_btn: "立即訂閱 →",
-      footer1: "財經日報 · AI 精選美股 + 台股新聞",
-      footer2: "✅ 多源確認 &nbsp;|&nbsp; ⚠️ 單一來源，請自行查證",
-      footer3: "本日報為 AI 生成，僅供參考，不構成投資建議。",
-    }
-  };
-
-  let currentLang = localStorage.getItem("md-lang") || "en";
-
-  function applyLang(lang) {
-    const t = i18n[lang];
-    document.querySelectorAll("[data-i18n]").forEach(el => {
-      const key = el.getAttribute("data-i18n");
-      if (t[key] !== undefined) el.textContent = t[key];
-    });
-    document.querySelectorAll("[data-i18n-html]").forEach(el => {
-      const key = el.getAttribute("data-i18n-html");
-      if (t[key] !== undefined) el.innerHTML = t[key];
-    });
-    document.querySelectorAll("[data-i18n-placeholder]").forEach(el => {
-      const key = el.getAttribute("data-i18n-placeholder");
-      if (t[key] !== undefined) el.placeholder = t[key];
-    });
-    document.getElementById("lang-toggle").textContent = lang === "en" ? "中文" : "EN";
-    document.documentElement.lang = lang === "en" ? "en" : "zh-Hant";
+const i18n = {
+  en: {
+    nav_settings: "⚙️ My Account", nav_pricing: "Pricing",
+    plan_free_badge: "Free", plan_free_btn: "Join Free →",
+    invite_has_code: "🎁 Someone sent you an invite? Claim it here",
+    invite_code_hint: "Enter the code a friend gave you — unlock the daily briefing free",
+    invite_placeholder: "Invite Code",
+    pill: "📊 AI-Curated · Fake-News Filtered · Daily 7AM",
+    hero_h1: 'Your daily stock market<br><span class="gradient">briefing in 30 seconds</span>',
+    hero_sub: "Every morning at 7AM Taiwan time — AI-curated US & Taiwan market news, fake-news filtered, written like a smart friend texting you.",
+    placeholder_email: "your@email.com",
+    sub_note_netflix: "Already subscribed? Enter your email to sign in.",
+    error_email: "Please enter a valid email address.",
+    hero_btn_check: "Get Started →",
+    hero_btn_signin: "Go to My Account →",
+    hero_btn_back: "← Not you? Change email",
+    wb_found: "✅ Found your subscription!",
+    choose_plan: "Choose your plan",
+    invite_title: "Someone sent you a gift 🎁", invite_hint: "A friend's invite gets you MarketDaily free — limited spots",
+    or_divider: "or",
+    btn_use_invite: "Claim my free briefing →",
+    remember_email: "Remember my email",
+    stat1: "Taiwan Time Daily", stat2: "News Sources Scanned", stat3: "Fake News Got Through", stat4_num: "30s", stat4: "Morning Briefing",
+    feat_title: "Built for busy people",
+    f1_title: "30-Second Summary", f1_desc: "3 bullet points at the top. Catch the most important thing even on your most hectic morning.",
+    f2_title: "Fake News Filtered", f2_desc: "Only news from Reuters, CNBC, Bloomberg, FT and other verified sources. Every story is cross-checked.",
+    f3_title: '"Why It Matters" Explained', f3_desc: "Every headline comes with one line explaining how it actually affects your stocks. No more guessing.",
+    f4_title: "US + Taiwan Markets", f4_desc: "S&P500, NASDAQ, TWSE, individual stocks — all in one place. No tab-switching.",
+    f5_title: "AI That Speaks Human", f5_desc: "Not a stiff analyst report. Written in plain language, like a knowledgeable friend giving you the rundown.",
+    f6_title: "Daily Verdict", f6_desc: "Bullish / Bearish / Neutral — what the AI thinks about today's market, with reasons. Make better decisions.",
+    howto_eyebrow: "How It Works",
+    howto_title: "Four steps to your daily digest",
+    howto_sub: "Three minutes to set up. Delivered every morning after that.",
+    howto_step1_title: "Sign up", howto_step1_desc: "Enter your email and pick a plan — done in 30 seconds.",
+    howto_step2_title: "Pick your stocks", howto_step2_desc: "Choose the US and Taiwan stocks you follow in Preferences.",
+    howto_step3_title: "Check your dashboard", howto_step3_desc: "See your preference summary at a glance in the dashboard.",
+    howto_step4_title: "Get your digest", howto_step4_desc: "Every morning at 7AM — with a buy / hold / sell call and AI confidence score for each stock.",
+    preview_title: "What it looks like 👇",
+    price_title: "Simple, transparent pricing", price_sub: "Start free. Upgrade anytime.",
+    price_free_badge: "Free (Invite)", price_mo: "/ mo",
+    price_free_desc: "Invite-only — a friend's gift gets you in free.",
+    pf1: "Daily 7AM briefing", pf2: "US + Taiwan markets", pf3: "AI fake-news filter", pf4: "30-second summary",
+    price_premium_badge: "Premium", price_premium_desc: "Full unlock for serious investors.",
+    pe1: "Everything in Pro", pe2: "Deeper market analysis", pe3: "Monthly portfolio review", pe4: "Breaking news alerts",
+    price_premium_btn: "Learn More →", price_compare_link: "See full plan comparison →",
+    slider_title: "What's in every brief", slider_sub: "5 AI-curated sections. Delivered every morning at 7AM Taiwan time.",
+    faq_eyebrow: "FAQ", faq_title: "Common Questions",
+    faq_q1: "What time does the brief arrive?", faq_a1: "Every morning at 7:00 AM Taiwan time. If you don't see it, check your spam folder.",
+    faq_q2: "What's inside every briefing?", faq_a2: "30-second TL;DR, top headlines (fake-news filtered), AI trade signals per stock (Buy/Sell/Hold + target price + confidence %), market sentiment dashboard, and personalized holdings analysis.",
+    faq_q3: "How do I get an invite code?", faq_a3: "Invite codes are issued by Delvin personally and are limited. Currently for friends and family only. Contact us if you'd like one.",
+    faq_q4: "How do I unsubscribe?", faq_a4: "Click 'Unsubscribe' at the bottom of any email. Takes effect immediately — no need to contact support.",
+    faq_q5: "What's the difference between the plans?", faq_a5: "Free (invite only) gives the daily AI briefing. Pro (NT$199/mo) adds personalized AI stock analysis and Buy/Sell/Hold signals — the best choice for most investors. Premium (NT$499/mo) adds deeper analysis, monthly portfolio reviews, and breaking news alerts.",
+    faq_contact: "More questions? <a href='contact.html'>Contact AI Support →</a>",
+    price_free_btn: "Use Invite Code ↑", price_pro_badge: "Pro ⭐ Most Popular", price_mo2: "/ mo",
+    price_pro_desc: "Smarter mornings, more confident investing.",
+    pp1: "Everything in Free", pp2: "Personalized AI stock analysis", pp3: "AI Buy/Sell/Hold signals", pp4: "Priority support",
+    price_pro_btn: "Subscribe Now →",
+    feat_sub: "Everything you need to start your morning smarter. Nothing you don't.",
+    about_title: "About MarketDaily", about_sub: "Why we built this — and who it's for",
+    about_tab_problem: "😩 The Problem", about_tab_solution: "✅ Our Solution",
+    about_prob_eye: "Your morning right now", about_prob_time: "60+ minutes wasted",
+    about_p1: "Open Bloomberg, CNBC, PTT, Reddit, Yahoo Finance... one by one",
+    about_p2: "Half the news is noise with no relevance to your portfolio",
+    about_p3: "Some stories are flat-out fake — you can't tell which",
+    about_p4: "After an hour, you still don't know what to do with your stocks",
+    about_prob_quote: '"I spend an hour every morning and still feel confused."',
+    about_prob_attr: "— every investor before MarketDaily",
+    about_sol_eye: "Your morning with MarketDaily", about_sol_time: "5 minutes. Done.",
+    about_s1: "75+ sources scanned overnight while you sleep",
+    about_s2: "Fake news filtered — every story cross-checked and labeled",
+    about_s3: "Only your stocks analyzed — nothing irrelevant",
+    about_s4: "Clear Buy / Hold / Sell signal with target price and confidence",
+    about_sol_quote: '"It\'s already in my inbox. I read it with coffee. Done."',
+    about_sol_attr: "— MarketDaily subscriber",
+    about_problem_title: "The problem", about_problem_desc: "Every morning, thousands of news articles flood the internet. Most are noise. Some are fake. And the few that actually matter — the ones that move markets — are buried under clickbait and speculation.",
+    about_solution_title: "Our solution", about_solution_desc: "MarketDaily scans 75+ verified sources every night, filters out fake news, and uses AI to write a plain-language briefing — delivered to your inbox every morning at 7AM Taiwan time.",
+    about_who_title: "Who it's for", about_who_desc: "Busy professionals and investors in Taiwan who hold US or Taiwan stocks and want to make smarter decisions — without spending an hour reading financial news every morning.",
+    about_trust_title: "Our commitment", about_trust_desc: "Every story is cross-checked across multiple trusted sources. We clearly label what's verified and what isn't. No hype, no clickbait — just the facts that matter to your portfolio.",
+    cta_title: "Start your mornings smarter", cta_sub: "From NT$199/mo · Cancel anytime", cta_btn: "Subscribe Pro →",
+    cta_see_plans: "See all plans", cta_line: "💬 Follow us on LINE",
+    cta_invite_full: "Got an invite from a friend? <span style=\"color:#a5b4fc;cursor:pointer;\" onclick=\"window.scrollTo({top:0,behavior:'smooth'});\">Enter your code above to join free ↑</span>",
+    footer2: "✅ Multi-source verified  |  ⚠️ Single source — read with caution",
+    footer3: "For informational purposes only. Not financial advice.",
+    footer_contact: "Contact Us / Support",
+    founder_text: "I used to spend an hour every morning reading Bloomberg, CNBC, and PTT — just to figure out what happened overnight to my stocks. Half the news was noise. Some of it was flat-out wrong. I built MarketDaily because I was tired of doing that work myself. Now it just shows up in my inbox, already filtered, already personalized. I haven't opened a financial news app in months.",
+    founder_name: "The Founder", founder_role: "Investor · Engineer · Built this for himself first",
+    testimonials_eyebrow: "Early Users", testimonials_title: "What people are saying",
+    t1_text: "\"I used to spend an hour on financial news every morning. Now I skim it in five minutes — and it only covers the stocks I actually own. Game changer.\"",
+    t1_name: "Jason L.", t1_role: "Software Engineer · NVDA / TSLA / TSMC",
+    t2_text: "\"The fake news filter is what got me. Half the things I read on Reddit and PTT turned out to be wrong. Every article here has a source label. I actually trust it.\"",
+    t2_name: "Claire W.", t2_role: "Finance professional · Long-term US investor",
+    t3_text: "\"I thought it would be like ChatGPT. It's not. It shows up before you even think to ask. It already knows what you care about. Completely different experience.\"",
+    t3_name: "Alex K.", t3_role: "Entrepreneur · Tracking US tech stocks",
+    prev_bar: "📩 MarketDaily · 2026-05-20 Morning Briefing",
+    prev_date: "Wednesday · May 20, 2026",
+    prev_title: "📈 Morning Briefing · US & Taiwan Markets",
+    prev_verdict: "📊 Verdict: Cautiously Bullish",
+    prev_tldr_title: "⚡ TL;DR — 30 seconds",
+    prev_li1: "Fed hints at rate pause → tech stocks rallied overnight",
+    prev_li2: "TSMC beats Q1 forecast → TWSE opens strong",
+    prev_li3: "Oil drops 2% on inventory data → airline & logistics stocks up",
+    prev_news_label: "Today's Top Stories",
+    prev_badge_v: "✅ Multi-source", prev_badge_s: "⚠️ Single source",
+    prev_news1: "Fed Chair signals potential pause in rate hike cycle at Jackson Hole",
+    prev_why1: "💡 Lower rates → cheaper borrowing → good for growth stocks like NVDA, AAPL",
+    prev_news2: "TSMC Q1 revenue beats estimates by 8%, raises full-year outlook",
+    prev_why2: "💡 Good news for 2330.TW holders — strong AI chip demand continues into H2",
+    prev_news3: "Crude oil falls 2.3% on surprise inventory build",
+    prev_why3: "💡 Lower oil = cost savings for airlines, shipping; watch EVA Air 2618.TW",
+  },
+  zh: {
+    nav_settings: "⚙️ 我的專區", nav_pricing: "定價",
+    plan_free_badge: "免費", plan_free_btn: "免費加入 →",
+    invite_has_code: "🎁 有人送你邀請碼？點這裡領取",
+    invite_code_hint: "輸入朋友送你的邀請碼，免費解鎖每日日報",
+    invite_placeholder: "邀請碼",
+    pill: "📊 AI 精選 · 假訊息過濾 · 每天早上 7 點",
+    hero_h1: '每天早上 7 點<br><span class="gradient">30 秒看完財經大事</span>',
+    hero_sub: "每天早上 7 點準時送達，AI 精選美股 + 台股新聞，假訊息全過濾，像聰明朋友傳訊息給你一樣好懂。",
+    placeholder_email: "你的Email",
+    sub_note_netflix: "已訂閱？輸入你的 Email 直接登入",
+    error_email: "請輸入有效的 Email 地址。",
+    hero_btn_check: "繼續 →",
+    hero_btn_signin: "前往我的專區 →",
+    hero_btn_back: "← 不是你？重新輸入",
+    wb_found: "✅ 找到你的訂閱了！",
+    choose_plan: "選擇你的方案",
+    invite_title: "有人送你一份禮物 🎁", invite_hint: "用朋友送的邀請碼免費入場 —— 名額有限",
+    or_divider: "或",
+    btn_use_invite: "領取我的免費日報 →",
+    remember_email: "記住我的 Email",
+    stat1: "台灣時間每日發送", stat2: "新聞來源掃描數", stat3: "假新聞漏網數", stat4_num: "30s", stat4: "每日早晨摘要",
+    feat_title: "專為忙碌的人打造",
+    f1_title: "30 秒快速摘要", f1_desc: "最上方三個重點，再忙的早晨也能在 30 秒內掌握市場大事。",
+    f2_title: "假訊息過濾", f2_desc: "只採用 Reuters、CNBC、Bloomberg、FT 等可信媒體，每則新聞交叉比對。",
+    f3_title: "「為什麼重要」一句話說清楚", f3_desc: "每則新聞都附上一句話，直接告訴你這件事對你持股的影響，不用猜。",
+    f4_title: "美股 + 台股同步覆蓋", f4_desc: "S&P500、NASDAQ、台灣加權指數、個股全都有，一個地方看完。",
+    f5_title: "AI 說人話", f5_desc: "不是生硬的分析報告，用生活化的語言，像懂財經的朋友跟你說重點。",
+    f6_title: "每日市場結論", f6_desc: "偏多 / 偏空 / 觀望 — AI 給出今日市場判斷並說明理由，幫你做更好的決策。",
+    feat_sub: "你每天早晨需要的全在這裡，多餘的一個都沒有。",
+    howto_eyebrow: "怎麼用",
+    howto_title: "四步驟，開始收到你的日報",
+    howto_sub: "三分鐘設定完，之後每天早上自動送達。",
+    howto_step1_title: "註冊", howto_step1_desc: "輸入 email、選擇方案，30 秒完成。",
+    howto_step2_title: "選你的股票", howto_step2_desc: "到偏好設定挑你關注的美股與台股。",
+    howto_step3_title: "確認後台", howto_step3_desc: "在後台一眼看完你的偏好摘要。",
+    howto_step4_title: "收到日報", howto_step4_desc: "每天早上 7 點，日報附每支股票的買/持有/賣訊號與 AI 信心指數。",
+    preview_title: "長這個樣子 👇",
+    price_title: "簡單透明的定價", price_sub: "免費入門，隨時升級。",
+    price_free_badge: "親友方案", price_mo: "/ 月",
+    price_free_desc: "好友送你的免費入場券。",
+    pf1: "每天早上 7 點日報", pf2: "美股 + 台股", pf3: "AI 假訊息過濾", pf4: "30 秒快速摘要",
+    price_free_btn: "使用邀請碼 ↑", price_pro_badge: "Pro ⭐ 最受歡迎", price_mo2: "/ 月",
+    price_pro_desc: "每天早上讀更聰明，投資更有把握。",
+    pp1: "包含免費方案所有功能", pp2: "個人化持股 AI 分析", pp3: "AI 操作建議（買/賣/持有）", pp4: "優先客服支援",
+    price_premium_badge: "Premium", price_premium_desc: "全功能解鎖，進階投資者首選。",
+    pe1: "包含 Pro 所有功能", pe2: "更深度市場分析報告", pe3: "月度投資組合健檢", pe4: "重大新聞即時推播",
+    price_premium_btn: "了解更多 →", price_compare_link: "查看完整方案比較 →",
+    slider_title: "每日簡報包含什麼", slider_sub: "5 個 AI 精選區塊，每天早上 7 點準時送達。",
+    faq_eyebrow: "FAQ", faq_title: "常見問題",
+    faq_q1: "幾點收到日報？", faq_a1: "每天早上 7:00 AM 台灣時間準時發送。如果沒收到，請先確認垃圾郵件資料夾。",
+    faq_q2: "每封日報包含什麼？", faq_a2: "30 秒 TL;DR 摘要、今日頭條（假訊息過濾）、AI 操作建議（每支持股 買/賣/持有 + 目標價 + 信心百分比）、市場情緒儀表板，以及你的個人持倉動態分析。",
+    faq_q3: "邀請碼哪裡取得？", faq_a3: "邀請碼由 Delvin 本人發出，數量有限，目前僅開放給親友。如有需要請透過客服聯繫。",
+    faq_q4: "如何取消訂閱？", faq_a4: "在任何一封日報 Email 底部點「取消訂閱」即可立即生效，完全不需要聯繫客服。",
+    faq_q5: "三個方案差在哪裡？", faq_a5: "免費方案需要邀請碼，提供每日 AI 財經日報基本版。Pro（NT$199/月）加上個人化持股 AI 分析與買/賣/持有操作建議，是大多數投資人的首選。Premium（NT$499/月）再加深度市場報告、月度投資組合健檢與重大新聞即時推播。",
+    faq_contact: "還有其他問題？<a href='contact.html'>聯絡 AI 客服 →</a>",
+    price_pro_btn: "立即訂閱 →",
+    about_title: "關於財經日報", about_sub: "我們是誰，我們在做什麼",
+    about_tab_problem: "😩 現在的問題", about_tab_solution: "✅ 我們的解法",
+    about_prob_eye: "你現在的早晨", about_prob_time: "60+ 分鐘白白浪費",
+    about_p1: "一個個打開 Bloomberg、CNBC、PTT、Reddit、Yahoo 財經...",
+    about_p2: "一半的新聞跟你的持倉完全無關",
+    about_p3: "有些根本是假新聞，但你分不出來",
+    about_p4: "花了一小時，還是不知道持倉該怎麼操作",
+    about_prob_quote: "「每天早上花一小時，讀完還是一頭霧水。」",
+    about_prob_attr: "— 每個用 MarketDaily 之前的投資人",
+    about_sol_eye: "有了 MarketDaily 的早晨", about_sol_time: "5 分鐘，搞定。",
+    about_s1: "75+ 個可信來源在你睡覺時掃完",
+    about_s2: "假訊息全過濾，每則新聞都交叉比對並標記",
+    about_s3: "只分析你持有的股票，其他的不浪費你時間",
+    about_s4: "清楚的買/持有/賣建議，含目標價與信心百分比",
+    about_sol_quote: "「它在信箱等我，配著咖啡讀完。不用多說。」",
+    about_sol_attr: "— MarketDaily 訂閱者",
+    about_problem_title: "問題在哪裡", about_problem_desc: "每天早上，網路上充斥著成千上萬篇財經新聞。大多數都是雜訊，有些甚至是假新聞。真正影響股市的關鍵訊息，往往被埋在標題黨和謠言之下。",
+    about_solution_title: "我們的解法", about_solution_desc: "財經日報每晚掃描 75+ 個可信來源，過濾假新聞，再由 AI 用生活化的語言寫成摘要，每天早上 7 點準時送進你的收件匣。",
+    about_who_title: "適合誰看", about_who_desc: "持有美股或台股、想做出更聰明投資決策的台灣上班族與投資人。不想每天花一個小時讀財經新聞，但又不想錯過重要消息的人。",
+    about_trust_title: "我們的承諾", about_trust_desc: "每則新聞都經過多個可信來源交叉比對，並明確標示「多源確認」或「單一來源」。不炒作、不標題黨，只給你真正影響持股的事實。",
+    cta_title: "讓每個早晨更聰明", cta_sub: "從 NT$199/月起 · 隨時取消", cta_btn: "立即訂閱 Pro →",
+    cta_see_plans: "查看所有方案", cta_line: "💬 追蹤我們的 LINE",
+    cta_invite_full: "有朋友邀請？<span style=\"color:#a5b4fc;cursor:pointer;\" onclick=\"window.scrollTo({top:0,behavior:'smooth'});\">在上方輸入邀請碼免費加入 ↑</span>",
+    footer2: "✅ 多源確認  |  ⚠️ 單一來源，請自行查證",
+    footer3: "本日報為 AI 生成，僅供參考，不構成投資建議。",
+    footer_contact: "聯絡我們 / 客服",
+    founder_text: "我以前每天早上花一個小時讀 Bloomberg、CNBC 還有 PTT，就只是為了搞清楚昨晚我持倉的股票發生了什麼事。一半的新聞是雜訊，有些根本是假的。我做 MarketDaily，是因為我不想再自己做這件事。現在它每天早上在信箱等我，已經過濾好了，已經個人化好了。我幾個月沒打開任何財經 App 了。",
+    founder_name: "創辦人", founder_role: "投資者 · 工程師 · 先為自己打造這個工具",
+    testimonials_eyebrow: "早期用戶", testimonials_title: "用過的人說什麼",
+    t1_text: "「以前每天花一小時看財經新聞，現在五分鐘看完重點。最重要的是它只分析我自己的持倉，不是在講跟我無關的股票。」",
+    t1_name: "Jason L.", t1_role: "軟體工程師，持有 NVDA / TSLA / 台積電",
+    t2_text: "「假訊息過濾這個功能讓我最有感。之前在 PTT 看到的消息一半是假的，現在收到的每則新聞都有來源標記，安心很多。」",
+    t2_name: "Claire W.", t2_role: "金融業，美股長期投資者",
+    t3_text: "「一開始以為跟 ChatGPT 差不多，試了才知道差很多。它主動送到你面前，還知道你在乎哪幾支。完全不一樣的體驗。」",
+    t3_name: "Alex K.", t3_role: "創業者，追蹤美股科技板塊",
+    prev_bar: "📩 財經日報 · 2026-05-20 早晨簡報",
+    prev_date: "星期三 · 2026年5月20日",
+    prev_title: "📈 早晨財經簡報 · 美股 & 台股",
+    prev_verdict: "📊 今日判斷：謹慎偏多",
+    prev_tldr_title: "⚡ 30 秒速覽",
+    prev_li1: "Fed 暗示暫停升息 → 科技股昨夜全面上揚",
+    prev_li2: "台積電超越 Q1 預期 → 台股開盤走強",
+    prev_li3: "油價庫存意外增加跌 2% → 航空、物流族群受惠",
+    prev_news_label: "今日頭條",
+    prev_badge_v: "✅ 多源確認", prev_badge_s: "⚠️ 單一來源",
+    prev_news1: "Fed 主席在 Jackson Hole 暗示可能暫停升息循環",
+    prev_why1: "💡 降息預期 → 借貸成本下降 → 利好 NVDA、AAPL 等成長股",
+    prev_news2: "台積電 Q1 營收超預期 8%，上調全年展望",
+    prev_why2: "💡 2330.TW 持有者利多 — AI 晶片需求強勁延續至下半年",
+    prev_news3: "原油庫存意外大增，WTI 跌 2.3%",
+    prev_why3: "💡 油價下跌 = 航空、海運省成本；關注長榮航 2618.TW",
   }
+};
 
-  function toggleLang() {
-    currentLang = currentLang === "en" ? "zh" : "en";
-    localStorage.setItem("md-lang", currentLang);
-    applyLang(currentLang);
-  }
+let currentLang = localStorage.getItem("md-lang-v2") || "zh";
 
+function toggleFaq(btn) {
+  const item = btn.closest(".faq-item-acc");
+  const isOpen = item.classList.contains("open");
+  document.querySelectorAll(".faq-item-acc.open").forEach(el => el.classList.remove("open"));
+  if (!isOpen) item.classList.add("open");
+}
 
-  async function checkEmail() {
-    const email = document.getElementById("hero-email").value.trim().toLowerCase();
-    const errEl = document.getElementById("error-email-msg");
-    const btn = document.getElementById("hero-check-btn");
-    errEl.style.display = "none";
+function applyLang(lang) {
+  const t = i18n[lang];
+  document.querySelectorAll("[data-i18n]").forEach(el => {
+    const key = el.getAttribute("data-i18n");
+    if (t[key] !== undefined) el.textContent = t[key];
+  });
+  document.querySelectorAll("[data-i18n-html]").forEach(el => {
+    const key = el.getAttribute("data-i18n-html");
+    if (t[key] !== undefined) el.innerHTML = t[key];
+  });
+  document.querySelectorAll("[data-i18n-placeholder]").forEach(el => {
+    const key = el.getAttribute("data-i18n-placeholder");
+    if (t[key] !== undefined) el.placeholder = t[key];
+  });
+  document.getElementById("lang-toggle").textContent = lang === "en" ? "中文" : "EN";
+  document.documentElement.lang = lang === "en" ? "en" : "zh-Hant";
+}
 
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      errEl.style.display = "block"; return;
+function toggleLang() {
+  currentLang = currentLang === "en" ? "zh" : "en";
+  localStorage.setItem("md-lang-v2", currentLang);
+  applyLang(currentLang);
+  if (window.updateSliderLang) window.updateSliderLang(currentLang);
+}
+
+async function checkEmail() {
+  const email = document.getElementById("hero-email").value.trim().toLowerCase();
+  const errEl = document.getElementById("error-email-msg");
+  const btn = document.getElementById("hero-check-btn");
+  errEl.style.display = "none";
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { errEl.style.display = "block"; return; }
+  btn.disabled = true;
+  btn.textContent = currentLang === "zh" ? "確認中..." : "Checking...";
+  try {
+    const res = await fetch(WORKER_URL + "/check-subscriber", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+    const data = await res.json();
+    if (document.getElementById("hero-remember").checked) {
+      localStorage.setItem("md-hero-email", email);
+    } else {
+      localStorage.removeItem("md-hero-email");
     }
-
-    btn.disabled = true;
-    btn.textContent = currentLang === "zh" ? "確認中..." : "Checking...";
-
-    try {
-      const res = await fetch(WORKER_URL + "/check-subscriber", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      });
-      const data = await res.json();
-
-      if (document.getElementById("hero-remember").checked) {
-        localStorage.setItem("md-hero-email", email);
+    if (data.subscribed || data.needsPasswordSetup) {
+      document.getElementById("email-step").style.display = "none";
+      if (data.needsPasswordSetup) {
+        _pendingSetupEmail = email;
+        document.getElementById("sp-email-text").textContent = email;
+        document.getElementById("set-pwd-step").style.display = "block";
       } else {
-        localStorage.removeItem("md-hero-email");
-      }
-
-      if (data.subscribed || data.needsPasswordSetup) {
-        document.getElementById("email-step").style.display = "none";
         document.getElementById("wb-email").textContent = email;
         document.getElementById("wb-signin-btn").href = `dashboard.html?email=${encodeURIComponent(email)}`;
         document.getElementById("returning-step").style.display = "block";
-      } else {
-        document.getElementById("email-step").style.display = "none";
-        document.getElementById("new-invite-email").value = email;
-        document.getElementById("stripe-plan-btn").href = `https://buy.stripe.com/9B6aEW2Op6nO4L87Ze4Ja00?prefilled_email=${encodeURIComponent(email)}`;
-        document.getElementById("new-user-step").style.display = "block";
       }
-    } catch {
-      errEl.textContent = currentLang === "zh" ? "網路錯誤，請稍後再試。" : "Network error. Please try again.";
+    } else {
+      document.getElementById("email-step").style.display = "none";
+      document.getElementById("new-invite-email").value = email;
+      document.getElementById("invite-sec-email").value = email;
+      const stripBtn = document.getElementById("stripe-plan-btn");
+      if (stripBtn) stripBtn.href = `https://buy.stripe.com/dRmaEW60B3bCfpM6Va4Ja01?prefilled_email=${encodeURIComponent(email)}`;
+      document.getElementById("new-user-step").style.display = "block";
+    }
+  } catch {
+    errEl.textContent = currentLang === "zh" ? "網路錯誤，請稍後再試。" : "Network error. Please try again.";
+    errEl.style.display = "block";
+  } finally {
+    btn.disabled = false;
+    btn.textContent = currentLang === "zh" ? "繼續 →" : "Get Started →";
+  }
+}
+
+function resetEmailStep() {
+  document.getElementById("returning-step").style.display = "none";
+  document.getElementById("new-user-step").style.display = "none";
+  document.getElementById("set-pwd-step").style.display = "none";
+  document.getElementById("email-step").style.display = "block";
+  document.getElementById("hero-email").focus();
+}
+
+let _pendingSetupEmail = "";
+
+async function heroSetPassword() {
+  const pwd = document.getElementById("sp-pwd").value;
+  const pwd2 = document.getElementById("sp-pwd2").value;
+  const errEl = document.getElementById("sp-err");
+  const btn = document.getElementById("sp-btn");
+  errEl.style.display = "none";
+  if (pwd.length < 6) { errEl.textContent = "密碼至少需要 6 位"; errEl.style.display = "block"; return; }
+  if (pwd !== pwd2) { errEl.textContent = "兩次密碼不一致"; errEl.style.display = "block"; return; }
+  btn.disabled = true; btn.textContent = "設定中...";
+  try {
+    const res = await fetch(WORKER_URL + "/set-password", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: _pendingSetupEmail, password: pwd })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      localStorage.setItem("md-email", _pendingSetupEmail);
+      window.location.href = `dashboard.html?email=${encodeURIComponent(_pendingSetupEmail)}`;
+    } else {
+      errEl.textContent = data.error || "設定失敗，請稍後再試"; errEl.style.display = "block";
+      btn.disabled = false; btn.textContent = "設定並進入 →";
+    }
+  } catch {
+    errEl.textContent = "網路錯誤，請稍後再試"; errEl.style.display = "block";
+    btn.disabled = false; btn.textContent = "設定並進入 →";
+  }
+}
+
+function toggleInviteSection() {
+  const sec = document.getElementById("invite-code-section");
+  sec.style.display = sec.style.display === "none" ? "block" : "none";
+}
+
+async function subscribeFree() {
+  const email = document.getElementById("new-invite-email").value.trim();
+  const btn = document.getElementById("free-signup-btn");
+  const errEl = document.getElementById("free-error");
+  const successEl = document.getElementById("free-success");
+  errEl.style.display = "none"; successEl.style.display = "none";
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    errEl.textContent = currentLang === "zh" ? "請輸入有效的 Email" : "Please enter a valid email.";
+    errEl.style.display = "block"; return;
+  }
+  btn.disabled = true; btn.textContent = "...";
+  try {
+    const refCode = localStorage.getItem("md-ref") || "";
+    const res = await fetch(WORKER_URL + "/subscribe-free-direct", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, ref: refCode }),
+    });
+    const data = await res.json();
+    if (data.ok) {
+      successEl.textContent = currentLang === "zh" ? "✅ 訂閱成功！請到信箱確認連結。" : "✅ Subscribed! Check your inbox.";
+      successEl.style.display = "block";
+      btn.textContent = currentLang === "zh" ? "已加入 ✓" : "Joined ✓";
+    } else {
+      errEl.textContent = currentLang === "zh" ? "出了點問題，請稍後再試。" : "Something went wrong. Please try again.";
       errEl.style.display = "block";
-    } finally {
-      btn.disabled = false;
-      btn.textContent = currentLang === "zh" ? "繼續 →" : "Get Started →";
+      btn.disabled = false; btn.textContent = currentLang === "zh" ? "免費加入 →" : "Join Free →";
     }
+  } catch {
+    errEl.textContent = currentLang === "zh" ? "網路錯誤，請稍後再試。" : "Network error. Please try again.";
+    errEl.style.display = "block";
+    btn.disabled = false; btn.textContent = currentLang === "zh" ? "免費加入 →" : "Join Free →";
   }
+}
 
-  function resetEmailStep() {
-    document.getElementById("returning-step").style.display = "none";
-    document.getElementById("new-user-step").style.display = "none";
-    document.getElementById("email-step").style.display = "block";
-    document.getElementById("hero-email").focus();
+async function subscribeInvite() {
+  const email = document.getElementById("invite-sec-email").value.trim();
+  const code = document.getElementById("invite-sec-code").value.trim().toUpperCase();
+  const btn = document.getElementById("invite-sec-btn");
+  const errEl = document.getElementById("invite-error");
+  const successEl = document.getElementById("invite-success");
+  errEl.style.display = "none"; successEl.style.display = "none";
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    errEl.textContent = currentLang === "zh" ? "請輸入有效的 Email" : "Please enter a valid email.";
+    errEl.style.display = "block"; return;
   }
-
-  async function subscribeInvite() {
-    const email = document.getElementById("new-invite-email").value.trim();
-    const code = document.getElementById("new-invite-code").value.trim().toUpperCase();
-    const btn = document.querySelector(".plan-mini-btn.free");
-    const errEl = document.getElementById("invite-error");
-    const successEl = document.getElementById("invite-success");
-    errEl.style.display = "none"; successEl.style.display = "none";
-
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      errEl.textContent = currentLang === "zh" ? "請輸入有效的 Email" : "Please enter a valid email.";
-      errEl.style.display = "block"; return;
-    }
-
-    btn.disabled = true; btn.textContent = "...";
-    try {
-      const res = await fetch(WORKER_URL + "/free-subscribe", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, code }),
-      });
-      const data = await res.json();
-      if (data.ok) {
-        successEl.textContent = currentLang === "zh" ? "✅ 訂閱成功！請到信箱確認連結。" : "✅ Subscribed! Check your inbox.";
-        successEl.style.display = "block";
-        document.getElementById("new-invite-code").value = "";
-      } else if (data.error === "invalid_code") {
-        errEl.textContent = currentLang === "zh" ? "邀請碼不對，請再確認一次。" : "Invalid invite code. Please check again.";
-        errEl.style.display = "block";
-      } else {
-        errEl.textContent = currentLang === "zh" ? "出了點問題，請稍後再試。" : "Something went wrong. Please try again.";
-        errEl.style.display = "block";
-      }
-    } catch {
-      errEl.textContent = currentLang === "zh" ? "網路錯誤，請稍後再試。" : "Network error. Please try again.";
+  btn.disabled = true; btn.textContent = "...";
+  try {
+    const refCode = localStorage.getItem("md-ref") || "";
+    const res = await fetch(WORKER_URL + "/free-subscribe", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, code, ref: refCode }),
+    });
+    const data = await res.json();
+    if (data.ok) {
+      successEl.textContent = currentLang === "zh" ? "✅ 訂閱成功！請到信箱確認連結。" : "✅ Subscribed! Check your inbox.";
+      successEl.style.display = "block";
+      document.getElementById("invite-sec-code").value = "";
+    } else if (data.error === "invalid_code") {
+      errEl.textContent = currentLang === "zh" ? "邀請碼不對，請再確認一次。" : "Invalid invite code. Please check again.";
       errEl.style.display = "block";
-    } finally {
-      btn.disabled = false;
-      btn.textContent = currentLang === "zh" ? "使用邀請碼 →" : "Use Invite Code →";
+    } else {
+      errEl.textContent = currentLang === "zh" ? "出了點問題，請稍後再試。" : "Something went wrong. Please try again.";
+      errEl.style.display = "block";
     }
+  } catch {
+    errEl.textContent = currentLang === "zh" ? "網路錯誤，請稍後再試。" : "Network error. Please try again.";
+    errEl.style.display = "block";
+  } finally {
+    btn.disabled = false;
+    btn.textContent = currentLang === "zh" ? "使用邀請碼 →" : "Use Invite Code →";
   }
+}
 
-  document.addEventListener("DOMContentLoaded", () => {
-    const savedHeroEmail = localStorage.getItem("md-hero-email");
-    if (savedHeroEmail) {
-      document.getElementById("hero-email").value = savedHeroEmail;
-      document.getElementById("hero-remember").checked = true;
-    }
-    if (currentLang !== "en") applyLang(currentLang);
+/* Scroll reveal — base + scene variants */
+const revealObserver = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add("visible"); revealObserver.unobserve(e.target); } });
+}, { threshold: 0.08 });
+document.querySelectorAll(".reveal, .scene-reveal, .scene-from-left, .scene-from-right, .scene-zoom-in").forEach(el => revealObserver.observe(el));
+
+/* ── 3D SLIDER ── */
+(function() {
+  const SLIDES = [
+    { icon: "🌅", title: "Market Overview", titleZh: "大盤總覽", desc: "S&P 500, NASDAQ, TAIEX — all major indices with overnight moves at a glance.", descZh: "美股、台股三大指數漲跌，一眼掌握今日市場開盤方向。", tag: "Daily", tagZh: "每日必讀", color: "#6366f1", bg: "rgba(99,102,241,0.13)" },
+    { icon: "🔥", title: "Top Stories", titleZh: "今日頭條", desc: "5 biggest market-moving stories filtered from 75+ verified sources. Zero noise.", descZh: "從 75+ 個可信來源篩出今天最影響股價的 5 件大事，去除雜訊。", tag: "Curated", tagZh: "AI 精選", color: "#f59e0b", bg: "rgba(245,158,11,0.13)" },
+    { icon: "🤖", title: "AI Verdict", titleZh: "AI 今日判斷", desc: "Our AI reads all sources and gives a directional outlook: Bullish, Bearish, or Wait.", descZh: "AI 讀完所有來源後給出方向：偏多、偏空、或觀望，附信心指數。", tag: "AI Powered", tagZh: "AI 驅動", color: "#8b5cf6", bg: "rgba(139,92,246,0.13)" },
+    { icon: "📊", title: "Portfolio Watch", titleZh: "你的持股動態", desc: "Your personalized watchlist — NVDA, TSMC, Apple — reported with why it matters.", descZh: "根據你設定的台股 / 美股，專屬解讀每支持股今天發生了什麼。", tag: "Personalized", tagZh: "個人化", color: "#10b981", bg: "rgba(16,185,129,0.13)" },
+    { icon: "🌐", title: "Global Macro", titleZh: "全球總經", desc: "FED decisions, CPI, earnings surprises and global capital flows that matter today.", descZh: "Fed 決策、CPI、財報驚喜、全球資金流向，影響今天行情的宏觀因素。", tag: "Macro", tagZh: "總體經濟", color: "#38bdf8", bg: "rgba(56,189,248,0.13)" },
+  ];
+
+  const track = document.getElementById("slider-track");
+  const dotsEl = document.getElementById("slider-dots");
+  if (!track || !dotsEl) return;
+
+  let idx = 0;
+  const cards = [];
+  const dots = [];
+
+  SLIDES.forEach((s, i) => {
+    const card = document.createElement("div");
+    card.className = "slide-card";
+    const isZh = (typeof currentLang !== "undefined" ? currentLang : "zh") !== "en";
+    card.innerHTML = `<span class="slide-icon">${s.icon}</span><div class="slide-title">${isZh ? s.titleZh : s.title}</div><div class="slide-desc">${isZh ? s.descZh : s.desc}</div><span class="slide-tag" style="background:${s.bg};color:${s.color};border:1px solid ${s.color}40;">${isZh ? s.tagZh : s.tag}</span>`;
+    card.addEventListener("click", () => go(i));
+    track.appendChild(card);
+    cards.push(card);
+
+    const dot = document.createElement("div");
+    dot.className = "slider-dot";
+    dot.addEventListener("click", () => go(i));
+    dotsEl.appendChild(dot);
+    dots.push(dot);
   });
+
+  function go(newIdx) {
+    idx = ((newIdx % SLIDES.length) + SLIDES.length) % SLIDES.length;
+    const n = SLIDES.length;
+    cards.forEach((c, i) => {
+      const raw = ((i - idx + n) % n);
+      const off = raw > n / 2 ? raw - n : raw;
+      const abs = Math.abs(off);
+      c.style.transform = `rotateY(${off * 36}deg) translateX(${off * 295}px) scale(${Math.max(0.65, 1 - abs * 0.11)})`;
+      c.style.opacity = Math.max(0.12, 1 - abs * 0.38);
+      c.style.zIndex = 10 - abs;
+      c.style.filter = abs > 0 ? `blur(${abs * 1.2}px)` : "none";
+      c.classList.toggle("active", i === idx);
+      c.style.borderColor = i === idx ? SLIDES[i].color + "60" : "rgba(255,255,255,0.09)";
+      c.style.boxShadow = i === idx
+        ? `0 36px 90px rgba(0,0,0,0.6), 0 0 0 1px ${SLIDES[i].color}35, inset 0 1px 0 rgba(255,255,255,0.1)`
+        : "0 20px 60px rgba(0,0,0,0.4)";
+    });
+    dots.forEach((d, i) => d.classList.toggle("active", i === idx));
+  }
+
+  document.getElementById("slider-prev").addEventListener("click", () => go(idx - 1));
+  document.getElementById("slider-next").addEventListener("click", () => go(idx + 1));
+  document.addEventListener("keydown", e => {
+    if (e.key === "ArrowLeft") go(idx - 1);
+    if (e.key === "ArrowRight") go(idx + 1);
+  });
+
+  const outer = document.getElementById("slider-outer");
+  let touchX = 0, mouseX = 0, dragging = false;
+  outer.addEventListener("touchstart", e => { touchX = e.touches[0].clientX; }, { passive: true });
+  outer.addEventListener("touchend", e => { const dx = e.changedTouches[0].clientX - touchX; if (Math.abs(dx) > 38) go(idx + (dx < 0 ? 1 : -1)); });
+  outer.addEventListener("mousedown", e => { dragging = true; mouseX = e.clientX; });
+  window.addEventListener("mouseup", e => { if (!dragging) return; dragging = false; const dx = e.clientX - mouseX; if (Math.abs(dx) > 38) go(idx + (dx < 0 ? 1 : -1)); });
+
+  let timer = setInterval(() => go(idx + 1), 4200);
+  outer.addEventListener("mouseenter", () => clearInterval(timer));
+  outer.addEventListener("mouseleave", () => { timer = setInterval(() => go(idx + 1), 4200); });
+
+  window.updateSliderLang = function(lang) {
+    const isZh = lang !== "en";
+    cards.forEach((card, i) => {
+      const s = SLIDES[i];
+      card.querySelector('.slide-title').textContent = isZh ? s.titleZh : s.title;
+      card.querySelector('.slide-desc').textContent = isZh ? s.descZh : s.desc;
+      card.querySelector('.slide-tag').textContent = isZh ? s.tagZh : s.tag;
+    });
+  };
+
+  go(0);
+})();
+
+
+
+document.addEventListener("DOMContentLoaded", () => {
+  // Store referral code from URL
+  const urlRef = new URLSearchParams(window.location.search).get("ref");
+  if (urlRef) {
+    localStorage.setItem("md-ref", urlRef.toUpperCase());
+    fetch("https://marketdaily-webhook.delvin-12345678.workers.dev/track-referral-click", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code: urlRef.toUpperCase() })
+    }).catch(() => {});
+  }
+
+  const savedEmail = localStorage.getItem("md-hero-email");
+  if (savedEmail) {
+    document.getElementById("hero-email").value = savedEmail;
+    document.getElementById("hero-remember").checked = true;
+  }
+  applyLang(currentLang);
+
+  /* ── SPLIT TEXT HERO ── */
+  function splitHero() {
+    const h1 = document.querySelector('.hero h1');
+    if (!h1 || h1.dataset.split) return;
+    h1.dataset.split = '1';
+    const raw = h1.innerHTML;
+    // Tokenize: preserve tags + BR, wrap text words
+    const parts = raw.split(/(<[^>]+>)/g);
+    let out = '';
+    parts.forEach(part => {
+      if (part.startsWith('<')) {
+        out += part;
+      } else {
+        out += part.replace(/(\S+)/g, '<span class="w-wrap"><span class="w-inner">$1</span></span>');
+      }
+    });
+    h1.innerHTML = out;
+    const words = h1.querySelectorAll('.w-inner');
+    words.forEach((w, i) => {
+      setTimeout(() => w.classList.add('w-vis'), 80 + i * 75);
+    });
+  }
+  setTimeout(splitHero, 30);
+
+  /* ── NUMBER COUNTER ── */
+  const counterObs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (!e.isIntersecting) return;
+      const el = e.target;
+      const to = parseFloat(el.dataset.countTo);
+      const suffix = el.dataset.suffix || '';
+      if (isNaN(to)) return;
+      counterObs.unobserve(el);
+      let start = null;
+      const dur = 1800;
+      function step(ts) {
+        if (!start) start = ts;
+        const prog = Math.min((ts - start) / dur, 1);
+        const ease = 1 - Math.pow(1 - prog, 4);
+        el.textContent = (to < 10 ? to : Math.round(to * ease)) + suffix;
+        if (prog < 1) requestAnimationFrame(step);
+        else el.textContent = to + suffix;
+      }
+      requestAnimationFrame(step);
+    });
+  }, { threshold: 0.5 });
+  document.querySelectorAll('[data-count-to]').forEach(el => counterObs.observe(el));
+
+  /* ── PARALLAX ORBS ON MOUSE MOVE ── */
+  const orbs = document.querySelectorAll('.orb');
+  if (orbs.length) {
+    document.addEventListener('mousemove', e => {
+      const cx = window.innerWidth / 2, cy = window.innerHeight / 2;
+      const dx = (e.clientX - cx) / cx, dy = (e.clientY - cy) / cy;
+      orbs.forEach((orb, i) => {
+        const factor = (i + 1) * 8;
+        // orb-1 uses translateX(-50%) in CSS for centering — preserve it
+        if (i === 0) {
+          orb.style.transform = `translateX(calc(-50% + ${dx * factor}px)) translateY(${dy * factor}px)`;
+        } else {
+          orb.style.transform = `translate(${dx * factor}px, ${dy * factor}px)`;
+        }
+      });
+    });
+  }
+});
+
+function switchAbout(panel, btn) {
+  document.querySelectorAll('.about-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.about-tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('about-' + panel).classList.add('active');
+  btn.classList.add('active');
+}
+
+(function initFeat() {
+  const TOTAL = 6;
+  const INTERVAL = 4000;
+  let current = 0;
+  let timer = null;
+  let fillTimer = null;
+
+  function clearFill() {
+    for (let i = 0; i < TOTAL; i++) {
+      const f = document.getElementById('fp' + i);
+      if (f) { f.style.transition = 'none'; f.style.width = '0%'; }
+    }
+  }
+
+  function startFill(idx) {
+    clearFill();
+    const f = document.getElementById('fp' + idx);
+    if (!f) return;
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        f.style.transition = 'width ' + INTERVAL + 'ms linear';
+        f.style.width = '100%';
+      });
+    });
+  }
+
+  function go(idx) {
+    current = ((idx % TOTAL) + TOTAL) % TOTAL;
+    document.querySelectorAll('.feat-tab-btn').forEach((b, i) => b.classList.toggle('active', i === current));
+    document.querySelectorAll('.feat-panel').forEach((p, i) => p.classList.toggle('active', i === current));
+    startFill(current);
+  }
+
+  function autoNext() {
+    go(current + 1);
+  }
+
+  function resetAuto() {
+    clearInterval(timer);
+    timer = setInterval(autoNext, INTERVAL);
+  }
+
+  window.switchFeat = function(idx) {
+    go(idx);
+    resetAuto();
+  };
+
+  go(0);
+  timer = setInterval(autoNext, INTERVAL);
+
+  const featEl = document.querySelector('.feat-showcase');
+  if (featEl) {
+    featEl.addEventListener('mouseenter', () => clearInterval(timer));
+    featEl.addEventListener('mouseleave', () => { resetAuto(); });
+  }
+})();
 </script>
 
+<script src="ui-pro.js"></script>
+
+<!-- Financial 3D particle background -->
+<canvas id="fin-bg" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;"></canvas>
+<script>
+(function(){
+  const canvas = document.getElementById("fin-bg");
+  const ctx = canvas.getContext("2d");
+  let W, H;
+  function resize(){ W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
+  resize();
+  window.addEventListener("resize", resize);
+
+  const TICKERS = ["NVDA","AAPL","TSMC","SPY","QQQ","MSFT","META","GOOGL","BTC","ETH","2330","0050","AMZN","NFLX"];
+  const PERCENTS_POS = ["+2.4%","+1.8%","+3.1%","+0.9%","+4.2%","+1.5%","+2.7%","+0.6%"];
+  const PERCENTS_NEG = ["-1.2%","-0.7%","-2.1%","-1.5%","-0.4%","-1.9%","-0.8%"];
+  const SYMBOLS = ["$","¥","€","₿","↑","↓","◈","⬡"];
+
+  function rand(a,b){ return a + Math.random()*(b-a); }
+  function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+
+  class Particle {
+    constructor(){this.reset(true);}
+    reset(init){
+      this.type = pick(["ticker","ticker","pct_pos","pct_neg","candle","chart","symbol"]);
+      this.depth = rand(0.15, 1.0);
+      const scale = 0.4 + this.depth * 0.6;
+      this.x = rand(0, W);
+      this.y = init ? rand(0, H) : H + 60;
+      this.vx = rand(-0.18, 0.18);
+      this.vy = -(rand(0.2, 0.55) * this.depth);
+      this.rot = rand(0, Math.PI*2);
+      this.vrot = rand(-0.003, 0.003);
+      this.alpha = rand(0.04, 0.13) * this.depth;
+      this.size = scale * (this.type === "candle" || this.type === "chart" ? rand(18,30) : rand(11,18));
+      if(this.type==="ticker") this.label = pick(TICKERS);
+      if(this.type==="pct_pos") this.label = pick(PERCENTS_POS);
+      if(this.type==="pct_neg") this.label = pick(PERCENTS_NEG);
+      if(this.type==="symbol") this.label = pick(SYMBOLS);
+      if(this.type==="candle"){
+        this.bullish = Math.random()>0.4;
+        this.bodyH = rand(8,20)*scale;
+        this.bodyW = rand(5,10)*scale;
+        this.wickTop = rand(4,10)*scale;
+        this.wickBot = rand(4,10)*scale;
+      }
+      if(this.type==="chart"){
+        this.pts = Array.from({length:7},()=>rand(-1,1));
+        let min=Math.min(...this.pts),max=Math.max(...this.pts);
+        this.pts = this.pts.map(v=>(v-min)/(max-min+0.001));
+        this.bullish = this.pts[this.pts.length-1] > this.pts[0];
+      }
+    }
+    draw(){
+      ctx.save();
+      ctx.globalAlpha = this.alpha;
+      ctx.translate(this.x, this.y);
+      ctx.rotate(this.rot);
+      if(this.type==="ticker"){
+        ctx.font = `600 ${this.size}px Inter,sans-serif`;
+        ctx.fillStyle = "#818cf8";
+        ctx.fillText(this.label, 0, 0);
+      } else if(this.type==="pct_pos"){
+        ctx.font = `600 ${this.size}px Inter,sans-serif`;
+        ctx.fillStyle = "#34d399";
+        ctx.fillText(this.label, 0, 0);
+      } else if(this.type==="pct_neg"){
+        ctx.font = `600 ${this.size}px Inter,sans-serif`;
+        ctx.fillStyle = "#f87171";
+        ctx.fillText(this.label, 0, 0);
+      } else if(this.type==="symbol"){
+        ctx.font = `700 ${this.size*1.3}px Inter,sans-serif`;
+        ctx.fillStyle = "#fbbf24";
+        ctx.fillText(this.label, 0, 0);
+      } else if(this.type==="candle"){
+        const color = this.bullish ? "#34d399" : "#f87171";
+        ctx.strokeStyle = color; ctx.fillStyle = color;
+        ctx.lineWidth = 1.5;
+        const cx=0, by=0;
+        ctx.beginPath(); ctx.moveTo(cx, by-this.bodyH/2-this.wickTop); ctx.lineTo(cx, by+this.bodyH/2+this.wickBot); ctx.stroke();
+        ctx.fillRect(-this.bodyW/2, by-this.bodyH/2, this.bodyW, this.bodyH);
+      } else if(this.type==="chart"){
+        const w=this.size*2, h=this.size*1.2;
+        const color = this.bullish ? "#34d399" : "#f87171";
+        ctx.strokeStyle = color; ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        this.pts.forEach((p,i)=>{
+          const px = -w/2 + (i/(this.pts.length-1))*w;
+          const py = h/2 - p*h;
+          i===0 ? ctx.moveTo(px,py) : ctx.lineTo(px,py);
+        });
+        ctx.stroke();
+        // Fill under line
+        ctx.lineTo(w/2, h/2); ctx.lineTo(-w/2, h/2); ctx.closePath();
+        ctx.globalAlpha = this.alpha * 0.3;
+        ctx.fillStyle = color; ctx.fill();
+      }
+      ctx.restore();
+    }
+    update(){
+      this.x += this.vx; this.y += this.vy; this.rot += this.vrot;
+      if(this.y < -80) this.reset(false);
+      if(this.x < -100) this.x = W+50;
+      if(this.x > W+100) this.x = -50;
+    }
+  }
+
+  const particles = Array.from({length:60}, ()=>new Particle());
+
+  function loop(){
+    ctx.clearRect(0,0,W,H);
+    particles.forEach(p=>{ p.update(); p.draw(); });
+    requestAnimationFrame(loop);
+  }
+  loop();
+})();
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js'));
+}
+</script>
+<script src="onboarding-tour.js"></script>
+<script>
+MDTour.mount([
+  { selector: "#hero-email", title: "第 1 步:輸入你的 Email", body: "在這個框框打上你的電子信箱,這就是以後收股市報告的信箱。" },
+  { selector: "#hero-check-btn", title: "第 2 步:按「繼續」", body: "Email 打好後,按這個按鈕進入下一步。" },
+  { title: "接下來會發生什麼", body: "系統會請你選方案(選免費就可以)、設定一組密碼。完成後,點上面的「我的專區」就能登入。任何時候需要教學,點右下角的「❓ 新手教學」。" }
+], { tourId: "index", auto: true });
+</script>
 </body>
 </html>

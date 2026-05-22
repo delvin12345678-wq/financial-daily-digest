@@ -469,7 +469,7 @@ nav {
         <div style="font-size:12px;color:var(--text3);text-align:center;margin-top:14px;cursor:pointer;" onclick="showLoginForm()">← 返回</div>
       </div>
 
-      <div class="login-hint">尚未訂閱？<a href="index.html">前往訂閱 →</a></div>
+      <div class="login-hint">尚未訂閱？<a href="index.html">前往訂閱 →</a><br>第一次使用、不知道怎麼操作？<a href="guide.html">看新手教學 →</a></div>
     </div>
   </div>
 </div>
@@ -748,8 +748,8 @@ function renderTags(market) {
   }
   el.innerHTML = selected[market].map(({ sym, name }) => {
     const zh = market === "us" && typeof US_ZH !== "undefined" ? (US_ZH[sym] || "") : "";
-    const nameHtml = (zh ? `<span style="font-weight:600;opacity:0.95;font-size:11px"> ${zh}</span>` : "")
-      + (name && name !== sym ? `<span style="font-weight:400;opacity:0.7;font-size:11px"> ${name}</span>` : "");
+    const label = zh || name;
+    const nameHtml = label && label !== sym ? `<span style="font-weight:400;opacity:0.7;font-size:11px"> ${label}</span>` : "";
     return `<div class="tag">${sym}${nameHtml} <span class="tag-x" onclick="removeStock('${market}','${sym}')">×</span></div>`;
   }).join("");
 }
@@ -851,6 +851,7 @@ function doLogout() {
 async function showDashboard(email, plan) {
   document.getElementById("login-screen").style.display = "none";
   document.getElementById("dashboard").style.display = "block";
+  if (window.mdStockTour) setTimeout(window.mdStockTour, 700);
   const name = email.split("@")[0];
   document.getElementById("hero-name").textContent = `👋 嗨，${name}！`;
   document.getElementById("nav-email").textContent = email;
@@ -1653,6 +1654,20 @@ init();
   }
   loop();
 })();
+</script>
+<script src="onboarding-tour.js"></script>
+<script>
+MDTour.mount([
+  { selector: "#login-email", title: "第 1 步:輸入 Email", body: "打上你訂閱時用的電子信箱。" },
+  { selector: "#login-password", title: "第 2 步:輸入密碼", body: "輸入你的密碼。如果是第一次登入,系統會先請你設定一組新密碼。" },
+  { selector: "#login-btn", title: "第 3 步:進入專區", body: "按這個按鈕,就能進入你的個人專區。" }
+], { tourId: "dashboard-login", auto: true });
+window.mdStockTour = function () {
+  MDTour.mount([
+    { selector: "#us-search", title: "搜尋你的股票", body: "在這裡打股票代號或公司名稱,例如「台積電」或「NVDA」,點一下就加入清單。" },
+    { selector: "#save-btn", title: "記得按儲存", body: "選好股票後,按「儲存設定」。明天起的報告就會特別分析你的股票。" }
+  ], { tourId: "dashboard-stocks", auto: true });
+};
 </script>
 </body>
 </html>
