@@ -1,0 +1,58 @@
+name: 社群每日自動發文(日報衍生)
+
+on:
+  schedule:
+    - cron: "30 0 * * *"   # 00:30 UTC = 台灣 08:30,日報生成後
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: 安裝渲染相依
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq librsvg2-bin fonts-noto-cjk
+          pip install --quiet pillow
+
+      - name: 產生今日貼文(文案 + 圖卡)
+        working-directory: marketing
+        run: python auto_digest_post.py generate
+
+      - name: 提交圖卡
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/social/digest_card_*.jpg
+          git diff --staged --quiet || git commit -m "chore: 每日社群圖卡 [skip ci]"
+          git push origin HEAD:main
+
+      - name: 發佈到各平台
+        working-directory: marketing
+        env:
+          META_ACCESS_TOKEN: ${{ secrets.META_ACCESS_TOKEN }}
+          FB_PAGE_ID: ${{ secrets.FB_PAGE_ID }}
+          IG_USER_ID: ${{ secrets.IG_USER_ID }}
+          THREADS_ACCESS_TOKEN: ${{ secrets.THREADS_ACCESS_TOKEN }}
+          THREADS_USER_ID: ${{ secrets.THREADS_USER_ID }}
+          LINE_CHANNEL_ID: ${{ secrets.LINE_CHANNEL_ID }}
+          LINE_CHANNEL_SECRET: ${{ secrets.LINE_CHANNEL_SECRET }}
+          LINE_ADD_URL: ${{ secrets.LINE_ADD_URL }}
+        run: |
+          sleep 10
+          python auto_digest_post.py publish
+
+      - name: 提交發文紀錄
+        run: |
+          git add marketing/social_out/digest_post_log.jsonl
+          git diff --staged --quiet || git commit -m "chore: 日報社群發文紀錄 [skip ci]"
+          git push origin HEAD:main

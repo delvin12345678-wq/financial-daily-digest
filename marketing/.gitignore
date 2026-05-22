@@ -1,3 +1,4 @@
 .env
 social_out/*
 !social_out/post_log.jsonl
+!social_out/digest_post_log.jsonl
