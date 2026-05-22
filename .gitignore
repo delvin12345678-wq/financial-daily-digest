@@ -7,3 +7,18 @@ agent_team/.worker.lock
 agent-relay/.relay-secret
 .wrangler/
 node_modules/
+
+# 瀏覽器 session / cookie —— 敏感,絕不可進 git
+browser_state.json
+browser_profile/
+tuna_pipeline/browser_state.json
+tuna_pipeline/browser_profile/
+
+# 工具雜物 / debug 產物
+.playwright-mcp/
+*.log
+logs/
+tuna_pipeline/debug_*.png
+
+# 產出物 —— 每日 pipeline 生成的 digest,不版控
+/output/
