@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>財經假新聞自保指南 — 5 個檢查點不再被割韭菜 | MarketDaily</title>
+<meta name="description" content="LINE 群組、PTT、財經內容農場的「內線消息」一半以上是錯的。這份免費指南教你用 5 個檢查點,30 秒分辨一則財經新聞能不能信。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="財經假新聞自保指南 — 5 個檢查點不再被割韭菜">
+<meta property="og:description" content="教你 30 秒分辨一則財經新聞能不能信 —— 這也是 MarketDaily 每天早上幫你做的事。">
+<meta property="og:image" content="https://marketdaily.ai/social/03_fakenews.jpg">
+<meta property="og:url" content="https://marketdaily.ai/filter.html">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/logo-icon.svg">
+<link rel="icon" type="image/svg+xml" href="/logo-icon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root { --indigo: #6366f1; --violet: #8b5cf6; --gold: #fde68a; --dim: #8b8ba0; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: radial-gradient(ellipse at top, #1a1633 0%, #0f0c29 45%, #07060f 100%);
+    background-attachment: fixed;
+    color: #e8e8f0; line-height: 1.75; -webkit-font-smoothing: antialiased;
+  }
+  a { color: inherit; }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 0 22px; }
+
+  nav {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 22px; max-width: 720px; margin: 0 auto;
+  }
+  .logo { display: flex; align-items: center; gap: 8px; text-decoration: none; }
+  .logo img { width: 30px; height: 30px; border-radius: 8px; }
+  .logo span { font-size: 16px; font-weight: 800; letter-spacing: -0.3px; }
+  .nav-cta {
+    font-size: 13px; font-weight: 700; text-decoration: none;
+    padding: 8px 16px; border-radius: 9px;
+    background: rgba(99,102,241,0.15); border: 1px solid rgba(99,102,241,0.32); color: #c7d2fe;
+  }
+
+  header { text-align: center; padding: 48px 0 8px; }
+  .eyebrow {
+    display: inline-block; font-size: 12px; font-weight: 700; letter-spacing: 2px;
+    text-transform: uppercase; color: #a5b4fc;
+    padding: 5px 13px; border: 1px solid rgba(99,102,241,0.3); border-radius: 999px;
+    margin-bottom: 22px;
+  }
+  h1 {
+    font-size: clamp(30px, 6vw, 46px); font-weight: 900; line-height: 1.18;
+    letter-spacing: -1px; margin-bottom: 18px;
+  }
+  h1 .hl { color: var(--gold); }
+  .lead { font-size: 17px; color: #c4c4d4; max-width: 560px; margin: 0 auto 30px; }
+
+  /* email capture */
+  .capture {
+    display: flex; gap: 8px; max-width: 440px; margin: 0 auto; flex-wrap: wrap;
+  }
+  .capture input {
+    flex: 1; min-width: 200px; padding: 14px 16px; font-size: 15px;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.14);
+    border-radius: 11px; color: #fff; font-family: inherit;
+  }
+  .capture input::placeholder { color: rgba(255,255,255,0.3); }
+  .capture input:focus { outline: none; border-color: var(--indigo); background: rgba(99,102,241,0.08); }
+  .capture button {
+    padding: 14px 24px; font-size: 15px; font-weight: 800; font-family: inherit;
+    background: linear-gradient(135deg, var(--indigo), var(--violet));
+    color: #fff; border: none; border-radius: 11px; cursor: pointer; white-space: nowrap;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    box-shadow: 0 8px 24px rgba(99,102,241,0.35);
+  }
+  .capture button:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(99,102,241,0.5); }
+  .capture button:disabled { opacity: 0.6; cursor: default; transform: none; }
+  .cap-msg { width: 100%; font-size: 13px; margin-top: 8px; text-align: center; min-height: 18px; }
+  .cap-msg.err { color: #fca5a5; }
+  .cap-done {
+    width: 100%; padding: 16px; border-radius: 12px; font-size: 14.5px; font-weight: 600;
+    background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.35); color: #6ee7b7;
+  }
+  .cap-note { font-size: 12px; color: var(--dim); margin-top: 10px; text-align: center; }
+
+  section { padding: 38px 0; }
+  .sec-num {
+    font-size: 13px; font-weight: 800; color: var(--indigo); letter-spacing: 1px;
+    margin-bottom: 6px;
+  }
+  h2 {
+    font-size: clamp(22px, 4.5vw, 30px); font-weight: 900; letter-spacing: -0.5px;
+    line-height: 1.3; margin-bottom: 16px;
+  }
+  p.body { font-size: 16px; color: #c4c4d4; margin-bottom: 14px; }
+  p.body strong { color: #fff; font-weight: 700; }
+
+  .divider { height: 1px; background: rgba(255,255,255,0.08); margin: 0 auto; max-width: 720px; }
+
+  .check {
+    background: rgba(255,255,255,0.035); border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 16px; padding: 24px 24px 20px; margin-bottom: 16px;
+  }
+  .check-head { display: flex; gap: 13px; align-items: flex-start; margin-bottom: 12px; }
+  .check-n {
+    flex: none; width: 32px; height: 32px; border-radius: 9px;
+    background: linear-gradient(135deg, var(--indigo), var(--violet));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; font-weight: 900; color: #fff;
+  }
+  .check-t { font-size: 18px; font-weight: 800; padding-top: 3px; }
+  .check p { font-size: 15px; color: #b8b8c8; margin-bottom: 12px; }
+  .tag-row { display: flex; flex-direction: column; gap: 7px; }
+  .tag {
+    font-size: 13.5px; padding: 9px 13px; border-radius: 9px; line-height: 1.55;
+  }
+  .tag.ok { background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.25); color: #a7f3d0; }
+  .tag.bad { background: rgba(245,158,11,0.09); border: 1px solid rgba(245,158,11,0.24); color: #fcd9a0; }
+  .tag b { font-weight: 800; }
+
+  .framework {
+    background: linear-gradient(135deg, rgba(99,102,241,0.1), rgba(139,92,246,0.07));
+    border: 1px solid rgba(99,102,241,0.22); border-radius: 16px; padding: 26px 24px;
+  }
+  .fw-q { display: flex; gap: 12px; margin-bottom: 16px; }
+  .fw-q:last-child { margin-bottom: 0; }
+  .fw-q .q-n { flex: none; font-size: 22px; }
+  .fw-q .q-t b { font-size: 16px; font-weight: 800; color: #fff; }
+  .fw-q .q-t span { display: block; font-size: 14px; color: #b0b0c4; margin-top: 2px; }
+
+  .cta-box {
+    text-align: center; background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(99,102,241,0.25); border-radius: 20px;
+    padding: 40px 28px; margin: 12px 0;
+  }
+  .cta-box h2 { margin-bottom: 14px; }
+  .cta-box .body { max-width: 500px; margin-left: auto; margin-right: auto; }
+
+  footer {
+    text-align: center; padding: 36px 22px 48px; font-size: 12.5px;
+    color: var(--dim); line-height: 1.9;
+  }
+  footer a { color: #a5b4fc; text-decoration: none; }
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="logo" href="/index.html">
+    <img src="/logo-icon.svg" alt="MD">
+    <span>MarketDaily</span>
+  </a>
+  <a class="nav-cta" href="#join">免費訂閱</a>
+</nav>
+
+<div class="wrap">
+
+  <header>
+    <span class="eyebrow">免費指南</span>
+    <h1>別再被「內線消息」<span class="hl">割韭菜</span></h1>
+    <p class="lead">
+      你在 LINE 群組、PTT、財經內容農場看到的「明牌」,一半以上事後證明是錯的。
+      這份指南教你用 <strong>5 個檢查點</strong>,30 秒分辨一則財經新聞能不能信。
+    </p>
+    <form class="capture" id="cap-top" onsubmit="event.preventDefault();subscribe('cap-top')">
+      <input type="email" placeholder="your@email.com" aria-label="Email" required>
+      <button type="submit">免費訂閱日報</button>
+      <div class="cap-msg"></div>
+    </form>
+    <p class="cap-note">免費 · 不需要信用卡 · 隨時取消</p>
+  </header>
+
+</div>
+<div class="divider"></div>
+<div class="wrap">
+
+  <section>
+    <div class="sec-num">為什麼你最容易中招</div>
+    <h2>假消息傳得比真相快</h2>
+    <p class="body">
+      問題不是你不夠認真 —— 是這場遊戲對散戶不公平。
+      <strong>情緒性的假消息天生比枯燥的事實更好轉發</strong>;內容農場靠你的點擊賺錢,標題當然越聳動越好;
+      而你在群組裡看到的,早就是被轉了二十手、去頭去尾的版本。
+    </p>
+    <p class="body">
+      好消息是:分辨真假不需要財經背景,只需要一套固定的檢查動作。以下 5 點,看完就能用。
+    </p>
+  </section>
+
+  <div class="divider"></div>
+
+  <section>
+    <div class="sec-num">核心 · 5 個檢查點</div>
+    <h2>30 秒驗證一則財經新聞</h2>
+
+    <div class="check">
+      <div class="check-head">
+        <div class="check-n">1</div>
+        <div class="check-t">看來源等級</div>
+      </div>
+      <p>消息從哪來,決定它的可信度。先問:這是「機構級媒體」還是「轉發來的」?</p>
+      <div class="tag-row">
+        <div class="tag ok"><b>✅ 一線來源:</b>Reuters、Bloomberg、CNBC、WSJ、FT、AP;中文如中央社、經濟日報。有編輯把關、要為錯誤負責。</div>
+        <div class="tag bad"><b>⚠️ 紅燈:</b>LINE 群組轉發、沒有署名的「財經粉專」、標題農場、Telegram「老師」。沒有人為內容負責。</div>
+      </div>
+    </div>
+
+    <div class="check">
+      <div class="check-head">
+        <div class="check-n">2</div>
+        <div class="check-t">多來源交叉比對</div>
+      </div>
+      <p>真的大事,會有多家獨立媒體同時報。把標題關鍵字丟進搜尋,看誰也在講。</p>
+      <div class="tag-row">
+        <div class="tag ok"><b>✅ 可信:</b>三四家獨立媒體各自報導同一件事 → 大概率是真的。</div>
+        <div class="tag bad"><b>⚠️ 存疑:</b>只有一家在講,其他全是轉貼它的 → 先當作「尚未證實」,等別人跟進。</div>
+      </div>
+    </div>
+
+    <div class="check">
+      <div class="check-head">
+        <div class="check-n">3</div>
+        <div class="check-t">抓「模糊語言」紅旗</div>
+      </div>
+      <p>假消息最愛用沒有主體、無法究責的字眼,把空氣講得像事實。</p>
+      <div class="tag-row">
+        <div class="tag bad"><b>⚠️ 紅旗字眼:</b>「據傳」「消息人士透露」「知情人士」「專家預測」「市場盛傳」—— 誰說的?查得到嗎?</div>
+        <div class="tag ok"><b>✅ 紮實的寫法:</b>具名發言、具體數字、可查證的文件或財報。「台積電財報顯示 Q1 營收 5,926 億」是事實。</div>
+      </div>
+    </div>
+
+    <div class="check">
+      <div class="check-head">
+        <div class="check-n">4</div>
+        <div class="check-t">分清「事實」與「觀點」</div>
+      </div>
+      <p>標題最常見的手法,是把「某人的猜測」包裝成「即將發生的事」。</p>
+      <div class="tag-row">
+        <div class="tag ok"><b>✅ 事實:</b>「聯準會本次維持利率不變」—— 已經發生、可查證。</div>
+        <div class="tag bad"><b>⚠️ 觀點偽裝成事實:</b>「台積電要噴了」「這檔下週必漲」—— 這是預測,不是新聞。把它當成一個人的意見就好。</div>
+      </div>
+    </div>
+
+    <div class="check">
+      <div class="check-head">
+        <div class="check-n">5</div>
+        <div class="check-t">看時間戳,小心舊聞翻炒</div>
+      </div>
+      <p>把半年前的舊聞拿掉日期、重新包裝再傳一次,是群組裡最常見的操作。</p>
+      <div class="tag-row">
+        <div class="tag ok"><b>✅ 動作:</b>先找發布日期。沒有日期、或日期被刻意藏起來 → 高度可疑。</div>
+        <div class="tag bad"><b>⚠️ 常見陷阱:</b>「驚爆!某公司大裁員」其實是去年的事,被翻出來嚇你一波。</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <section>
+    <div class="sec-num">進階 · 讀法</div>
+    <h2>30 秒讀懂一則新聞,只問 3 件事</h2>
+    <p class="body">確認新聞可信之後,別急著反應。用這 3 個問題快速判斷它跟你有沒有關係:</p>
+    <div class="framework">
+      <div class="fw-q">
+        <div class="q-n">①</div>
+        <div class="q-t"><b>發生了什麼?</b><span>用一句話講出「事實」—— 講不出來,代表這篇沒有真內容。</span></div>
+      </div>
+      <div class="fw-q">
+        <div class="q-n">②</div>
+        <div class="q-t"><b>這影響誰?</b><span>哪些公司、板塊、或我手上的持股,會被這件事直接影響?</span></div>
+      </div>
+      <div class="fw-q">
+        <div class="q-n">③</div>
+        <div class="q-t"><b>我需要動作嗎?</b><span>多數時候答案是「不用」。能分辨「可以忽略的新聞」,比追每一則更值錢。</span></div>
+      </div>
+    </div>
+  </section>
+
+</div>
+<div class="divider"></div>
+<div class="wrap">
+
+  <section id="join">
+    <div class="cta-box">
+      <div class="sec-num">每天早上,有人幫你做完</div>
+      <h2>這 5 件事,你每天都能自己做</h2>
+      <p class="body">
+        但要對 30 篇美股 + 台股新聞、每天早上做一輪這種檢查 —— 很累,而且容易漏掉重要的。
+        <strong>MarketDaily 每天早上 7 點幫你做完</strong>:每則新聞都標好來源等級與多源驗證,30 秒讀完今天該知道的。
+      </p>
+      <form class="capture" id="cap-end" onsubmit="event.preventDefault();subscribe('cap-end')">
+        <input type="email" placeholder="your@email.com" aria-label="Email" required>
+        <button type="submit">免費訂閱日報</button>
+        <div class="cap-msg"></div>
+      </form>
+      <p class="cap-note">免費 · 不需要信用卡 · 隨時取消</p>
+    </div>
+  </section>
+
+</div>
+
+<footer>
+  本指南與 MarketDaily 日報內容僅供參考,不構成投資建議。<br>
+  © MarketDaily · <a href="/index.html">marketdaily.ai</a> · <a href="/pricing.html">方案與定價</a>
+</footer>
+
+<script>
+const WORKER = "https://marketdaily-webhook.delvin-12345678.workers.dev";
+async function subscribe(formId) {
+  const form = document.getElementById(formId);
+  const input = form.querySelector("input");
+  const btn = form.querySelector("button");
+  const msg = form.querySelector(".cap-msg");
+  const email = input.value.trim();
+  msg.textContent = ""; msg.className = "cap-msg";
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    msg.textContent = "請輸入有效的 Email"; msg.className = "cap-msg err"; return;
+  }
+  const orig = btn.textContent;
+  btn.disabled = true; btn.textContent = "送出中…";
+  try {
+    const ref = localStorage.getItem("md-ref") || "";
+    const res = await fetch(WORKER + "/subscribe-free-direct", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, ref })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      form.innerHTML = '<div class="cap-done">✅ 訂閱成功!確認信已寄到你的信箱 —— 明早 7 點起,財經新聞有人幫你過濾好。</div>';
+    } else {
+      msg.textContent = "訂閱失敗,請稍後再試一次"; msg.className = "cap-msg err";
+      btn.disabled = false; btn.textContent = orig;
+    }
+  } catch (e) {
+    msg.textContent = "網路連線異常,請稍後再試"; msg.className = "cap-msg err";
+    btn.disabled = false; btn.textContent = orig;
+  }
+}
+</script>
+</body>
+</html>
