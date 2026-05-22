@@ -8,7 +8,7 @@ const INVITE_CODES = [
   "MD-O9GFBT","MD-3BVD3O","MD-XTKXU8","MD-XETLNK","MD-OAF39F"
 ];
 
-const TIER_BY_AMOUNT = { 19900: "Pro", 190800: "Pro", 49900: "Premium", 478800: "Premium" };
+const TIER_BY_AMOUNT = { 19900: "Pro", 190800: "Pro", 29900: "Pro", 287000: "Pro", 49900: "Premium", 478800: "Premium" };
 
 const PLAN_CAPS = { free: 3, pro: 15, premium: Infinity };
 function planCap(plan) { return PLAN_CAPS[plan] || PLAN_CAPS.free; }
@@ -232,6 +232,101 @@ export default {
     if (url.pathname === "/line/status" && request.method === "GET") {
       const email = (url.searchParams.get("email") || "").trim().toLowerCase();
       return json({ bound: !!email && !!(await env.USER_PREFS.get(`line:${email}`)) });
+    }
+
+    // AI 投資助手:聊天(Premium 專屬)
+    if (url.pathname === "/chat" && request.method === "POST") {
+      let body;
+      try { body = await request.json(); } catch { return json({ error: "Invalid request" }, 400); }
+      const email = (body.email || "").trim().toLowerCase();
+      const password = body.password || "";
+      const msgs = Array.isArray(body.messages) ? body.messages : [];
+      if (!email) return json({ error: "invalid_email" }, 400);
+
+      const isAdmin = ADMIN_EMAILS.includes(email);
+      if (!isAdmin) {
+        const storedHash = await env.USER_PREFS.get(`pwd:${email}`);
+        if (!storedHash || (await hashPassword(password)) !== storedHash) {
+          return json({ error: "auth" }, 403);
+        }
+      }
+      const plan = await env.USER_PREFS.get(`plan:${email}`);
+      if (!isAdmin && plan !== "premium") return json({ error: "not_premium" }, 403);
+
+      const day = new Date(Date.now() + 8 * 3600 * 1000).toISOString().slice(0, 10);
+      const countKey = `chatcount:${email}:${day}`;
+      const used = parseInt((await env.USER_PREFS.get(countKey)) || "0", 10);
+      if (used >= 30) return json({ error: "daily_limit" }, 429);
+
+      const convo = msgs
+        .filter(m => m && (m.role === "user" || m.role === "assistant")
+          && typeof m.content === "string" && m.content.trim())
+        .slice(-20)
+        .map(m => ({ role: m.role, content: m.content.slice(0, 4000) }));
+      if (!convo.length || convo[convo.length - 1].role !== "user") {
+        return json({ error: "no_message" }, 400);
+      }
+
+      let holdings = "(尚未設定持股)";
+      const prefRaw = await env.USER_PREFS.get(email);
+      if (prefRaw) {
+        try {
+          const p = JSON.parse(prefRaw);
+          const us = (p.us_stocks || []).join("、");
+          const tw = (p.tw_stocks || []).join("、");
+          const parts = [us && `美股:${us}`, tw && `台股:${tw}`].filter(Boolean);
+          if (parts.length) holdings = parts.join(";");
+        } catch {}
+      }
+
+      const system = `你是 MarketDaily 的 AI 投資助手。MarketDaily 是給台灣投資人的每日財經 AI 日報平台。
+
+你的任務:用繁體中文,針對「這位用戶的持股」回答市場、個股、財經概念,以及如何解讀每日日報的問題。
+
+規則:
+- 一律繁體中文,語氣專業、精簡、好懂,適度分段。
+- 可以分析、解釋、提供觀點與資訊,但不做保證、不喊進喊出。只要回答涉及買賣判斷,結尾務必加一句「以上為資訊整理,非投資建議」。
+- 你沒有即時報價與盤中數據;需要即時價格才能回答時,誠實說明,並建議用戶看當日日報或券商報價。
+- 與投資、財經、用戶持股無關的問題,簡短禮貌帶過,引導回投資主題。
+
+這位用戶目前在 MarketDaily 追蹤的持股:${holdings}`;
+
+      let aiRes;
+      try {
+        aiRes = await fetch("https://api.anthropic.com/v1/messages", {
+          method: "POST",
+          headers: {
+            "x-api-key": env.ANTHROPIC_API_KEY,
+            "anthropic-version": "2023-06-01",
+            "content-type": "application/json",
+          },
+          body: JSON.stringify({
+            model: "claude-haiku-4-5-20251001",
+            max_tokens: 1024,
+            system,
+            messages: convo,
+          }),
+        });
+      } catch {
+        return json({ error: "ai_unreachable" }, 502);
+      }
+      if (!aiRes.ok) return json({ error: "ai_error", status: aiRes.status }, 502);
+      const data = await aiRes.json();
+      const reply = (data.content || []).map(c => c.text || "").join("").trim();
+      if (!reply) return json({ error: "ai_empty" }, 502);
+      await env.USER_PREFS.put(countKey, String(used + 1), { expirationTtl: 26 * 3600 });
+      return json({ reply, remaining: Math.max(0, 30 - used - 1) });
+    }
+
+    // AI 投資助手:狀態查詢(前端決定卡片顯示)
+    if (url.pathname === "/chat-status" && request.method === "GET") {
+      const email = (url.searchParams.get("email") || "").trim().toLowerCase();
+      const isAdmin = ADMIN_EMAILS.includes(email);
+      const plan = await env.USER_PREFS.get(`plan:${email}`);
+      const premium = isAdmin || plan === "premium";
+      const day = new Date(Date.now() + 8 * 3600 * 1000).toISOString().slice(0, 10);
+      const used = parseInt((await env.USER_PREFS.get(`chatcount:${email}:${day}`)) || "0", 10);
+      return json({ premium, remaining: Math.max(0, 30 - used) });
     }
 
     // Admin stats

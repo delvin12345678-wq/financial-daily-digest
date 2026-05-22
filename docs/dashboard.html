@@ -310,6 +310,20 @@ nav {
 .save-status.saved  { background: rgba(16,185,129,0.12); color: #4ade80; border-color: rgba(16,185,129,0.25); }
 .save-status.error  { background: rgba(239,68,68,0.12); color: #f87171; border-color: rgba(239,68,68,0.25); cursor: pointer; }
 
+/* AI 投資助手 */
+#chat-messages { max-height: 340px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding: 2px; }
+.chat-msg { max-width: 86%; padding: 10px 14px; border-radius: 14px; font-size: 14px; line-height: 1.65; white-space: pre-wrap; word-break: break-word; }
+.chat-msg.user { align-self: flex-end; background: var(--primary); color: #fff; border-bottom-right-radius: 4px; }
+.chat-msg.ai { align-self: flex-start; background: rgba(255,255,255,0.06); border: 1px solid var(--input-border); color: var(--text); border-bottom-left-radius: 4px; }
+.chat-msg.thinking { color: var(--text2); font-style: italic; }
+.chat-msg.err { align-self: stretch; max-width: 100%; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.25); color: #f87171; text-align: center; font-size: 13px; }
+.chat-input-row { display: flex; gap: 8px; margin-top: 12px; }
+#chat-input { flex: 1; resize: none; padding: 11px 14px; background: var(--input-bg); border: 1px solid var(--input-border); border-radius: 10px; color: var(--text); font-size: 14px; font-family: inherit; outline: none; line-height: 1.5; }
+#chat-input:focus { border-color: var(--primary); }
+#chat-send { padding: 0 18px; background: var(--primary); color: #fff; border: none; border-radius: 10px; font-weight: 700; font-family: inherit; font-size: 14px; cursor: pointer; white-space: nowrap; }
+#chat-send:disabled { opacity: 0.5; cursor: not-allowed; }
+#chat-meta { font-size: 11px; color: var(--text3); margin-top: 8px; text-align: right; }
+
 /* Set password form */
 #set-password-form .login-label { margin-top: 0; }
 
@@ -678,6 +692,23 @@ nav {
       </div>
     </div>
 
+    <!-- AI 投資助手(Premium 專屬) -->
+    <div class="card" id="chat-card" style="margin-top:8px;display:none;">
+      <div class="card-title" data-i18n="chat_card_title">💬 AI 投資助手</div>
+      <div class="card-desc" data-i18n="chat_card_desc">問 AI 你的持股、大盤、財經概念 —— 它知道你正在追蹤的股票。Premium 專屬。</div>
+      <div id="chat-locked-box" style="display:none;margin-top:14px;">
+        <div style="font-size:12px;color:var(--text2);line-height:1.7;padding:10px 13px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.22);border-radius:10px;" data-i18n-html="chat_locked_notice">⚠️ AI 投資助手是 Premium 專屬功能。<a href="pricing.html" style="color:#fbbf24;font-weight:700;">升級 Premium →</a></div>
+      </div>
+      <div id="chat-box" style="display:none;margin-top:14px;">
+        <div id="chat-messages"></div>
+        <div class="chat-input-row">
+          <textarea id="chat-input" rows="1" data-i18n-placeholder="chat_input_ph" placeholder="問點什麼…例如「我的持股今天要注意什麼?」" oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,120)+'px';" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChat();}"></textarea>
+          <button id="chat-send" onclick="sendChat()" data-i18n="chat_send_btn">送出</button>
+        </div>
+        <div id="chat-meta"></div>
+      </div>
+    </div>
+
     <!-- Referral Program -->
     <div class="card referral-card scene-reveal scene-reveal-d1" id="referral-section">
       <div class="referral-header">
@@ -735,6 +766,18 @@ const WORKER_URL = "https://marketdaily-webhook.delvin-12345678.workers.dev";
 const i18n = {
   zh: {
     page_title: "訂閱者專區 · MarketDaily",
+    chat_card_title: "💬 AI 投資助手",
+    chat_card_desc: "問 AI 你的持股、大盤、財經概念 —— 它知道你正在追蹤的股票。Premium 專屬。",
+    chat_locked_notice: "⚠️ AI 投資助手是 Premium 專屬功能。<a href=\"pricing.html\" style=\"color:#fbbf24;font-weight:700;\">升級 Premium →</a>",
+    chat_input_ph: "問點什麼…例如「我的持股今天要注意什麼?」",
+    chat_send_btn: "送出",
+    chat_greeting: "嗨 👋 我是你的 MarketDaily AI 投資助手。可以問我你追蹤的股票、大盤走勢,或任何財經問題 —— 我知道你的持股清單。",
+    chat_thinking: "思考中…",
+    chat_remaining_pre: "今日剩餘 ",
+    chat_err_generic: "出了點問題,請稍後再試。",
+    chat_err_limit: "今日對話次數已用完(每日上限 30 則),明天再來 🌙",
+    chat_err_auth: "登入狀態過期,請重新登入後再試。",
+    chat_err_premium: "AI 投資助手是 Premium 專屬功能。",
     login_sub: "訂閱者專區 · 輸入你的 Email 進入",
     login_email_label: "訂閱 Email",
     login_pwd_label: "密碼",
@@ -870,6 +913,18 @@ const i18n = {
   },
   en: {
     page_title: "Subscriber Area · MarketDaily",
+    chat_card_title: "💬 AI Investment Assistant",
+    chat_card_desc: "Ask AI about your holdings, the market and finance — it knows the stocks you track. Premium-only.",
+    chat_locked_notice: "⚠️ The AI Investment Assistant is a Premium-only feature. <a href=\"pricing.html\" style=\"color:#fbbf24;font-weight:700;\">Upgrade to Premium →</a>",
+    chat_input_ph: "Ask anything… e.g. \"Anything to watch on my holdings today?\"",
+    chat_send_btn: "Send",
+    chat_greeting: "Hi 👋 I'm your MarketDaily AI investment assistant. Ask me about the stocks you track, market trends, or any finance question — I know your holdings.",
+    chat_thinking: "Thinking…",
+    chat_remaining_pre: "Remaining today: ",
+    chat_err_generic: "Something went wrong. Please try again.",
+    chat_err_limit: "You've used today's 30 messages. Come back tomorrow 🌙",
+    chat_err_auth: "Your session expired. Please log in again.",
+    chat_err_premium: "The AI assistant is a Premium-only feature.",
     login_sub: "Subscriber Area · Enter your email to continue",
     login_email_label: "Subscription Email",
     login_pwd_label: "Password",
@@ -1263,6 +1318,7 @@ async function showDashboard(email, plan) {
     document.getElementById("plan-badge").textContent = plan === "paid" ? T('badge_paid') : T('badge_free');
   }
   setupLineCard(email, plan);
+  setupChatCard(email, plan);
   await loadPreferences(email);
   loadReferral(email);
   loadStories(email);
@@ -1282,6 +1338,84 @@ async function setupLineCard(email, plan) {
   } catch {}
   document.getElementById("line-bound-box").style.display = bound ? "block" : "none";
   document.getElementById("line-unbound-box").style.display = bound ? "none" : "block";
+}
+
+// ── AI 投資助手 ──
+let _chatHistory = [], _chatRemaining = 30, _chatBusy = false, _chatErr = "";
+
+async function setupChatCard(email, plan) {
+  const card = document.getElementById("chat-card");
+  if (!card) return;
+  if (plan !== "paid" && plan !== "admin") { card.style.display = "none"; return; }
+  card.style.display = "block";
+  let premium = false, remaining = 30;
+  try {
+    const res = await fetch(`${WORKER_URL}/chat-status?email=${encodeURIComponent(email)}`);
+    if (res.ok) { const d = await res.json(); premium = !!d.premium; remaining = d.remaining; }
+  } catch {}
+  document.getElementById("chat-box").style.display = premium ? "block" : "none";
+  document.getElementById("chat-locked-box").style.display = premium ? "none" : "block";
+  if (premium) { _chatRemaining = (typeof remaining === "number") ? remaining : 30; renderChat(); }
+}
+
+function chatEsc(s) { const d = document.createElement("div"); d.textContent = s == null ? "" : s; return d.innerHTML; }
+
+function renderChat() {
+  const box = document.getElementById("chat-messages");
+  if (!box) return;
+  let html = _chatHistory.length
+    ? _chatHistory.map(m => `<div class="chat-msg ${m.role === "user" ? "user" : "ai"}">${chatEsc(m.content)}</div>`).join("")
+    : `<div class="chat-msg ai">${chatEsc(T('chat_greeting'))}</div>`;
+  if (_chatBusy) html += `<div class="chat-msg ai thinking">${chatEsc(T('chat_thinking'))}</div>`;
+  if (_chatErr) html += `<div class="chat-msg err">${chatEsc(_chatErr)}</div>`;
+  box.innerHTML = html;
+  box.scrollTop = box.scrollHeight;
+  const meta = document.getElementById("chat-meta");
+  if (meta) meta.textContent = T('chat_remaining_pre') + _chatRemaining;
+}
+
+async function sendChat() {
+  if (_chatBusy) return;
+  const input = document.getElementById("chat-input");
+  const text = (input.value || "").trim();
+  if (!text) return;
+  const email = localStorage.getItem("md-email");
+  if (!email) return;
+  let password = sessionStorage.getItem("md-pwd") || localStorage.getItem("md-saved-pwd");
+  if (!password) { password = prompt(T('line_prompt_pwd')); if (!password) return; }
+  _chatErr = "";
+  _chatHistory.push({ role: "user", content: text });
+  input.value = ""; input.style.height = "auto";
+  _chatBusy = true; renderChat();
+  const sendBtn = document.getElementById("chat-send");
+  if (sendBtn) sendBtn.disabled = true;
+  try {
+    const res = await fetch(WORKER_URL + "/chat", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password, messages: _chatHistory }),
+    });
+    const data = await res.json();
+    _chatBusy = false;
+    if (data.reply) {
+      _chatHistory.push({ role: "assistant", content: data.reply });
+      if (typeof data.remaining === "number") _chatRemaining = data.remaining;
+    } else {
+      _chatHistory.pop();
+      input.value = text;
+      _chatErr = data.error === "daily_limit" ? T('chat_err_limit')
+        : data.error === "auth" ? T('chat_err_auth')
+        : data.error === "not_premium" ? T('chat_err_premium')
+        : T('chat_err_generic');
+    }
+  } catch {
+    _chatBusy = false;
+    _chatHistory.pop();
+    input.value = text;
+    _chatErr = T('chat_err_generic');
+  }
+  if (sendBtn) sendBtn.disabled = false;
+  renderChat();
+  input.focus();
 }
 
 // 直接沿用登入時的密碼,不再請用戶重輸;只有取不到(換頁/未登入)才補問。
