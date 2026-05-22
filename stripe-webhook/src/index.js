@@ -8,6 +8,8 @@ const INVITE_CODES = [
   "MD-O9GFBT","MD-3BVD3O","MD-XTKXU8","MD-XETLNK","MD-OAF39F"
 ];
 
+const TIER_BY_AMOUNT = { 19900: "Pro", 190800: "Pro", 49900: "Premium", 478800: "Premium" };
+
 async function hashPassword(password) {
   const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(password));
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join("");
@@ -500,13 +502,25 @@ export default {
     }
 
     const event = JSON.parse(payload);
+    const listId = parseInt(env.BREVO_LIST_ID) || 2;
 
     if (event.type === "checkout.session.completed") {
-      const email = event.data.object?.customer_details?.email;
+      const session = event.data.object || {};
+      const email = (session.customer_details?.email || session.customer_email || "").trim().toLowerCase();
       if (email) {
-        await addToBrevo(email, env.BREVO_API_KEY, parseInt(env.BREVO_LIST_ID));
-        await sendWelcomeEmail(email, env.BREVO_API_KEY, true);
-        ctx.waitUntil(sendTodayDigestToAll(env.BREVO_API_KEY, parseInt(env.BREVO_LIST_ID) || 2, env.USER_PREFS));
+        const tier = TIER_BY_AMOUNT[session.amount_total] || "付費";
+        await addToBrevo(email, env.BREVO_API_KEY, listId, { PAID: true, PLAN: "paid", PLAN_TIER: tier });
+        if (session.customer) await env.USER_PREFS.put(`stripe-cust:${session.customer}`, email);
+        await sendWelcomeEmail(email, env.BREVO_API_KEY, true, tier);
+        ctx.waitUntil(sendTodayDigestToAll(env.BREVO_API_KEY, listId, env.USER_PREFS));
+      }
+    }
+
+    if (event.type === "customer.subscription.deleted") {
+      const custId = event.data.object?.customer;
+      if (custId) {
+        const email = await env.USER_PREFS.get(`stripe-cust:${custId}`);
+        if (email) await addToBrevo(email, env.BREVO_API_KEY, listId, { PAID: false, PLAN: "free" });
       }
     }
 
@@ -609,11 +623,13 @@ async function sendTodayDigestToAll(apiKey, listId, kv) {
   }
 }
 
-async function addToBrevo(email, apiKey, listId) {
+async function addToBrevo(email, apiKey, listId, attributes) {
+  const body = { email, listIds: [listId], updateEnabled: true };
+  if (attributes) body.attributes = attributes;
   const res = await fetch("https://api.brevo.com/v3/contacts", {
     method: "POST",
     headers: { "api-key": apiKey, "Content-Type": "application/json" },
-    body: JSON.stringify({ email, listIds: [listId], updateEnabled: true })
+    body: JSON.stringify(body)
   });
   return res.ok || res.status === 400; // 400 = contact already exists, still OK
 }
@@ -736,10 +752,11 @@ async function notifyAdmin(userEmail, name, topic, message, aiReply, apiKey) {
   });
 }
 
-async function sendWelcomeEmail(email, apiKey, isPaid = false) {
+async function sendWelcomeEmail(email, apiKey, isPaid = false, tier = "") {
   const subject = isPaid ? "✅ 訂閱成功！歡迎加入財經日報 🎉" : "✅ 邀請碼確認！歡迎加入財經日報 🎉";
+  const tierLabel = tier && tier !== "付費" ? `${tier} 方案` : "付費方案";
   const planLine = isPaid
-    ? "您的 <strong>NT$500/月付費方案</strong>已啟用。"
+    ? `您的 <strong>${tierLabel}</strong>已啟用。`
     : "您的<strong>免費邀請方案</strong>已啟用。";
 
   const html = `<!DOCTYPE html>
