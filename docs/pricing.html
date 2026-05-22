@@ -1,0 +1,1333 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>定價方案 · MarketDaily</title>
+<meta name="description" content="選擇最適合你的 MarketDaily 方案。從免費開始，隨時升級。台灣投資人的每日 AI 財經日報。">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#6366f1">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="MarketDaily">
+<link rel="apple-touch-icon" href="/logo-icon.svg">
+<link rel="icon" type="image/svg+xml" href="/logo-icon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #060611;
+  --surface: rgba(255,255,255,0.03);
+  --surface2: rgba(255,255,255,0.06);
+  --primary: #6366f1;
+  --primary-light: #818cf8;
+  --primary-dim: rgba(99,102,241,0.12);
+  --primary-border: rgba(99,102,241,0.28);
+  --violet: #8b5cf6;
+  --sky: #38bdf8;
+  --emerald: #10b981;
+  --amber: #f59e0b;
+  --text: #f1f5f9;
+  --text-muted: rgba(255,255,255,0.48);
+  --text-dim: rgba(255,255,255,0.28);
+  --border: rgba(255,255,255,0.07);
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:focus-visible { outline: 2px solid #818cf8; outline-offset: 2px; border-radius: 4px; }
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image:
+    linear-gradient(rgba(99,102,241,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(99,102,241,0.04) 1px, transparent 1px);
+  background-size: 72px 72px;
+  pointer-events: none; z-index: 0;
+}
+
+/* ── NAV ── */
+nav {
+  position: sticky; top: 0; z-index: 100;
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 0 40px; height: 62px;
+  background: rgba(6,6,17,0.75);
+  backdrop-filter: blur(28px) saturate(1.8);
+  -webkit-backdrop-filter: blur(28px) saturate(1.8);
+  border-bottom: 1px solid var(--border);
+}
+.logo {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 17px; font-weight: 800; letter-spacing: -0.5px;
+  text-decoration: none; color: var(--text);
+}
+.logo-icon {
+  width: 30px; height: 30px;
+  background: linear-gradient(135deg, var(--primary), var(--violet));
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.logo em { color: var(--primary-light); font-style: normal; }
+.nav-right { display: flex; align-items: center; gap: 4px; }
+.nav-link {
+  font-size: 13px; font-weight: 500; color: var(--text-muted);
+  text-decoration: none; padding: 7px 14px; border-radius: 8px;
+  transition: all 0.18s; white-space: nowrap; flex-shrink: 0;
+}
+.nav-link:hover { color: var(--text); background: rgba(255,255,255,0.05); }
+.nav-link.active { color: var(--text); background: var(--primary-dim); }
+
+/* ── MAIN WRAPPER ── */
+main { position: relative; z-index: 1; }
+
+/* ── HERO ── */
+.hero {
+  text-align: center;
+  padding: 96px 24px 64px;
+  position: relative;
+  overflow: hidden;
+}
+.orb-hero {
+  position: absolute; border-radius: 50%; pointer-events: none;
+  width: 640px; height: 640px;
+  background: radial-gradient(circle at 50% 50%, rgba(99,102,241,0.18), transparent 65%);
+  top: -260px; left: 50%; transform: translateX(-50%);
+  animation: orb-breathe 9s ease-in-out infinite;
+  filter: blur(1px);
+}
+@keyframes orb-breathe {
+  0%, 100% { opacity: 1; transform: translateX(-50%) scale(1); }
+  50% { opacity: 0.7; transform: translateX(-50%) scale(1.1); }
+}
+.hero-inner { position: relative; z-index: 1; }
+.hero-pill {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--primary-dim); border: 1px solid var(--primary-border);
+  color: var(--primary-light); font-size: 11px; font-weight: 700;
+  padding: 6px 16px; border-radius: 40px; letter-spacing: 0.6px;
+  margin-bottom: 32px; text-transform: uppercase;
+}
+.hero h1 {
+  font-size: clamp(36px, 6vw, 60px);
+  font-weight: 900; letter-spacing: -2.5px; line-height: 1.06;
+  margin-bottom: 20px;
+}
+.hero h1 .grad {
+  background: linear-gradient(135deg, #818cf8 0%, #a78bfa 50%, #38bdf8 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.hero-sub {
+  font-size: 17px; color: var(--text-muted);
+  max-width: 460px; margin: 0 auto 48px;
+  line-height: 1.75;
+}
+
+/* ── BILLING TOGGLE ── */
+.toggle-wrap {
+  display: inline-flex; align-items: center; gap: 14px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border);
+  border-radius: 40px; padding: 5px;
+  margin-bottom: 72px;
+}
+.toggle-opt {
+  font-size: 13px; font-weight: 600; color: var(--text-muted);
+  padding: 8px 22px; border-radius: 32px; cursor: pointer;
+  transition: all 0.22s; user-select: none; white-space: nowrap;
+}
+.toggle-opt.active {
+  background: linear-gradient(135deg, var(--primary), var(--violet));
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(99,102,241,0.35);
+}
+.toggle-save-badge {
+  display: inline-block;
+  background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.3);
+  color: var(--emerald); font-size: 10px; font-weight: 800;
+  padding: 2px 8px; border-radius: 20px; letter-spacing: 0.4px;
+  margin-left: 4px; vertical-align: middle;
+}
+
+/* ── PRICING GRID ── */
+.pricing-section { padding: 0 24px 96px; }
+.pricing-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 20px;
+  max-width: 1060px;
+  margin: 0 auto;
+  align-items: start;
+}
+
+/* ── TIER CARD ── */
+.tier-card {
+  background: rgba(255,255,255,0.03);
+  backdrop-filter: blur(12px);
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(255,255,255,0.07);
+  padding: 36px 32px;
+  position: relative;
+  transition: transform 0.28s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.28s ease;
+  cursor: default;
+}
+.tier-card:hover {
+  transform: scale(1.02);
+  box-shadow: 0 24px 64px rgba(0,0,0,0.4);
+}
+
+/* Starter */
+.tier-card.starter {
+  border-color: rgba(16,185,129,0.18);
+}
+
+/* Pro — secondary tier */
+.tier-card.pro {
+  border-color: rgba(99,102,241,0.22);
+}
+.tier-card.pro:hover {
+  box-shadow: 0 24px 64px rgba(99,102,241,0.1);
+}
+
+/* Premium — highlighted */
+.tier-card.premium {
+  border: 1.5px solid rgba(245,158,11,0.5);
+  background: rgba(245,158,11,0.06);
+  box-shadow:
+    0 0 0 1px rgba(245,158,11,0.15),
+    0 32px 72px rgba(245,158,11,0.18),
+    inset 0 1px 0 rgba(255,255,255,0.06);
+  transform: scale(1.03);
+  z-index: 2;
+}
+.tier-card.premium:hover {
+  transform: scale(1.05);
+  box-shadow:
+    0 0 0 1px rgba(245,158,11,0.25),
+    0 40px 88px rgba(245,158,11,0.26),
+    inset 0 1px 0 rgba(255,255,255,0.07);
+}
+
+/* Popular badge */
+.badge-popular {
+  position: absolute; top: -14px; left: 50%; transform: translateX(-50%);
+  background: linear-gradient(135deg, var(--primary), var(--violet));
+  color: #fff; font-size: 11px; font-weight: 800;
+  padding: 5px 18px; border-radius: 20px; letter-spacing: 0.6px;
+  white-space: nowrap;
+  box-shadow: 0 4px 20px rgba(99,102,241,0.45);
+}
+
+.tier-name {
+  font-size: 12px; font-weight: 700; letter-spacing: 1px;
+  text-transform: uppercase; color: var(--text-muted);
+  margin-bottom: 20px;
+}
+.tier-card.pro .tier-name { color: var(--primary-light); }
+.tier-card.premium .tier-name { color: #fbbf24; }
+
+.tier-price {
+  display: flex; align-items: flex-end; gap: 6px;
+  margin-bottom: 6px;
+}
+.price-num {
+  font-size: 52px; font-weight: 900; letter-spacing: -3px; line-height: 1;
+  color: var(--text);
+}
+.price-unit {
+  font-size: 15px; font-weight: 500; color: var(--text-muted);
+  padding-bottom: 8px;
+}
+.price-free {
+  font-size: 52px; font-weight: 900; letter-spacing: -2px; line-height: 1;
+  color: var(--text);
+}
+.price-annual-note {
+  font-size: 12px; color: var(--text-dim);
+  margin-bottom: 28px; min-height: 18px;
+}
+.price-original {
+  text-decoration: line-through; color: var(--text-dim); font-size: 12px;
+}
+
+.tier-desc {
+  font-size: 14px; color: var(--text-muted); line-height: 1.65;
+  margin-bottom: 28px;
+}
+
+.tier-btn {
+  display: block; width: 100%;
+  padding: 14px 20px; border-radius: var(--radius-sm);
+  font-size: 14px; font-weight: 700; font-family: inherit;
+  text-align: center; text-decoration: none; cursor: pointer;
+  border: none; transition: all 0.22s; letter-spacing: 0.2px;
+}
+.tier-btn.btn-starter {
+  background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.28);
+  color: var(--emerald);
+}
+.tier-btn.btn-starter:hover {
+  background: rgba(16,185,129,0.2); transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(16,185,129,0.2);
+}
+.tier-btn.btn-pro {
+  background: linear-gradient(135deg, var(--primary), var(--violet));
+  color: #fff;
+  box-shadow: 0 6px 24px rgba(99,102,241,0.42), inset 0 1px 0 rgba(255,255,255,0.1);
+}
+.tier-btn.btn-pro:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 36px rgba(99,102,241,0.52);
+}
+.tier-btn.btn-premium {
+  background: rgba(245,158,11,0.12); border: 1px solid rgba(245,158,11,0.28);
+  color: #fbbf24;
+}
+.tier-btn.btn-premium:hover {
+  background: rgba(245,158,11,0.2); transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(245,158,11,0.2);
+}
+
+.tier-divider {
+  height: 1px; background: var(--border);
+  margin: 28px 0;
+}
+
+.feature-list { list-style: none; display: flex; flex-direction: column; gap: 12px; }
+.feature-item {
+  display: flex; align-items: flex-start; gap: 10px;
+  font-size: 13.5px; color: var(--text-muted); line-height: 1.5;
+}
+.feature-icon {
+  flex-shrink: 0; width: 18px; height: 18px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; margin-top: 1px;
+}
+.fi-check { background: rgba(16,185,129,0.15); color: var(--emerald); }
+.fi-cross { background: rgba(255,255,255,0.05); color: var(--text-dim); }
+.feature-item.included { color: var(--text); }
+
+/* ── COMPARISON TABLE ── */
+.compare-section {
+  padding: 0 24px 96px;
+}
+.section-head {
+  text-align: center;
+  margin-bottom: 48px;
+}
+.section-label {
+  font-size: 11px; font-weight: 700; letter-spacing: 1.2px;
+  color: var(--primary-light); text-transform: uppercase; margin-bottom: 12px;
+}
+.section-title {
+  font-size: clamp(26px, 4vw, 38px); font-weight: 800; letter-spacing: -1.5px;
+}
+.section-sub {
+  font-size: 15px; color: var(--text-muted); margin-top: 10px;
+}
+
+.compare-wrap { max-width: 900px; margin: 0 auto; }
+.compare-table { width: 100%; border-collapse: collapse; }
+
+.compare-table th {
+  font-size: 12px; font-weight: 700; letter-spacing: 0.5px;
+  text-align: center; padding: 14px 16px 18px;
+  color: var(--text-muted);
+}
+.compare-table th.col-feature { text-align: left; color: var(--text-dim); }
+.compare-table th.col-pro { color: var(--primary-light); }
+.compare-table th.col-premium { color: #fbbf24; }
+
+.compare-group-head td {
+  font-size: 11px; font-weight: 700; letter-spacing: 1px;
+  text-transform: uppercase; color: var(--text-dim);
+  padding: 24px 16px 10px;
+  border-bottom: 1px solid var(--border);
+}
+.compare-row td {
+  padding: 13px 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  font-size: 13.5px;
+}
+.compare-row td.col-feature {
+  color: var(--text-muted); font-weight: 500;
+}
+.compare-row td.col-val {
+  text-align: center; color: var(--text-muted);
+}
+.compare-row td.col-val.yes { color: var(--emerald); }
+.compare-row td.col-val.premium-yes { color: #fbbf24; }
+.compare-row td.col-val.no { color: var(--text-dim); }
+.v-check::before { content: '✓'; font-weight: 700; font-size: 14px; }
+.v-cross::before { content: '—'; }
+.v-val { font-weight: 600; color: var(--text); }
+
+.compare-header-row {
+  background: rgba(255,255,255,0.02);
+  border-radius: 12px;
+}
+
+/* ── FAQ ── */
+.faq-section { padding: 0 24px 96px; }
+.faq-wrap { max-width: 700px; margin: 0 auto; }
+.faq-item {
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.faq-q {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 22px 0; cursor: pointer;
+  font-size: 15px; font-weight: 600; color: var(--text);
+  gap: 16px; user-select: none;
+  transition: color 0.18s;
+}
+.faq-q:hover { color: var(--primary-light); }
+.faq-arrow {
+  width: 24px; height: 24px; flex-shrink: 0;
+  background: rgba(255,255,255,0.05); border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1), background 0.2s;
+  font-size: 12px; color: var(--text-muted);
+}
+.faq-item.open .faq-arrow {
+  transform: rotate(180deg);
+  background: var(--primary-dim);
+  color: var(--primary-light);
+}
+.faq-body {
+  overflow: hidden; max-height: 0;
+  transition: max-height 0.38s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.faq-body-inner {
+  padding: 0 0 22px;
+  font-size: 14px; color: var(--text-muted); line-height: 1.78;
+}
+.faq-body-inner strong { color: var(--text); }
+
+/* ── SOCIAL PROOF ── */
+.social-section {
+  padding: 0 24px 80px;
+}
+.social-strip {
+  max-width: 900px; margin: 0 auto;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 48px 52px;
+  display: flex; align-items: center; gap: 64px;
+  position: relative; overflow: hidden;
+}
+.social-strip::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse 55% 80% at 10% 50%, rgba(99,102,241,0.07), transparent 70%);
+  pointer-events: none;
+}
+.social-quote {
+  flex: 1; position: relative; z-index: 1;
+}
+.quote-mark {
+  font-size: 64px; line-height: 0.6; color: var(--primary-light);
+  opacity: 0.4; margin-bottom: 16px; display: block;
+  font-family: Georgia, serif;
+}
+.quote-text {
+  font-size: 17px; font-weight: 600; color: var(--text);
+  line-height: 1.6; margin-bottom: 16px;
+}
+.quote-author {
+  font-size: 13px; color: var(--text-muted);
+}
+.social-stats {
+  display: flex; gap: 40px; flex-shrink: 0; position: relative; z-index: 1;
+}
+.stat-item { text-align: center; }
+.stat-num {
+  font-size: 36px; font-weight: 900; letter-spacing: -1.5px;
+  background: linear-gradient(135deg, var(--primary-light), var(--violet));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+  display: block;
+}
+.stat-label {
+  font-size: 12px; color: var(--text-muted); margin-top: 4px;
+}
+
+/* ── FINAL CTA ── */
+.cta-section {
+  padding: 0 24px 120px;
+}
+.cta-wrap {
+  max-width: 680px; margin: 0 auto;
+  text-align: center;
+}
+.cta-card {
+  background: rgba(99,102,241,0.07);
+  border: 1.5px solid rgba(99,102,241,0.28);
+  border-radius: var(--radius-lg);
+  padding: 64px 48px;
+  position: relative; overflow: hidden;
+  box-shadow: 0 0 80px rgba(99,102,241,0.12);
+}
+.cta-card::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse 70% 60% at 50% 0%, rgba(99,102,241,0.18), transparent 65%);
+  pointer-events: none;
+}
+.cta-card-inner { position: relative; z-index: 1; }
+.cta-eyebrow {
+  font-size: 11px; font-weight: 700; letter-spacing: 1.2px;
+  color: var(--primary-light); text-transform: uppercase;
+  margin-bottom: 16px;
+}
+.cta-title {
+  font-size: clamp(26px, 4vw, 38px); font-weight: 900; letter-spacing: -1.5px;
+  margin-bottom: 14px; line-height: 1.12;
+}
+.cta-sub {
+  font-size: 15px; color: var(--text-muted); margin-bottom: 36px; line-height: 1.7;
+}
+.cta-price-row {
+  display: flex; align-items: baseline; gap: 8px;
+  justify-content: center; margin-bottom: 8px;
+}
+.cta-price-main {
+  font-size: 48px; font-weight: 900; letter-spacing: -2.5px;
+}
+.cta-price-unit { font-size: 16px; color: var(--text-muted); }
+.cta-price-note { font-size: 13px; color: var(--text-dim); margin-bottom: 36px; }
+.cta-btn-big {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: linear-gradient(135deg, var(--primary), var(--violet));
+  color: #fff; font-size: 16px; font-weight: 700; font-family: inherit;
+  padding: 17px 44px; border-radius: var(--radius-sm); border: none;
+  text-decoration: none; cursor: pointer;
+  box-shadow: 0 8px 32px rgba(99,102,241,0.45), inset 0 1px 0 rgba(255,255,255,0.12);
+  transition: all 0.24s;
+}
+.cta-btn-big:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 16px 48px rgba(99,102,241,0.55);
+}
+.cta-guarantee {
+  margin-top: 18px;
+  font-size: 12px; color: var(--text-dim);
+}
+.cta-guarantee span { color: var(--emerald); }
+
+/* ── FOOTER ── */
+footer {
+  border-top: 1px solid var(--border);
+  padding: 32px 40px;
+  display: flex; justify-content: space-between; align-items: center;
+  position: relative; z-index: 1;
+}
+.footer-brand { font-size: 14px; font-weight: 700; color: rgba(255,255,255,0.3); }
+.footer-note { font-size: 12px; color: var(--text-dim); }
+.lang-btn {
+  background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.5); font-size: 12px; font-weight: 700; font-family: inherit;
+  padding: 5px 12px; border-radius: 20px; cursor: pointer; transition: all 0.2s;
+  margin-left: 4px;
+}
+.lang-btn:hover { background: rgba(99,102,241,0.12); border-color: rgba(99,102,241,0.28); color: #fff; }
+
+/* ── SCROLL REVEAL ── */
+.scene-reveal {
+  opacity: 0;
+  transform: perspective(1200px) rotateX(12deg) translateY(55px) scale(0.96);
+  transform-origin: center bottom;
+  will-change: transform, opacity;
+  transition: opacity 0.95s cubic-bezier(0.16, 1, 0.3, 1), transform 0.95s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.scene-reveal.visible { opacity: 1; transform: perspective(1200px) rotateX(0deg) translateY(0) scale(1); }
+.scene-reveal-d1 { transition-delay: 0.07s; }
+.scene-reveal-d2 { transition-delay: 0.14s; }
+.scene-reveal-d3 { transition-delay: 0.21s; }
+.reveal { opacity: 0; transform: translateY(26px); transition: opacity 0.65s ease, transform 0.65s ease; }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+.reveal-d1 { transition-delay: 0.08s; }
+.reveal-d2 { transition-delay: 0.16s; }
+.reveal-d3 { transition-delay: 0.24s; }
+
+/* ── MOBILE ── */
+@media (max-width: 800px) {
+  nav { padding: 0 20px; }
+  .nav-link { padding: 6px 10px; font-size: 12px; }
+  .pricing-grid {
+    grid-template-columns: 1fr;
+    max-width: 440px;
+  }
+  .tier-card.premium { transform: scale(1); order: -1; }
+  .tier-card.premium:hover { transform: scale(1.02); }
+  .social-strip {
+    flex-direction: column; gap: 36px; padding: 36px 28px; text-align: center;
+  }
+  .social-stats { justify-content: center; }
+  .cta-card { padding: 44px 28px; }
+  .hero h1 { letter-spacing: -1.5px; }
+  footer { flex-direction: column; gap: 8px; text-align: center; }
+  .compare-section { overflow-x: auto; }
+}
+@media (max-width: 560px) {
+  .hero { padding: 72px 20px 48px; }
+  .pricing-section { padding: 0 16px 72px; }
+  nav { padding: 0 12px; }
+  .logo { font-size: 15px; }
+  .nav-right { gap: 2px; }
+  .nav-link { padding: 6px 7px; font-size: 11px; }
+  .lang-btn { padding: 5px 9px; font-size: 11px; margin-left: 2px; }
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a class="logo" href="index.html">
+    <div class="logo-icon">
+      <svg width="16" height="16" viewBox="0 0 22 22" xmlns="http://www.w3.org/2000/svg">
+        <rect x="1" y="14" width="4" height="7" rx="1.5" fill="white" fill-opacity="0.55"/>
+        <rect x="7" y="9" width="4" height="12" rx="1.5" fill="white" fill-opacity="0.78"/>
+        <rect x="13" y="4" width="4" height="17" rx="1.5" fill="white"/>
+        <circle cx="20" cy="3" r="2" fill="#fde68a"/>
+      </svg>
+    </div>
+    Market<em>Daily</em>
+  </a>
+  <div class="nav-right">
+    <a class="nav-link" href="index.html" data-i18n="nav_home">首頁</a>
+    <a class="nav-link active" href="pricing.html" data-i18n="nav_pricing">定價</a>
+    <a class="nav-link" href="dashboard.html" data-i18n="nav_dashboard">我的專區</a>
+    <button class="lang-btn" onclick="toggleLang()">EN</button>
+  </div>
+</nav>
+
+<main>
+
+<!-- ── HERO ── -->
+<section class="hero">
+  <div class="orb-hero"></div>
+  <div class="hero-inner">
+    <div class="hero-pill">
+      <span style="width:7px;height:7px;border-radius:50%;background:var(--emerald);flex-shrink:0;box-shadow:0 0 0 0 rgba(16,185,129,0.7);animation:live-pulse 2.2s ease-in-out infinite;display:inline-block;"></span>
+      <span data-i18n="price_pill">方案與定價</span>
+    </div>
+    <h1 data-i18n-html="price_h1">選擇最適合你的<br><span class="grad">方案</span></h1>
+    <p class="hero-sub" data-i18n="price_sub">從免費開始，隨時升級。取消隨時生效，沒有隱藏費用。</p>
+
+    <!-- Billing Toggle -->
+    <div class="toggle-wrap" id="billing-toggle">
+      <div class="toggle-opt active" data-mode="monthly" onclick="setBilling('monthly')" data-i18n="bill_monthly">月付</div>
+      <div class="toggle-opt" data-mode="annual" onclick="setBilling('annual')">
+        <span data-i18n="bill_annual">年付</span> <span class="toggle-save-badge" data-i18n="bill_save">省 20%</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── PRICING CARDS ── -->
+<section class="pricing-section">
+  <div class="pricing-grid">
+
+    <!-- STARTER -->
+    <div class="tier-card starter scene-reveal scene-reveal-d1">
+      <div class="tier-name" data-i18n="tier_free_name">免費版 · Starter</div>
+      <div class="tier-price">
+        <div class="price-free">NT$0</div>
+      </div>
+      <div class="price-annual-note">&nbsp;</div>
+      <p class="tier-desc" data-i18n="tier_free_desc">每天早上 7 點，基礎版市場快訊直送信箱。適合剛入門的投資人。</p>
+      <a class="tier-btn btn-starter" href="index.html#subscribe" data-i18n="tier_free_btn">免費開始</a>
+      <div class="tier-divider"></div>
+      <ul class="feature-list">
+        <li class="feature-item included">
+          <span class="feature-icon fi-check">✓</span>
+          <span data-i18n="sf1">每日大盤摘要（美股 + 台股）</span>
+        </li>
+        <li class="feature-item included">
+          <span class="feature-icon fi-check">✓</span>
+          <span data-i18n="sf2">5 大新聞精選（假訊息過濾）</span>
+        </li>
+        <li class="feature-item included">
+          <span class="feature-icon fi-check">✓</span>
+          <span data-i18n="sf3">加密貨幣動向（BTC / ETH / SOL）</span>
+        </li>
+        <li class="feature-item included">
+          <span class="feature-icon fi-check">✓</span>
+          <span data-i18n="sf4">板塊輪動概覽</span>
+        </li>
+        <li class="feature-item included">
+          <span class="feature-icon fi-check">✓</span>
+          <span data-i18n="sf5">個人化持倉分析（最多 3 檔）</span>
+        </li>
+        <li class="feature-item">
+          <span class="feature-icon fi-cross">—</span>
+          <span data-i18n="sf6">即將公布財報提醒</span>
+        </li>
+        <li class="feature-item" style="color:var(--text-dim);font-size:12px;">
+          <span class="feature-icon" style="background:rgba(245,158,11,0.12);color:#fbbf24;font-size:10px;">!</span>
+          <span data-i18n="sf7">需邀請碼</span>
+        </li>
+      </ul>
+    </div>
+
+    <!-- PRO -->
+    <div class="tier-card pro scene-reveal scene-reveal-d2">
+      <div class="tier-name">Pro</div>
+      <div class="tier-price">
+        <div class="price-num" id="pro-price-num">199</div>
+        <div class="price-unit" data-i18n="price_per_month">/月</div>
+      </div>
+      <div class="price-annual-note" id="pro-price-note">&nbsp;</div>
+      <p class="tier-desc" data-i18n="tier_pro_desc">適合積極追蹤持股的投資人，個人化分析讓每封日報都跟你的投資組合直接掛鉤。</p>
+      <a class="tier-btn btn-pro" href="https://buy.stripe.com/dRmaEW60B3bCfpM6Va4Ja01" target="_blank" rel="noopener noreferrer" id="pro-cta" data-i18n="tier_cta_btn">立即訂閱 →</a>
+      <div class="tier-divider"></div>
+      <ul class="feature-list">
+        <li class="feature-item included" style="font-weight:600;">
+          <span class="feature-icon fi-check">✓</span>
+          <span data-i18n="pf1">免費版所有功能</span>
+        </li>
+        <li class="feature-item included">
+          <span class="feature-icon fi-check">✓</span>
+          <span data-i18n="pf2">個人化持倉分析（最多 15 檔）</span>
+        </li>
+        <li class="feature-item included">
+          <span class="feature-icon fi-check">✓</span>
+          <span data-i18n="pf3">美股 + 台股深度追蹤</span>
+        </li>
+        <li class="feature-item included">
+          <span class="feature-icon fi-check">✓</span>
+          <span data-i18n="pf4">二階思考：美股如何影響台灣</span>
+        </li>
+        <li class="feature-item included">
+          <span class="feature-icon fi-check">✓</span>
+          <span data-i18n="pf5">即將公布財報提醒</span>
+        </li>
+        <li class="feature-item included">
+          <span class="feature-icon fi-check">✓</span>
+          <span data-i18n="pf6">持倉損益追蹤</span>
+        </li>
+        <li class="feature-item included">
+          <span class="feature-icon fi-check">✓</span>
+          <span data-i18n="pf7">優先客服回覆</span>
+        </li>
+      </ul>
+    </div>
+
+    <!-- PREMIUM -->
+    <div class="tier-card premium scene-reveal scene-reveal-d3">
+      <div class="badge-popular" data-i18n="badge_popular">最超值</div>
+      <div class="tier-name">Premium</div>
+      <div class="tier-price">
+        <div class="price-num" id="premium-price-num">499</div>
+        <div class="price-unit" data-i18n="price_per_month">/月</div>
+      </div>
+      <div class="price-annual-note" id="premium-price-note">&nbsp;</div>
+      <p class="tier-desc" data-i18n="tier_prem_desc">給高度投入的投資人。無限追蹤、即時警報、月度健檢，全方位掌控投資組合。</p>
+      <a class="tier-btn btn-premium" href="https://buy.stripe.com/fZu5kC88Jh2selI3IY4Ja02" target="_blank" rel="noopener noreferrer" id="premium-cta" data-i18n="tier_cta_btn">立即訂閱 →</a>
+      <div class="tier-divider"></div>
+      <ul class="feature-list">
+        <li class="feature-item included" style="font-weight:600;">
+          <span class="feature-icon fi-check">✓</span>
+          <span data-i18n="pmf1">Pro 所有功能</span>
+        </li>
+        <li class="feature-item included">
+          <span class="feature-icon fi-check">✓</span>
+          <span data-i18n="pmf2">無限股票追蹤</span>
+        </li>
+        <li class="feature-item included">
+          <span class="feature-icon fi-check">✓</span>
+          <span data-i18n="pmf3">即時重大消息警報（Email）</span>
+        </li>
+        <li class="feature-item included">
+          <span class="feature-icon fi-check">✓</span>
+          <span data-i18n="pmf4">月度投資組合健檢報告</span>
+        </li>
+        <li class="feature-item included">
+          <span class="feature-icon fi-check">✓</span>
+          <span data-i18n="pmf5">客製化觀察清單（最多 5 主題）</span>
+        </li>
+        <li class="feature-item included">
+          <span class="feature-icon fi-check">✓</span>
+          <span data-i18n="pmf6">LINE 優先 1-1 專人客服</span>
+        </li>
+      </ul>
+    </div>
+
+  </div>
+</section>
+
+<!-- ── FEATURE COMPARISON TABLE ── -->
+<section class="compare-section">
+  <div class="compare-wrap">
+    <div class="section-head scene-reveal">
+      <div class="section-label" data-i18n="cmp_label">詳細比較</div>
+      <h2 class="section-title" data-i18n="cmp_title">功能完整對照表</h2>
+      <p class="section-sub" data-i18n="cmp_sub">找到最符合你需求的方案</p>
+    </div>
+
+    <div class="scene-reveal reveal-d1" style="overflow-x:auto;">
+      <table class="compare-table">
+        <thead>
+          <tr class="compare-header-row">
+            <th class="col-feature" style="width:42%;" data-i18n="cmp_col_feat">功能</th>
+            <th data-i18n="cmp_col_free">免費版</th>
+            <th class="col-pro">Pro</th>
+            <th class="col-premium">Premium</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- 內容 -->
+          <tr class="compare-group-head"><td colspan="4" data-i18n="cmp_g_content">內容</td></tr>
+          <tr class="compare-row">
+            <td class="col-feature" data-i18n="cmp_r1">每日大盤摘要</td>
+            <td class="col-val yes"><span class="v-check"></span></td>
+            <td class="col-val yes"><span class="v-check"></span></td>
+            <td class="col-val yes"><span class="v-check"></span></td>
+          </tr>
+          <tr class="compare-row">
+            <td class="col-feature" data-i18n="cmp_r2">5 大新聞精選</td>
+            <td class="col-val yes"><span class="v-check"></span></td>
+            <td class="col-val yes"><span class="v-check"></span></td>
+            <td class="col-val yes"><span class="v-check"></span></td>
+          </tr>
+          <tr class="compare-row">
+            <td class="col-feature" data-i18n="cmp_r3">加密貨幣動向</td>
+            <td class="col-val yes"><span class="v-check"></span></td>
+            <td class="col-val yes"><span class="v-check"></span></td>
+            <td class="col-val yes"><span class="v-check"></span></td>
+          </tr>
+          <tr class="compare-row">
+            <td class="col-feature" data-i18n="cmp_r4">板塊輪動概覽</td>
+            <td class="col-val yes"><span class="v-check"></span></td>
+            <td class="col-val yes"><span class="v-check"></span></td>
+            <td class="col-val yes"><span class="v-check"></span></td>
+          </tr>
+          <tr class="compare-row">
+            <td class="col-feature" data-i18n="cmp_r5">美股深度追蹤</td>
+            <td class="col-val no"><span class="v-cross"></span></td>
+            <td class="col-val yes"><span class="v-check"></span></td>
+            <td class="col-val yes"><span class="v-check"></span></td>
+          </tr>
+          <tr class="compare-row">
+            <td class="col-feature" data-i18n="cmp_r6">台股深度追蹤</td>
+            <td class="col-val no"><span class="v-cross"></span></td>
+            <td class="col-val yes"><span class="v-check"></span></td>
+            <td class="col-val yes"><span class="v-check"></span></td>
+          </tr>
+          <tr class="compare-row">
+            <td class="col-feature" data-i18n="cmp_r7">二階思考分析</td>
+            <td class="col-val no"><span class="v-cross"></span></td>
+            <td class="col-val yes"><span class="v-check"></span></td>
+            <td class="col-val yes"><span class="v-check"></span></td>
+          </tr>
+
+          <!-- 個人化 -->
+          <tr class="compare-group-head"><td colspan="4" data-i18n="cmp_g_personal">個人化</td></tr>
+          <tr class="compare-row">
+            <td class="col-feature" data-i18n="cmp_r8">股票追蹤數量</td>
+            <td class="col-val"><span class="v-val" data-i18n="cmp_v_free_stocks">最多 3 檔</span></td>
+            <td class="col-val"><span class="v-val" data-i18n="cmp_v_pro_stocks">最多 15 檔</span></td>
+            <td class="col-val premium-yes"><span class="v-val" style="color:#fbbf24;" data-i18n="cmp_v_prem_stocks">無限</span></td>
+          </tr>
+          <tr class="compare-row">
+            <td class="col-feature" data-i18n="cmp_r9">持倉損益追蹤</td>
+            <td class="col-val no"><span class="v-cross"></span></td>
+            <td class="col-val yes"><span class="v-check"></span></td>
+            <td class="col-val yes"><span class="v-check"></span></td>
+          </tr>
+          <tr class="compare-row">
+            <td class="col-feature" data-i18n="cmp_r10">客製化觀察清單</td>
+            <td class="col-val no"><span class="v-cross"></span></td>
+            <td class="col-val no"><span class="v-cross"></span></td>
+            <td class="col-val premium-yes"><span class="v-val" style="color:#fbbf24;" data-i18n="cmp_v_prem_watch">最多 5 主題</span></td>
+          </tr>
+          <tr class="compare-row">
+            <td class="col-feature" data-i18n="cmp_r11">月度投組健檢</td>
+            <td class="col-val no"><span class="v-cross"></span></td>
+            <td class="col-val no"><span class="v-cross"></span></td>
+            <td class="col-val yes"><span class="v-check"></span></td>
+          </tr>
+
+          <!-- 提醒 -->
+          <tr class="compare-group-head"><td colspan="4" data-i18n="cmp_g_alert">提醒</td></tr>
+          <tr class="compare-row">
+            <td class="col-feature" data-i18n="cmp_r12">財報提醒</td>
+            <td class="col-val no"><span class="v-cross"></span></td>
+            <td class="col-val yes"><span class="v-check"></span></td>
+            <td class="col-val yes"><span class="v-check"></span></td>
+          </tr>
+          <tr class="compare-row">
+            <td class="col-feature" data-i18n="cmp_r13">即時重大消息警報</td>
+            <td class="col-val no"><span class="v-cross"></span></td>
+            <td class="col-val no"><span class="v-cross"></span></td>
+            <td class="col-val yes"><span class="v-check"></span></td>
+          </tr>
+
+          <!-- 支援 -->
+          <tr class="compare-group-head"><td colspan="4" data-i18n="cmp_g_support">支援</td></tr>
+          <tr class="compare-row">
+            <td class="col-feature" data-i18n="cmp_r14">客服回覆</td>
+            <td class="col-val"><span class="v-val" style="font-size:12px;color:var(--text-muted);" data-i18n="cmp_v_std">標準</span></td>
+            <td class="col-val yes"><span class="v-val" style="font-size:12px;" data-i18n="cmp_v_priority">優先</span></td>
+            <td class="col-val premium-yes"><span class="v-val" style="font-size:12px;color:#fbbf24;" data-i18n="cmp_v_prio_line">LINE 1-1 專人</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ── FAQ ── -->
+<section class="faq-section">
+  <div class="section-head scene-reveal" style="max-width:700px;margin:0 auto 40px;">
+    <div class="section-label" data-i18n="faq_label">常見問題</div>
+    <h2 class="section-title" data-i18n="faq_title">你可能想問的</h2>
+  </div>
+  <div class="faq-wrap">
+
+    <div class="faq-item scene-reveal scene-reveal-d1">
+      <div class="faq-q" onclick="toggleFaq(this)">
+        <span data-i18n="faq_q1">我可以隨時取消嗎？</span>
+        <div class="faq-arrow">&#9660;</div>
+      </div>
+      <div class="faq-body">
+        <div class="faq-body-inner" data-i18n-html="faq_a1">
+          可以。取消訂閱後，你的方案在當前計費週期結束前仍然有效。<strong>沒有違約金，沒有任何隱藏費用</strong>，隨時在帳號設定裡一鍵取消。
+        </div>
+      </div>
+    </div>
+
+    <div class="faq-item scene-reveal scene-reveal-d2">
+      <div class="faq-q" onclick="toggleFaq(this)">
+        <span data-i18n="faq_q2">年付方案怎麼算？</span>
+        <div class="faq-arrow">&#9660;</div>
+      </div>
+      <div class="faq-body">
+        <div class="faq-body-inner" data-i18n-html="faq_a2">
+          年付方案每月費用比月付便宜 20%。以 Pro 為例：<strong>月付 NT$199/月，年付則是 NT$159/月（一次扣款 NT$1,908）</strong>。Premium 年付為 NT$399/月（一次扣款 NT$4,788）。
+        </div>
+      </div>
+    </div>
+
+    <div class="faq-item scene-reveal scene-reveal-d3">
+      <div class="faq-q" onclick="toggleFaq(this)">
+        <span data-i18n="faq_q3">免費版跟 Pro 差在哪？</span>
+        <div class="faq-arrow">&#9660;</div>
+      </div>
+      <div class="faq-body">
+        <div class="faq-body-inner" data-i18n-html="faq_a3">
+          免費版提供每日大盤概覽、新聞精選，以及最多 3 檔的個人化持倉分析。<strong>Pro 把持倉上限放寬到 15 檔</strong>——你設定追蹤哪些股票，AI 就針對你的持倉分析今天的新聞如何影響你，而不是泛泛的市場報導。
+        </div>
+      </div>
+    </div>
+
+    <div class="faq-item scene-reveal scene-reveal-d1">
+      <div class="faq-q" onclick="toggleFaq(this)">
+        <span data-i18n="faq_q4">什麼是邀請碼？</span>
+        <div class="faq-arrow">&#9660;</div>
+      </div>
+      <div class="faq-body">
+        <div class="faq-body-inner" data-i18n-html="faq_a4">
+          MarketDaily 目前以邀請制推出免費版，確保服務品質。<strong>邀請碼可透過現有訂閱者分享</strong>，或在 Instagram / X 追蹤官方帳號參加不定期抽選活動取得。付費方案（Pro / Premium）不需要邀請碼。
+        </div>
+      </div>
+    </div>
+
+    <div class="faq-item scene-reveal scene-reveal-d2">
+      <div class="faq-q" onclick="toggleFaq(this)">
+        <span data-i18n="faq_q5">訂閱後是怎麼計費的？</span>
+        <div class="faq-arrow">&#9660;</div>
+      </div>
+      <div class="faq-body">
+        <div class="faq-body-inner" data-i18n-html="faq_a5">
+          選擇 Pro 或 Premium 後，款項由 <strong>Stripe 立即處理</strong>並開始當期計費，之後按月（或按年）自動續訂。你可以<strong>隨時在帳號設定取消</strong>，取消後方案維持到當期結束，不會再扣款。
+        </div>
+      </div>
+    </div>
+
+    <div class="faq-item scene-reveal scene-reveal-d3">
+      <div class="faq-q" onclick="toggleFaq(this)">
+        <span data-i18n="faq_q6">支援哪些付款方式？</span>
+        <div class="faq-arrow">&#9660;</div>
+      </div>
+      <div class="faq-body">
+        <div class="faq-body-inner" data-i18n-html="faq_a6">
+          目前支援 <strong>Visa、Mastercard、JCB</strong> 信用卡與簽帳卡，以及 <strong>Apple Pay、Google Pay</strong>。付款由 Stripe 安全處理，MarketDaily 不儲存任何卡號資訊。
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ── SOCIAL PROOF ── -->
+<section class="social-section">
+  <div class="social-strip scene-reveal">
+    <div class="social-quote">
+      <span class="quote-mark">"</span>
+      <div class="quote-text" data-i18n="social_quote">以前每天花一小時看財經新聞，現在七點打開信箱，十分鐘就掌握今天該注意的事。</div>
+      <div class="quote-author" data-i18n="social_author">— 台積電股東，使用 Pro 方案 3 個月</div>
+    </div>
+    <div class="social-stats">
+      <div class="stat-item">
+        <span class="stat-num">500+</span>
+        <div class="stat-label" data-i18n="stat_subscribers">活躍訂閱者</div>
+      </div>
+      <div class="stat-item">
+        <span class="stat-num">7AM</span>
+        <div class="stat-label" data-i18n="stat_delivery">每日準時送達</div>
+      </div>
+      <div class="stat-item">
+        <span class="stat-num">98%</span>
+        <div class="stat-label" data-i18n="stat_renewal">續訂率</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── FINAL CTA ── -->
+<section class="cta-section">
+  <div class="cta-wrap scene-reveal">
+    <div class="cta-card">
+      <div class="cta-card-inner">
+        <div class="cta-eyebrow" data-i18n="cta_eyebrow">立即開始</div>
+        <h2 class="cta-title" data-i18n="cta_title">讓每封日報，只講你的持股</h2>
+        <p class="cta-sub" data-i18n="cta_sub">Pro 方案 NT$199/月。隨時可取消，取消後服務維持到當期結束，沒有隱藏費用。</p>
+        <div class="cta-price-row">
+          <div class="cta-price-main" id="cta-price-display">NT$199</div>
+          <div class="cta-price-unit" data-i18n="cta_price_unit">/月</div>
+        </div>
+        <div class="cta-price-note" id="cta-price-detail" data-i18n="cta_monthly_note">月付方案，隨時取消</div>
+        <a class="cta-btn-big" href="https://buy.stripe.com/dRmaEW60B3bCfpM6Va4Ja01" target="_blank" rel="noopener noreferrer" id="cta-main-btn">
+          <span data-i18n="cta_btn">立即訂閱 Pro</span>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M3 8h10M9 4l4 4-4 4" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </a>
+        <div class="cta-guarantee"><span data-i18n="cta_guarantee">隨時取消</span> · <span data-i18n="cta_no_card">沒有隱藏費用</span> · <span data-i18n="cta_cancel">Stripe 安全付款</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="footer-brand">© 2026 MarketDaily</div>
+  <div class="footer-note" data-i18n="footer_note">每日早上 7 點 · 台灣投資人的 AI 財經日報</div>
+</footer>
+
+<script src="ui-pro.js"></script>
+<script>
+/* ── i18n ── */
+const i18n = {
+  en: {
+    page_title: "Pricing · MarketDaily",
+    nav_home: "Home", nav_pricing: "Pricing", nav_dashboard: "My Account",
+    price_pill: "Plans & Pricing",
+    price_h1: "Choose the plan that<br><span class=\"grad\">fits you best</span>",
+    price_sub: "Start free, upgrade anytime. Cancel anytime, no hidden fees.",
+    bill_monthly: "Monthly", bill_annual: "Annual", bill_save: "Save 20%",
+    tier_free_name: "Free · Starter",
+    tier_free_desc: "Daily market briefing to your inbox every morning at 7AM. Perfect for new investors.",
+    tier_free_btn: "Start Free",
+    sf1: "Daily market summary (US + TW)",
+    sf2: "Top 5 news picks (fake news filtered)",
+    sf3: "Crypto trends (BTC / ETH / SOL)",
+    sf4: "Sector rotation overview",
+    sf5: "Personalized portfolio analysis (up to 3 stocks)",
+    sf6: "Earnings report reminders",
+    sf7: "Invite code required",
+    badge_popular: "Best Value",
+    price_per_month: "/mo",
+    tier_pro_desc: "For active investors tracking their holdings — every digest is tailored to your portfolio.",
+    tier_cta_btn: "Subscribe Now →",
+    pf1: "Everything in Free",
+    pf2: "Personalized portfolio analysis (up to 15 stocks)",
+    pf3: "US + TW stocks deep tracking",
+    pf4: "2nd-order thinking: how US moves affect Taiwan",
+    pf5: "Earnings report reminders",
+    pf6: "Portfolio P&L tracking",
+    pf7: "Priority customer support",
+    tier_prem_desc: "For serious investors. Unlimited tracking, real-time alerts, monthly portfolio health checks.",
+    pmf1: "Everything in Pro",
+    pmf2: "Unlimited stock tracking",
+    pmf3: "Real-time breaking news alerts (Email)",
+    pmf4: "Monthly portfolio health report",
+    pmf5: "Custom watchlists (up to 5 themes)",
+    pmf6: "Priority 1-on-1 support on LINE",
+    annual_pro_note: "Annual billing NT$1,908 once",
+    annual_prem_note: "Annual billing NT$4,788 once",
+    cmp_label: "Side-by-Side",
+    cmp_title: "Full Feature Comparison",
+    cmp_sub: "Find the plan that fits your needs",
+    cmp_col_feat: "Feature", cmp_col_free: "Free",
+    cmp_g_content: "Content", cmp_g_personal: "Personalization",
+    cmp_g_alert: "Alerts", cmp_g_support: "Support",
+    cmp_r1: "Daily market summary", cmp_r2: "Top 5 news picks",
+    cmp_r3: "Crypto trends", cmp_r4: "Sector rotation",
+    cmp_r5: "US stocks deep tracking", cmp_r6: "TW stocks deep tracking",
+    cmp_r7: "2nd-order thinking", cmp_r8: "Stocks tracked",
+    cmp_r9: "Portfolio P&L tracking", cmp_r10: "Custom watchlists",
+    cmp_r11: "Monthly portfolio health check", cmp_r12: "Earnings reminders",
+    cmp_r13: "Real-time breaking alerts", cmp_r14: "Customer support",
+    cmp_v_free_stocks: "Up to 3", cmp_v_pro_stocks: "Up to 15", cmp_v_prem_stocks: "Unlimited",
+    cmp_v_prem_watch: "Up to 5 themes",
+    cmp_v_std: "Standard", cmp_v_priority: "Priority", cmp_v_prio_line: "1-on-1 on LINE",
+    faq_label: "FAQ", faq_title: "Common Questions",
+    faq_q1: "Can I cancel anytime?",
+    faq_a1: "Yes. After canceling, your plan stays active until the end of the current billing period. <strong>No cancellation fees, no hidden charges</strong> — cancel anytime in your account settings.",
+    faq_q2: "How does annual billing work?",
+    faq_a2: "Annual plans are 20% cheaper per month. For Pro: <strong>NT$199/mo monthly, NT$159/mo annually (billed NT$1,908 once)</strong>. Premium annual is NT$399/mo (billed NT$4,788 once).",
+    faq_q3: "What's the difference between Free and Pro?",
+    faq_a3: "Free gives you daily market overviews, top news, and personalized analysis for up to 3 stocks. <strong>Pro raises the limit to 15 stocks</strong> — you set which stocks to track and the AI analyzes today's news for your holdings specifically.",
+    faq_q4: "What is an invite code?",
+    faq_a4: "MarketDaily's free tier currently launches by invitation to ensure quality. <strong>Invite codes are shared by existing subscribers</strong> or distributed via giveaways on Instagram / X. Paid plans (Pro / Premium) don't need an invite code.",
+    faq_q5: "How does billing work after I subscribe?",
+    faq_a5: "After choosing Pro or Premium, payment is <strong>processed immediately by Stripe</strong> and your billing period begins, renewing automatically each month or year. You can <strong>cancel anytime in your account settings</strong> — your plan stays active until the end of the current period, with no further charges.",
+    faq_q6: "What payment methods are supported?",
+    faq_a6: "We accept <strong>Visa, Mastercard, JCB</strong> credit and debit cards, plus <strong>Apple Pay and Google Pay</strong>. Payments are securely processed by Stripe — MarketDaily never stores card numbers.",
+    social_quote: "I used to spend an hour every morning on financial news. Now I open my inbox at 7AM and in 10 minutes I know exactly what to watch today.",
+    social_author: "— TSMC shareholder, Pro plan for 3 months",
+    stat_subscribers: "Active Subscribers", stat_delivery: "Delivered Daily at 7AM", stat_renewal: "Renewal Rate",
+    cta_eyebrow: "Get Started",
+    cta_title: "Every Digest, Tailored to Your Holdings",
+    cta_sub: "Pro is NT$199/mo. Cancel anytime — your plan stays active until the end of the billing period, with no hidden fees.",
+    cta_price_unit: "/mo",
+    cta_monthly_note: "Monthly plan, cancel anytime",
+    cta_btn: "Subscribe to Pro",
+    cta_guarantee: "Cancel Anytime", cta_no_card: "No Hidden Fees", cta_cancel: "Secure Stripe Checkout",
+    footer_note: "Every morning at 7AM · AI financial digest for investors"
+  },
+  zh: {
+    page_title: "定價方案 · MarketDaily",
+    nav_home: "首頁", nav_pricing: "定價", nav_dashboard: "我的專區",
+    price_pill: "方案與定價",
+    price_h1: "選擇最適合你的<br><span class=\"grad\">方案</span>",
+    price_sub: "從免費開始，隨時升級。取消隨時生效，沒有隱藏費用。",
+    bill_monthly: "月付", bill_annual: "年付", bill_save: "省 20%",
+    tier_free_name: "免費版 · Starter",
+    tier_free_desc: "每天早上 7 點，基礎版市場快訊直送信箱。適合剛入門的投資人。",
+    tier_free_btn: "免費開始",
+    sf1: "每日大盤摘要（美股 + 台股）",
+    sf2: "5 大新聞精選（假訊息過濾）",
+    sf3: "加密貨幣動向（BTC / ETH / SOL）",
+    sf4: "板塊輪動概覽",
+    sf5: "個人化持倉分析（最多 3 檔）",
+    sf6: "即將公布財報提醒",
+    sf7: "需邀請碼",
+    badge_popular: "最超值",
+    price_per_month: "/月",
+    tier_pro_desc: "適合積極追蹤持股的投資人，個人化分析讓每封日報都跟你的投資組合直接掛鉤。",
+    tier_cta_btn: "立即訂閱 →",
+    pf1: "免費版所有功能",
+    pf2: "個人化持倉分析（最多 15 檔）",
+    pf3: "美股 + 台股深度追蹤",
+    pf4: "二階思考：美股如何影響台灣",
+    pf5: "即將公布財報提醒",
+    pf6: "持倉損益追蹤",
+    pf7: "優先客服回覆",
+    tier_prem_desc: "給高度投入的投資人。無限追蹤、即時警報、月度健檢，全方位掌控投資組合。",
+    pmf1: "Pro 所有功能",
+    pmf2: "無限股票追蹤",
+    pmf3: "即時重大消息警報（Email）",
+    pmf4: "月度投資組合健檢報告",
+    pmf5: "客製化觀察清單（最多 5 主題）",
+    pmf6: "LINE 優先 1-1 專人客服",
+    annual_pro_note: "年付 NT$1,908 一次扣款",
+    annual_prem_note: "年付 NT$4,788 一次扣款",
+    cmp_label: "詳細比較",
+    cmp_title: "功能完整對照表",
+    cmp_sub: "找到最符合你需求的方案",
+    cmp_col_feat: "功能", cmp_col_free: "免費版",
+    cmp_g_content: "內容", cmp_g_personal: "個人化",
+    cmp_g_alert: "提醒", cmp_g_support: "支援",
+    cmp_r1: "每日大盤摘要", cmp_r2: "5 大新聞精選",
+    cmp_r3: "加密貨幣動向", cmp_r4: "板塊輪動概覽",
+    cmp_r5: "美股深度追蹤", cmp_r6: "台股深度追蹤",
+    cmp_r7: "二階思考分析", cmp_r8: "股票追蹤數量",
+    cmp_r9: "持倉損益追蹤", cmp_r10: "客製化觀察清單",
+    cmp_r11: "月度投組健檢", cmp_r12: "財報提醒",
+    cmp_r13: "即時重大消息警報", cmp_r14: "客服回覆",
+    cmp_v_free_stocks: "最多 3 檔", cmp_v_pro_stocks: "最多 15 檔", cmp_v_prem_stocks: "無限",
+    cmp_v_prem_watch: "最多 5 主題",
+    cmp_v_std: "標準", cmp_v_priority: "優先", cmp_v_prio_line: "LINE 1-1 專人",
+    faq_label: "常見問題", faq_title: "你可能想問的",
+    faq_q1: "我可以隨時取消嗎？",
+    faq_a1: "可以。取消訂閱後，你的方案在當前計費週期結束前仍然有效。<strong>沒有違約金，沒有任何隱藏費用</strong>，隨時在帳號設定裡一鍵取消。",
+    faq_q2: "年付方案怎麼算？",
+    faq_a2: "年付方案每月費用比月付便宜 20%。以 Pro 為例：<strong>月付 NT$199/月，年付則是 NT$159/月（一次扣款 NT$1,908）</strong>。Premium 年付為 NT$399/月（一次扣款 NT$4,788）。",
+    faq_q3: "免費版跟 Pro 差在哪？",
+    faq_a3: "免費版提供每日大盤概覽、新聞精選，以及最多 3 檔的個人化持倉分析。<strong>Pro 把持倉上限放寬到 15 檔</strong>——你設定追蹤哪些股票，AI 就針對你的持倉分析今天的新聞如何影響你，而不是泛泛的市場報導。",
+    faq_q4: "什麼是邀請碼？",
+    faq_a4: "MarketDaily 目前以邀請制推出免費版，確保服務品質。<strong>邀請碼可透過現有訂閱者分享</strong>，或在 Instagram / X 追蹤官方帳號參加不定期抽選活動取得。付費方案（Pro / Premium）不需要邀請碼。",
+    faq_q5: "訂閱後是怎麼計費的？",
+    faq_a5: "選擇 Pro 或 Premium 後，款項由 <strong>Stripe 立即處理</strong>並開始當期計費，之後按月（或按年）自動續訂。你可以<strong>隨時在帳號設定取消</strong>，取消後方案維持到當期結束，不會再扣款。",
+    faq_q6: "支援哪些付款方式？",
+    faq_a6: "目前支援 <strong>Visa、Mastercard、JCB</strong> 信用卡與簽帳卡，以及 <strong>Apple Pay、Google Pay</strong>。付款由 Stripe 安全處理，MarketDaily 不儲存任何卡號資訊。",
+    social_quote: "以前每天花一小時看財經新聞，現在七點打開信箱，十分鐘就掌握今天該注意的事。",
+    social_author: "— 台積電股東，使用 Pro 方案 3 個月",
+    stat_subscribers: "活躍訂閱者", stat_delivery: "每日準時送達", stat_renewal: "續訂率",
+    cta_eyebrow: "立即開始",
+    cta_title: "讓每封日報，只講你的持股",
+    cta_sub: "Pro 方案 NT$199/月。隨時可取消，取消後服務維持到當期結束，沒有隱藏費用。",
+    cta_price_unit: "/月",
+    cta_monthly_note: "月付方案，隨時取消",
+    cta_btn: "立即訂閱 Pro",
+    cta_guarantee: "隨時取消", cta_no_card: "沒有隱藏費用", cta_cancel: "Stripe 安全付款",
+    footer_note: "每日早上 7 點 · 台灣投資人的 AI 財經日報"
+  }
+};
+
+function applyLang(lang) {
+  const t = i18n[lang] || i18n.zh;
+  document.title = t.page_title;
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const v = t[el.dataset.i18n];
+    if (v !== undefined) el.textContent = v;
+  });
+  document.querySelectorAll('[data-i18n-html]').forEach(el => {
+    const v = t[el.dataset.i18nHtml];
+    if (v !== undefined) el.innerHTML = v;
+  });
+  const langBtn = document.querySelector('.lang-btn');
+  if (langBtn) langBtn.textContent = lang === 'zh' ? 'EN' : '中文';
+  localStorage.setItem('md-lang-v2', lang);
+  // Sync dynamic billing text
+  const ctaDetail = document.getElementById('cta-price-detail');
+  if (ctaDetail) {
+    ctaDetail.textContent = currentBilling === 'annual' ? t.annual_pro_note : t.cta_monthly_note;
+  }
+  if (currentBilling === 'annual') {
+    const pn = document.getElementById('pro-price-note');
+    const pmn = document.getElementById('premium-price-note');
+    if (pn) pn.textContent = t.annual_pro_note;
+    if (pmn) pmn.textContent = t.annual_prem_note;
+  }
+}
+
+function toggleLang() {
+  const cur = localStorage.getItem('md-lang-v2') || 'zh';
+  applyLang(cur === 'zh' ? 'en' : 'zh');
+}
+
+/* ── Billing Toggle ── */
+const PRICES = {
+  monthly: { pro: 199, premium: 499 },
+  annual:  { pro: 159, premium: 399 }
+};
+const STRIPE_PRO = 'https://buy.stripe.com/dRmaEW60B3bCfpM6Va4Ja01';
+const STRIPE_PREMIUM = 'https://buy.stripe.com/fZu5kC88Jh2selI3IY4Ja02';
+
+let currentBilling = 'monthly';
+
+function setBilling(mode) {
+  if (currentBilling === mode) return;
+  currentBilling = mode;
+
+  document.querySelectorAll('.toggle-opt').forEach(el => {
+    el.classList.toggle('active', el.dataset.mode === mode);
+  });
+
+  const p = PRICES[mode];
+  const lang = localStorage.getItem('md-lang-v2') || 'zh';
+  const t = i18n[lang] || i18n.zh;
+
+  const proNum = document.getElementById('pro-price-num');
+  const proNote = document.getElementById('pro-price-note');
+  const proCta = document.getElementById('pro-cta');
+  animatePrice(proNum, p.pro);
+  proNote.textContent = mode === 'annual' ? t.annual_pro_note : '';
+  proCta.href = STRIPE_PRO;
+
+  const premiumNum = document.getElementById('premium-price-num');
+  const premiumNote = document.getElementById('premium-price-note');
+  const premiumCta = document.getElementById('premium-cta');
+  animatePrice(premiumNum, p.premium);
+  premiumNote.textContent = mode === 'annual' ? t.annual_prem_note : '';
+  premiumCta.href = STRIPE_PREMIUM;
+
+  const ctaDisplay = document.getElementById('cta-price-display');
+  const ctaDetail = document.getElementById('cta-price-detail');
+  const ctaBtn = document.getElementById('cta-main-btn');
+  ctaDisplay.textContent = 'NT$' + p.pro;
+  ctaDetail.textContent = mode === 'annual' ? t.annual_pro_note : t.cta_monthly_note;
+  ctaBtn.href = STRIPE_PRO;
+}
+
+function animatePrice(el, target) {
+  const start = parseInt(el.textContent.replace(/\D/g,'')) || 0;
+  const duration = 360;
+  const startTime = performance.now();
+  function step(now) {
+    const t = Math.min((now - startTime) / duration, 1);
+    const ease = 1 - Math.pow(1 - t, 3);
+    el.textContent = Math.round(start + (target - start) * ease);
+    if (t < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+/* ── FAQ Accordion ── */
+function toggleFaq(qEl) {
+  const item = qEl.closest('.faq-item');
+  const body = item.querySelector('.faq-body');
+  const isOpen = item.classList.contains('open');
+
+  document.querySelectorAll('.faq-item.open').forEach(openItem => {
+    openItem.classList.remove('open');
+    openItem.querySelector('.faq-body').style.maxHeight = '0';
+  });
+
+  if (!isOpen) {
+    item.classList.add('open');
+    body.style.maxHeight = body.scrollHeight + 'px';
+  }
+}
+
+/* ── Scroll Reveal ── */
+const revealObserver = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.classList.add('visible');
+      revealObserver.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.08 });
+
+document.querySelectorAll('.scene-reveal, .reveal').forEach(el => revealObserver.observe(el));
+
+/* ── Animate live-pulse ── */
+const style = document.createElement('style');
+style.textContent = `
+  @keyframes live-pulse {
+    0% { box-shadow: 0 0 0 0 rgba(16,185,129,0.7); }
+    70% { box-shadow: 0 0 0 7px rgba(16,185,129,0); }
+    100% { box-shadow: 0 0 0 0 rgba(16,185,129,0); }
+  }
+`;
+document.head.appendChild(style);
+
+/* ── Init lang ── */
+applyLang(localStorage.getItem('md-lang-v2') || 'zh');
+</script>
+</body>
+</html>

@@ -277,6 +277,11 @@ nav {
 .save-btn:hover { background: #4f46e5; transform: translateY(-2px); box-shadow: 0 8px 28px rgba(99,102,241,0.48); }
 .save-btn:active { transform: translateY(0); }
 .save-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+.cap-bar { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin: 0 2px 12px; font-size: 13px; }
+.cap-count { color: var(--text2); font-weight: 600; }
+.cap-count.full { color: #fbbf24; }
+.cap-upgrade { color: #818cf8; font-weight: 700; text-decoration: none; }
+.cap-upgrade:hover { color: #fff; }
 
 /* Messages */
 .msg {
@@ -614,6 +619,10 @@ nav {
       </div>
     </div>
 
+    <div class="cap-bar" id="cap-bar">
+      <span class="cap-count" id="cap-count">已追蹤 0 檔</span>
+      <a href="pricing.html" class="cap-upgrade" id="cap-upgrade" style="display:none;">升級可追蹤更多 →</a>
+    </div>
     <button class="save-btn" id="save-btn" onclick="savePreferences()">儲存設定</button>
     <div class="msg success" id="success-msg">✅ 設定已儲存！明天起的報告會依你的選股客製化。</div>
     <div class="msg error" id="error-msg"></div>
@@ -634,6 +643,23 @@ nav {
         <div style="display:none;margin-top:12px;padding:12px 16px;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.25);color:#6ee7b7;font-size:13px;font-weight:600;border-radius:10px;text-align:center;" id="cpwd-ok">✅ 密碼已更新！</div>
       </div>
       <button class="save-btn" onclick="toggleChangePwd()" id="toggle-pwd-btn" style="margin-top:0;">修改密碼</button>
+    </div>
+
+    <!-- LINE 即時提醒(Premium 專屬) -->
+    <div class="card" id="line-alert-card" style="margin-top:8px;display:none;">
+      <div class="card-title">⚡ 即時 LINE 重大新聞提醒</div>
+      <div class="card-desc">重大新聞影響到你的持股時,立刻用 LINE 通知你,不必等隔天日報。Premium 專屬功能。</div>
+      <div id="line-unbound-box" style="display:none;margin-top:14px;">
+        <div style="font-size:12px;color:var(--text2);line-height:1.7;margin-bottom:14px;padding:10px 13px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.22);border-radius:10px;">⚠️ 綁定前,請先在 LINE 把 <strong>MarketDaily 官方帳號</strong> 加為好友,提醒才送得到。</div>
+        <label for="line-pwd" style="display:block;font-size:12px;font-weight:700;color:var(--text2);margin-bottom:7px;">輸入密碼確認</label>
+        <input type="password" id="line-pwd" placeholder="••••••••" autocomplete="current-password" style="width:100%;padding:13px 16px;background:var(--input-bg);border:1px solid var(--input-border);border-radius:var(--radius-sm);font-size:14px;font-family:inherit;color:var(--text);outline:none;transition:all 0.2s;margin-bottom:14px;" onkeydown="if(event.key==='Enter')bindLine()">
+        <button class="save-btn" onclick="bindLine()" id="line-bind-btn" style="margin-top:0;background:#06C755;">綁定 LINE →</button>
+        <div style="display:none;margin-top:12px;font-size:13px;color:#f87171;text-align:center;" id="line-err"></div>
+      </div>
+      <div id="line-bound-box" style="display:none;margin-top:14px;">
+        <div style="padding:12px 16px;background:rgba(6,199,85,0.1);border:1px solid rgba(6,199,85,0.3);color:#6ee7b7;font-size:13px;font-weight:600;border-radius:10px;margin-bottom:12px;">✓ LINE 已綁定 — 重大新聞會即時推播給你</div>
+        <button class="save-btn" onclick="unbindLine()" id="line-unbind-btn" style="margin-top:0;background:rgba(255,255,255,0.06);border:1px solid var(--input-border);">解除綁定</button>
+      </div>
     </div>
 
     <!-- Referral Program -->
@@ -691,6 +717,8 @@ const WORKER_URL = "https://marketdaily-webhook.delvin-12345678.workers.dev";
 
 let US_STOCKS = [], TW_STOCKS = [];
 const selected = { us: [], tw: [] };
+let userCap = Infinity;
+let userPlan = "free";
 const hiIdx = { us: -1, tw: -1 };
 
 function search(q, db) {
@@ -730,6 +758,10 @@ function renderDD(market, results, q) {
 
 function addStock(market, sym, name) {
   if (selected[market].find(s => s.sym === sym)) return;
+  if (userCap !== Infinity && selected.us.length + selected.tw.length >= userCap) {
+    updateStats();
+    return;
+  }
   selected[market].push({ sym, name });
   renderTags(market); updateStats();
   document.getElementById(`${market}-search`).value = "";
@@ -760,6 +792,24 @@ function updateStats() {
   document.getElementById("stat-tw").textContent = `${tw.length} 支`;
   document.getElementById("stat-us-list").textContent = us.length ? us.slice(0,3).map(s=>s.sym).join(" · ") + (us.length > 3 ? " ..." : "") : "尚未設定";
   document.getElementById("stat-tw-list").textContent = tw.length ? tw.slice(0,2).map(s=>s.sym).join(" · ") + (tw.length > 2 ? " ..." : "") : "尚未設定";
+
+  const n = us.length + tw.length;
+  const atCap = userCap !== Infinity && n >= userCap;
+  const countEl = document.getElementById("cap-count");
+  if (countEl) {
+    countEl.textContent = userCap === Infinity ? `已追蹤 ${n} 檔` : `已追蹤 ${n} / ${userCap} 檔`;
+    countEl.classList.toggle("full", atCap);
+    document.getElementById("cap-upgrade").style.display = atCap && userPlan !== "premium" ? "" : "none";
+  }
+  ["us", "tw"].forEach(m => {
+    const inp = document.getElementById(`${m}-search`);
+    if (inp) {
+      inp.disabled = atCap;
+      inp.placeholder = atCap
+        ? `已達上限 ${userCap} 檔，移除後才能再加`
+        : (m === "us" ? "搜尋美股代號或名稱..." : "搜尋台股代號或名稱...");
+    }
+  });
 }
 
 ["us","tw"].forEach(market => {
@@ -865,10 +915,64 @@ async function showDashboard(email, plan) {
     document.getElementById("stat-plan").textContent = plan === "paid" ? "付費方案 NT$500/月" : "免費方案";
     document.getElementById("plan-badge").textContent = plan === "paid" ? "⭐ 付費方案 · 訂閱中" : "✅ 免費方案 · 訂閱中";
   }
+  setupLineCard(email, plan);
   await loadPreferences(email);
   loadReferral(email);
   loadStories(email);
   loadMarketOverview();
+}
+
+// Premium 即時 LINE 提醒綁定卡(目前對 paid/admin 顯示;Premium 細分待 plan 標記完成後收斂)
+async function setupLineCard(email, plan) {
+  const card = document.getElementById("line-alert-card");
+  if (!card) return;
+  if (plan !== "paid" && plan !== "admin") { card.style.display = "none"; return; }
+  card.style.display = "block";
+  let bound = false;
+  try {
+    const res = await fetch(`${WORKER_URL}/line/status?email=${encodeURIComponent(email)}`);
+    if (res.ok) bound = (await res.json()).bound;
+  } catch {}
+  document.getElementById("line-bound-box").style.display = bound ? "block" : "none";
+  document.getElementById("line-unbound-box").style.display = bound ? "none" : "block";
+}
+
+async function bindLine() {
+  const email = localStorage.getItem("md-email");
+  const password = document.getElementById("line-pwd").value;
+  const errEl = document.getElementById("line-err");
+  const btn = document.getElementById("line-bind-btn");
+  errEl.style.display = "none";
+  if (!password) { errEl.textContent = "請輸入密碼"; errEl.style.display = "block"; return; }
+  btn.disabled = true; btn.textContent = "處理中...";
+  try {
+    const res = await fetch(WORKER_URL + "/line/login", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
+    const data = await res.json();
+    if (data.authUrl) { window.location.href = data.authUrl; return; }
+    errEl.textContent = data.error === "auth" ? "密碼錯誤" : "綁定失敗,請稍後再試";
+    errEl.style.display = "block";
+  } catch { errEl.textContent = "網路錯誤,請稍後再試"; errEl.style.display = "block"; }
+  finally { btn.disabled = false; btn.textContent = "綁定 LINE →"; }
+}
+
+async function unbindLine() {
+  const email = localStorage.getItem("md-email");
+  const password = localStorage.getItem("md-saved-pwd") || prompt("解除綁定 — 請輸入你的密碼");
+  if (!password) return;
+  try {
+    const res = await fetch(WORKER_URL + "/line/unbind", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
+    const data = await res.json();
+    if (data.ok) {
+      document.getElementById("line-bound-box").style.display = "none";
+      document.getElementById("line-unbound-box").style.display = "block";
+    } else { alert(data.error === "auth" ? "密碼錯誤" : "解除失敗,請稍後再試"); }
+  } catch { alert("網路錯誤,請稍後再試"); }
 }
 
 async function loadAdminStats() {
@@ -882,6 +986,8 @@ async function loadPreferences(email) {
   try {
     const res = await fetch(WORKER_URL + "/get-preferences", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email }) });
     const data = await res.json();
+    userPlan = data.plan || "free";
+    userCap = data.cap == null ? Infinity : data.cap;
     selected.us = []; selected.tw = [];
     (data.us_stocks || []).forEach(sym => { const f = US_STOCKS.find(([s])=>s===sym); selected.us.push({ sym, name: f ? f[1] : sym }); });
     (data.tw_stocks || []).forEach(sym => { const f = TW_STOCKS.find(([s])=>s===sym); selected.tw.push({ sym, name: f ? f[1] : sym }); });
@@ -1536,6 +1642,9 @@ async function init() {
   if (urlEmail && !savedEmail) { document.getElementById("login-email").value = urlEmail; document.getElementById("login-password").focus(); history.replaceState(null, "", "dashboard.html"); }
   const email = localStorage.getItem("md-email"); const plan = localStorage.getItem("md-plan") || "free";
   if (email) showDashboard(email, plan);
+  const lineParam = new URLSearchParams(window.location.search).get("line");
+  if (lineParam === "bound") { alert("✅ LINE 綁定成功!重大新聞影響你的持股時會即時推播。"); history.replaceState(null, "", "dashboard.html"); }
+  else if (lineParam === "error") { alert("⚠️ LINE 綁定失敗,請再試一次。"); history.replaceState(null, "", "dashboard.html"); }
 }
 init();
 </script>

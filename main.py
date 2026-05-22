@@ -354,13 +354,14 @@ def get_user_preferences(email: str) -> dict:
                 return {
                     "us_stocks": d.get("us_stocks") or [],
                     "tw_stocks": d.get("tw_stocks") or [],
+                    "plan": d.get("plan") or "free",
                 }
         except Exception:
             pass
         if attempt < 2:
             time.sleep(2)
     print(f"   ⚠️ 無法取得 {email} 的偏好設定（重試 3 次後仍失敗），本次改用預設版")
-    return {"us_stocks": [], "tw_stocks": []}
+    return {"us_stocks": [], "tw_stocks": [], "plan": "free"}
 
 
 def save_hosted_digest(html: str) -> str:
@@ -395,6 +396,20 @@ def _web_view_banner(url: str, total_holdings: int = 0, shown: int = 0) -> str:
         f'<a href="{url}" style="font-size:13px;font-weight:800;color:#4338ca;'
         'text-decoration:none;">📱 在網頁上看完整日報（不會被截斷、可分享）→</a>'
         f'{note}</div>'
+    )
+
+
+def _newbie_guide_footer() -> str:
+    """新手等級的訂閱者:日報底部附新手教學連結。"""
+    return (
+        '<div style="margin:18px 20px 4px;padding:14px 16px;background:#f6f7fb;'
+        'border:1px solid #e2e8f0;border-radius:12px;text-align:center;">'
+        '<div style="font-size:13px;color:#444;line-height:1.7;">'
+        '剛開始用 MarketDaily？不熟悉怎麼操作？</div>'
+        '<a href="https://marketdaily.ai/guide.html" style="display:inline-block;'
+        'margin-top:6px;font-size:13px;font-weight:800;color:#4338ca;'
+        'text-decoration:none;">📖 看 3 分鐘新手教學 →</a>'
+        '</div>'
     )
 
 
@@ -455,19 +470,23 @@ def run():
 
     print("⑦ 個人化發送...")
     from analyzer import get_personalized_subject
+    from experience import experience_tier
     success_count = 0
     ai_calls = 0
+    tier_counts = {"新手": 0, "一般": 0, "老手": 0}
     for email in subscribers:
         prefs = subscriber_prefs[email]
         us_stocks = prefs.get("us_stocks") or []
         tw_stocks = prefs.get("tw_stocks") or []
         total = len(us_stocks) + len(tw_stocks)
+        exp_score, exp_tier = experience_tier(len(us_stocks), len(tw_stocks), prefs.get("plan"))
+        tier_counts[exp_tier] = tier_counts.get(exp_tier, 0) + 1
 
         subject = None
         web_url = default_web_url
         shown = total
         if us_stocks or tw_stocks:
-            print(f"   {email} → 個人化（美股:{len(us_stocks)}, 台股:{len(tw_stocks)}）")
+            print(f"   {email} → 個人化（美股:{len(us_stocks)}, 台股:{len(tw_stocks)}）· {exp_tier}（{exp_score}）")
             try:
                 if ai_calls > 0:
                     time.sleep(5)  # 輕度間隔，避免觸發 Gemini 免費層每分鐘上限
@@ -497,6 +516,8 @@ def run():
 
         if web_url:
             inner = _web_view_banner(web_url, total, shown) + inner
+        if exp_tier == "新手":
+            inner = inner + _newbie_guide_footer()
 
         try:
             html = build_email_html(data["date"], inner)
@@ -510,6 +531,7 @@ def run():
             print(f"   ❌ 發送失敗：{email}")
 
     print(f"✅ 今日財經日報發送完成！成功 {success_count}/{len(subscribers)} 位")
+    print(f"   經驗分布 → 🌱新手 {tier_counts['新手']} · 📈一般 {tier_counts['一般']} · 🎯老手 {tier_counts['老手']}")
 
 
 if __name__ == "__main__":

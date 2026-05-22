@@ -203,6 +203,11 @@ nav {
 }
 .save-btn:hover { background: #4f46e5; transform: translateY(-2px); box-shadow: 0 8px 28px rgba(99,102,241,0.52); }
 .save-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+.cap-bar { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin: 2px 2px 14px; font-size: 13px; }
+.cap-count { color: var(--text2); font-weight: 600; }
+.cap-count.full { color: #fbbf24; }
+.cap-upgrade { color: var(--primary-light); font-weight: 700; text-decoration: none; }
+.cap-upgrade:hover { color: #fff; }
 
 /* ── MESSAGES ── */
 .msg { display: none; padding: 14px 18px; border-radius: var(--radius-sm); font-size: 14px; font-weight: 600; margin-top: 14px; text-align: center; }
@@ -300,6 +305,10 @@ nav {
     <div class="tags" id="tw-tags"><span class="tags-empty">尚未選擇任何台股</span></div>
   </div>
 
+  <div class="cap-bar" id="cap-bar">
+    <span class="cap-count" id="cap-count">已追蹤 0 檔</span>
+    <a href="pricing.html" class="cap-upgrade" id="cap-upgrade" style="display:none;">升級可追蹤更多 →</a>
+  </div>
   <button class="save-btn pricing-btn btn-pro" id="save-btn" onclick="savePreferences()">儲存設定 →</button>
   <div class="msg success" id="success-msg">✅ 設定已儲存！明天起的報告會依照你的選股客製化。</div>
   <div class="msg error" id="error-msg"></div>
@@ -315,6 +324,29 @@ const TW_STOCKS = TW_STOCKS_FULL;
 const selected = { us: [], tw: [] };
 let activeDropdown = null;
 let highlightIndex = { us: -1, tw: -1 };
+let userCap = Infinity;
+let userPlan = "free";
+
+function totalSelected() { return selected.us.length + selected.tw.length; }
+
+function updateCapUI() {
+  const n = totalSelected();
+  const countEl = document.getElementById("cap-count");
+  const atCap = userCap !== Infinity && n >= userCap;
+  countEl.textContent = userCap === Infinity
+    ? `已追蹤 ${n} 檔`
+    : `已追蹤 ${n} / ${userCap} 檔`;
+  countEl.classList.toggle("full", atCap);
+  document.getElementById("cap-upgrade").style.display =
+    atCap && userPlan !== "premium" ? "" : "none";
+  ["us", "tw"].forEach(m => {
+    const inp = document.getElementById(`${m}-search`);
+    inp.disabled = atCap;
+    inp.placeholder = atCap
+      ? `已達上限 ${userCap} 檔，移除後才能再加`
+      : (m === "us" ? "搜尋美股代號或名稱..." : "搜尋台股代號或名稱...");
+  });
+}
 
 function searchStocks(query, db) {
   if (!query) return [];
@@ -357,8 +389,13 @@ function renderDropdown(market, results, query) {
 
 function addStock(market, sym, name) {
   if (selected[market].find(s => s.sym === sym)) return;
+  if (userCap !== Infinity && totalSelected() >= userCap) {
+    updateCapUI();
+    return;
+  }
   selected[market].push({ sym, name });
   renderTags(market);
+  updateCapUI();
   document.getElementById(`${market}-search`).value = "";
   document.getElementById(`${market}-dropdown`).classList.remove("open");
 }
@@ -366,6 +403,7 @@ function addStock(market, sym, name) {
 function removeStock(market, sym) {
   selected[market] = selected[market].filter(s => s.sym !== sym);
   renderTags(market);
+  updateCapUI();
 }
 
 function renderTags(market) {
@@ -431,6 +469,8 @@ document.getElementById("email-input").addEventListener("blur", async () => {
       body: JSON.stringify({ email }),
     });
     const data = await res.json();
+    userPlan = data.plan || "free";
+    userCap = data.cap == null ? Infinity : data.cap;
     selected.us = []; selected.tw = [];
     (data.us_stocks || []).forEach(sym => {
       const found = US_STOCKS.find(([s]) => s === sym);
@@ -441,6 +481,7 @@ document.getElementById("email-input").addEventListener("blur", async () => {
       selected.tw.push({ sym, name: found ? found[1] : sym });
     });
     renderTags("us"); renderTags("tw");
+    updateCapUI();
   } catch {}
 });
 

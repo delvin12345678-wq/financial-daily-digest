@@ -10,6 +10,14 @@ const INVITE_CODES = [
 
 const TIER_BY_AMOUNT = { 19900: "Pro", 190800: "Pro", 49900: "Premium", 478800: "Premium" };
 
+const PLAN_CAPS = { free: 3, pro: 15, premium: Infinity };
+function planCap(plan) { return PLAN_CAPS[plan] || PLAN_CAPS.free; }
+function applyCap(us, tw, cap) {
+  if (cap === Infinity || us.length + tw.length <= cap) return [us, tw];
+  if (us.length >= cap) return [us.slice(0, cap), []];
+  return [us, tw.slice(0, cap - us.length)];
+}
+
 async function hashPassword(password) {
   const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(password));
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join("");
@@ -21,6 +29,39 @@ function generateRefCode(email) {
   let code = 'REF' + prefix;
   for (let i = 0; i < 5; i++) code += chars[Math.floor(Math.random() * chars.length)];
   return code;
+}
+
+// --- LINE Login(Premium 即時提醒綁定)---
+const LINE_LOGIN_CHANNEL_ID = "2010167489";
+const LINE_LOGIN_CALLBACK = "https://marketdaily-webhook.delvin-12345678.workers.dev/line/callback";
+const DASHBOARD_URL = "https://marketdaily.ai/dashboard.html";
+
+function b64urlEncode(bytes) {
+  return btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+function b64urlToBytes(s) {
+  return Uint8Array.from(atob(s.replace(/-/g, "+").replace(/_/g, "/")), c => c.charCodeAt(0));
+}
+async function hmacKey(secret) {
+  return crypto.subtle.importKey("raw", new TextEncoder().encode(secret),
+    { name: "HMAC", hash: "SHA-256" }, false, ["sign", "verify"]);
+}
+async function signState(payload, secret) {
+  const data = b64urlEncode(new TextEncoder().encode(JSON.stringify(payload)));
+  const sig = await crypto.subtle.sign("HMAC", await hmacKey(secret), new TextEncoder().encode(data));
+  return data + "." + b64urlEncode(new Uint8Array(sig));
+}
+async function verifyState(state, secret) {
+  const [data, sig] = (state || "").split(".");
+  if (!data || !sig) return null;
+  const ok = await crypto.subtle.verify("HMAC", await hmacKey(secret),
+    b64urlToBytes(sig), new TextEncoder().encode(data));
+  if (!ok) return null;
+  try {
+    const payload = JSON.parse(new TextDecoder().decode(b64urlToBytes(data)));
+    if (payload.exp && Date.now() > payload.exp) return null;
+    return payload;
+  } catch { return null; }
 }
 
 const CORS_HEADERS = {
@@ -124,6 +165,75 @@ export default {
       return json({ ok: true });
     }
 
+    // LINE 綁定:啟動 OAuth,回傳授權 URL
+    if (url.pathname === "/line/login" && request.method === "POST") {
+      let body;
+      try { body = await request.json(); } catch { return json({ error: "Invalid request" }, 400); }
+      const email = (body.email || "").trim().toLowerCase();
+      const password = body.password || "";
+      if (!email) return json({ error: "invalid_email" }, 400);
+      const storedHash = await env.USER_PREFS.get(`pwd:${email}`);
+      if (!storedHash || (await hashPassword(password)) !== storedHash) {
+        return json({ error: "auth" }, 403);
+      }
+      const state = await signState({ email, exp: Date.now() + 600000 }, env.LINE_LOGIN_CHANNEL_SECRET);
+      const authUrl = "https://access.line.me/oauth2/v2.1/authorize?response_type=code"
+        + "&client_id=" + LINE_LOGIN_CHANNEL_ID
+        + "&redirect_uri=" + encodeURIComponent(LINE_LOGIN_CALLBACK)
+        + "&state=" + encodeURIComponent(state)
+        + "&scope=profile";
+      return json({ authUrl });
+    }
+
+    // LINE 綁定:OAuth 回呼
+    if (url.pathname === "/line/callback" && request.method === "GET") {
+      const code = url.searchParams.get("code");
+      const payload = await verifyState(url.searchParams.get("state"), env.LINE_LOGIN_CHANNEL_SECRET);
+      if (!code || !payload) return Response.redirect(DASHBOARD_URL + "?line=error", 302);
+      const tokenRes = await fetch("https://api.line.me/oauth2/v2.1/token", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+          grant_type: "authorization_code", code,
+          redirect_uri: LINE_LOGIN_CALLBACK,
+          client_id: LINE_LOGIN_CHANNEL_ID,
+          client_secret: env.LINE_LOGIN_CHANNEL_SECRET,
+        }),
+      });
+      if (!tokenRes.ok) return Response.redirect(DASHBOARD_URL + "?line=error", 302);
+      const tok = await tokenRes.json();
+      const profRes = await fetch("https://api.line.me/v2/profile", {
+        headers: { "Authorization": "Bearer " + tok.access_token },
+      });
+      if (!profRes.ok) return Response.redirect(DASHBOARD_URL + "?line=error", 302);
+      const prof = await profRes.json();
+      if (!prof.userId) return Response.redirect(DASHBOARD_URL + "?line=error", 302);
+      await env.USER_PREFS.put(`line:${payload.email}`, prof.userId);
+      await env.USER_PREFS.put(`linemap:${prof.userId}`, payload.email);
+      return Response.redirect(DASHBOARD_URL + "?line=bound", 302);
+    }
+
+    // LINE 綁定:解除
+    if (url.pathname === "/line/unbind" && request.method === "POST") {
+      let body;
+      try { body = await request.json(); } catch { return json({ error: "Invalid request" }, 400); }
+      const email = (body.email || "").trim().toLowerCase();
+      const storedHash = await env.USER_PREFS.get(`pwd:${email}`);
+      if (!storedHash || (await hashPassword(body.password || "")) !== storedHash) {
+        return json({ error: "auth" }, 403);
+      }
+      const userId = await env.USER_PREFS.get(`line:${email}`);
+      if (userId) await env.USER_PREFS.delete(`linemap:${userId}`);
+      await env.USER_PREFS.delete(`line:${email}`);
+      return json({ ok: true });
+    }
+
+    // LINE 綁定:查詢狀態
+    if (url.pathname === "/line/status" && request.method === "GET") {
+      const email = (url.searchParams.get("email") || "").trim().toLowerCase();
+      return json({ bound: !!email && !!(await env.USER_PREFS.get(`line:${email}`)) });
+    }
+
     // Admin stats
     if (url.pathname === "/admin-stats" && request.method === "POST") {
       let body;
@@ -180,13 +290,18 @@ export default {
       if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
         return json({ error: "invalid_email" }, 400);
       }
+      const plan = (await env.USER_PREFS.get(`plan:${email}`)) || "free";
+      const cap = planCap(plan);
+      let us = Array.isArray(body.us_stocks) ? body.us_stocks : [];
+      let tw = Array.isArray(body.tw_stocks) ? body.tw_stocks : [];
+      [us, tw] = applyCap(us, tw, cap);
       const prefs = {
-        us_stocks: Array.isArray(body.us_stocks) ? body.us_stocks : [],
-        tw_stocks: Array.isArray(body.tw_stocks) ? body.tw_stocks : [],
+        us_stocks: us,
+        tw_stocks: tw,
         updated_at: new Date().toISOString(),
       };
       await env.USER_PREFS.put(email, JSON.stringify(prefs));
-      return json({ ok: true });
+      return json({ ok: true, plan, cap: cap === Infinity ? null : cap, count: us.length + tw.length });
     }
 
     // Get user preferences
@@ -197,9 +312,16 @@ export default {
       }
       const email = (body.email || "").trim().toLowerCase();
       if (!email) return json({ error: "invalid_email" }, 400);
+      const plan = (await env.USER_PREFS.get(`plan:${email}`)) || "free";
+      const cap = planCap(plan);
       const raw = await env.USER_PREFS.get(email);
-      if (!raw) return json({ us_stocks: [], tw_stocks: [] });
-      return json(JSON.parse(raw));
+      const prefs = raw ? JSON.parse(raw) : {};
+      return json({
+        us_stocks: prefs.us_stocks || [],
+        tw_stocks: prefs.tw_stocks || [],
+        plan,
+        cap: cap === Infinity ? null : cap,
+      });
     }
 
     // Save a personalized digest HTML; returns a shareable web URL
@@ -269,6 +391,8 @@ export default {
         }
       }
 
+      // 優惠碼註冊者 = Premium
+      await env.USER_PREFS.put(`plan:${email}`, "premium");
       await sendWelcomeEmail(email, env.BREVO_API_KEY, false);
       ctx.waitUntil(sendTodayDigestToAll(env.BREVO_API_KEY, parseInt(env.BREVO_LIST_ID) || 2, env.USER_PREFS));
       return json({ ok: true });
@@ -510,6 +634,7 @@ export default {
       if (email) {
         const tier = TIER_BY_AMOUNT[session.amount_total] || "付費";
         await addToBrevo(email, env.BREVO_API_KEY, listId, { PAID: true, PLAN: "paid", PLAN_TIER: tier });
+        await env.USER_PREFS.put(`plan:${email}`, tier === "Premium" ? "premium" : "pro");
         if (session.customer) await env.USER_PREFS.put(`stripe-cust:${session.customer}`, email);
         await sendWelcomeEmail(email, env.BREVO_API_KEY, true, tier);
         ctx.waitUntil(sendTodayDigestToAll(env.BREVO_API_KEY, listId, env.USER_PREFS));
@@ -520,7 +645,10 @@ export default {
       const custId = event.data.object?.customer;
       if (custId) {
         const email = await env.USER_PREFS.get(`stripe-cust:${custId}`);
-        if (email) await addToBrevo(email, env.BREVO_API_KEY, listId, { PAID: false, PLAN: "free" });
+        if (email) {
+          await addToBrevo(email, env.BREVO_API_KEY, listId, { PAID: false, PLAN: "free" });
+          await env.USER_PREFS.put(`plan:${email}`, "free");
+        }
       }
     }
 
