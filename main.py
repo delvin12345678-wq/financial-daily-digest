@@ -410,7 +410,7 @@ def run():
             print(f"   {email} → 個人化（美股:{len(us_stocks)}, 台股:{len(tw_stocks)}）")
             try:
                 if ai_calls > 0:
-                    time.sleep(8)  # 輕度間隔，避免超過 Gemini 每分鐘請求數限制
+                    time.sleep(3)  # 輕度間隔，Groq 免費層上限 30 RPM
                 inner = generate_report(data, us_stocks or None, tw_stocks or None)
                 ai_calls += 1
                 inner = _inject_ai_banner(inner, data["date"])

@@ -2,10 +2,74 @@ import re
 import time
 import requests
 import stock_names
-from config import GEMINI_API_KEY
+from config import GEMINI_API_KEY, GROQ_API_KEY
 
 GEMINI_MODEL = "gemini-2.5-flash"
 GEMINI_URL = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent"
+
+# 主引擎：Groq（免費層每日 1000 次，遠高於 Gemini 免費層每日 20 次）
+GROQ_MODEL = "llama-3.3-70b-versatile"
+GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
+
+
+def _call_groq(prompt: str) -> str:
+    if not GROQ_API_KEY:
+        raise RuntimeError("未設定 GROQ_API_KEY")
+    payload = {
+        "model": GROQ_MODEL,
+        "messages": [
+            {"role": "system", "content": (
+                "你是嚴謹的財經日報 HTML 生成器。必須完整輸出使用者要求的每一個 HTML "
+                "區塊與欄位，凡是標示「必填、強制、每一張都要」的內容一律不可省略。"
+                "只輸出 HTML 本身，不要 markdown code block，不要任何多餘說明。"
+            )},
+            {"role": "user", "content": prompt},
+        ],
+        "temperature": 0.4,
+        "max_tokens": 16000,
+    }
+    headers = {"Authorization": f"Bearer {GROQ_API_KEY}", "Content-Type": "application/json"}
+    resp = None
+    for attempt in range(4):
+        resp = requests.post(GROQ_URL, json=payload, headers=headers, timeout=120)
+        if resp.status_code in (429, 500, 502, 503) and attempt < 3:
+            time.sleep(15 if resp.status_code == 429 else 6)
+            continue
+        resp.raise_for_status()
+        break
+    return resp.json()["choices"][0]["message"]["content"].strip()
+
+
+def _call_gemini(prompt: str) -> str:
+    if not GEMINI_API_KEY:
+        raise RuntimeError("未設定 GEMINI_API_KEY")
+    payload = {
+        "contents": [{"parts": [{"text": prompt}]}],
+        "generationConfig": {
+            "temperature": 0.4,
+            "maxOutputTokens": 16000,
+            "thinkingConfig": {"thinkingBudget": 0},
+        },
+    }
+    url = f"{GEMINI_URL}?key={GEMINI_API_KEY}"
+    resp = None
+    for attempt in range(4):
+        resp = requests.post(url, json=payload, timeout=120)
+        if resp.status_code in (429, 500, 502, 503) and attempt < 3:
+            time.sleep(20 if resp.status_code == 429 else 8)
+            continue
+        resp.raise_for_status()
+        break
+    return resp.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
+
+
+def _llm_generate(prompt: str) -> str:
+    """免費優先：Groq 為主引擎，失敗才退回 Gemini 備援。"""
+    try:
+        return _call_groq(prompt)
+    except Exception as e:
+        print(f"  [LLM] Groq 失敗，改用 Gemini 備援（{e}）")
+        return _call_gemini(prompt)
 
 
 def get_personalized_subject(data: dict, us_stocks: list, tw_stocks: list, date: str) -> str:
@@ -498,15 +562,19 @@ def generate_report(data: dict, user_us_stocks: list = None, user_tw_stocks: lis
   <div class="news-why">💡 為什麼重要：（這件事的來龍去脈與後續影響，要有實質分析，不可只是把標題換句話說）</div>
   <div class="news-impact">
     <span class="impact-label">📊 影響個股</span>
-    <span class="impact-stock up">代號</span>
-    <span class="impact-stock down">代號</span>
+    <span class="impact-stock up">NVDA</span>
+    <span class="impact-stock down">INTC</span>
   </div>
   <a class="read-more" href="（URL）" target="_blank">閱讀原文 →</a>
 </div>
 （重複 5 次，單一來源用 <div class="news-tag single">⚠️ 單一來源</div>）
-news-impact 規則：每則新聞都要列出它實際會影響的 1-3 支股票，優先列跟用戶持倉（{', '.join(all_holdings) if has_holdings else '主流科技股'}）相關的；
-class 用 up（這則消息對它是利多、可能漲）或 down（利空、可能跌）；impact-stock span 內只放純代號，系統會自動補公司名與漲跌標示；
-真的找不到具體受影響個股時，才整個 news-impact 區塊省略。
+
+‼️ news-impact 是強制要求：5 張新聞卡【每一張都必須】有 news-impact 區塊，且至少列 1 支 impact-stock。
+- impact-stock span 內只放純股票代號（例如 NVDA、AAPL、2330），不要放公司名，系統會自動補名稱與漲跌標示
+- class 用 up＝這則消息對該股是利多（可能漲）、down＝利空（可能跌）
+- 想不到具體個股時，就挑受影響產業的龍頭股：Fed 利率→JPM、GS；油價→XOM、CVX；AI/算力→NVDA、TSM；半導體→TSM、2330、2454；消費→AMZN、WMT
+- 優先列跟用戶持倉（{', '.join(all_holdings) if has_holdings else '主流科技股'}）相關的個股
+- 只有新聞完全與任何上市公司無關時（例如純政治事件）才可省略，且這種最多 1 張
 
 <div class="section-label">🔗 二階思考：美股如何影響台灣？</div>
 <div class="second-order">
@@ -554,23 +622,7 @@ class 用 up（這則消息對它是利多、可能漲）或 down（利空、可
 - signal-ticker、ticker、stock-news-ticker、earnings-ticker、impact-stock 這些 span 內一律只放純股票代號，系統會自動補上公司中英文名稱
 """
 
-    payload = {
-        "contents": [{"parts": [{"text": prompt}]}],
-        "generationConfig": {
-            "temperature": 0.4,
-            "maxOutputTokens": 16000,
-            "thinkingConfig": {"thinkingBudget": 0},
-        },
-    }
-    url = f"{GEMINI_URL}?key={GEMINI_API_KEY}"
-    for attempt in range(4):
-        resp = requests.post(url, json=payload, timeout=120)
-        if resp.status_code in (429, 500, 502, 503) and attempt < 3:
-            time.sleep(20 if resp.status_code == 429 else 8)
-            continue
-        resp.raise_for_status()
-        break
-    raw = resp.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
+    raw = _llm_generate(prompt)
     if raw.startswith("```"):
         raw = re.sub(r'^```[a-zA-Z]*\n?', '', raw)
         raw = re.sub(r'\n?```$', '', raw)
