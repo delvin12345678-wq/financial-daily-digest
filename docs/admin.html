@@ -3,10 +3,17 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Admin · 財經日報</title>
+<title>Admin · MarketDaily</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#07070e">
+<link rel="icon" type="image/svg+xml" href="/logo-icon.svg">
+<link rel="apple-touch-icon" href="/logo-icon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
 /* ── Reset ── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:focus-visible { outline: 2px solid #818cf8; outline-offset: 2px; border-radius: 4px; }
 :root {
   --bg:       #07070e;
   --surface:  rgba(255,255,255,0.035);
@@ -29,7 +36,7 @@
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   background: var(--bg);
   color: var(--text);
   min-height: 100vh;
@@ -444,22 +451,43 @@ body {
   padding: 8px 12px; background: var(--surface2); border: 1px solid var(--border2);
   border-radius: 9px; color: var(--text); font-size: 13px; outline: none; cursor: pointer;
 }
+
+/* ── Scene Reveal ── */
+.scene-reveal, .scene-from-left, .scene-from-right, .scene-zoom-in, .reveal {
+  opacity: 0; transition: opacity 0.75s cubic-bezier(0.16,1,0.3,1), transform 0.75s cubic-bezier(0.16,1,0.3,1);
+}
+.scene-reveal { transform: perspective(1200px) rotateX(10deg) translateY(45px) scale(0.97); }
+.scene-from-left { transform: translateX(-48px); }
+.scene-from-right { transform: translateX(48px); }
+.scene-zoom-in { transform: scale(0.9) translateY(20px); }
+.reveal { transform: translateY(30px); }
+.scene-reveal.visible, .scene-from-left.visible, .scene-from-right.visible,
+.scene-zoom-in.visible, .reveal.visible {
+  opacity: 1; transform: none;
+}
+.reveal-d1 { transition-delay: 0.08s; }
+.reveal-d2 { transition-delay: 0.16s; }
+.reveal-d3 { transition-delay: 0.24s; }
 </style>
 </head>
 <body>
 
 <!-- ── Auth Screen ── -->
 <div id="auth-screen">
-  <div class="auth-card">
-    <div class="auth-logo">財經日報<em>·</em></div>
+  <div class="auth-card scene-zoom-in">
+    <div class="auth-logo">MarketDaily<em>·</em></div>
     <div class="auth-label">Admin Console</div>
     <div class="auth-field">
-      <label>Email</label>
+      <label for="auth-email">Email</label>
       <input id="auth-email" class="auth-input" type="email" placeholder="admin@example.com" autocomplete="email">
     </div>
     <div class="auth-field">
-      <label>Password</label>
+      <label for="auth-pw">Password</label>
       <input id="auth-pw" class="auth-input" type="password" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;margin:4px 0 10px;">
+      <input type="checkbox" id="auth-remember" style="width:14px;height:14px;accent-color:#6366f1;cursor:pointer;">
+      <label for="auth-remember" style="font-size:12px;color:rgba(255,255,255,0.45);cursor:pointer;">記住我的 Email</label>
     </div>
     <button class="auth-btn" onclick="doLogin()">進入管理後台</button>
     <div id="auth-err" class="auth-err">Email 或密碼錯誤，或無管理員權限</div>
@@ -472,7 +500,7 @@ body {
   <!-- Sidebar -->
   <aside id="sidebar">
     <div class="sb-logo">
-      財經日報<em>◆</em>
+      MarketDaily<em>◆</em>
       <small>Admin Console</small>
     </div>
 
@@ -526,7 +554,7 @@ body {
     <div class="topbar">
       <div>
         <div class="topbar-title" id="topbar-title">總覽</div>
-        <div class="topbar-sub" id="topbar-sub">財經日報後台管理系統</div>
+        <div class="topbar-sub" id="topbar-sub">MarketDaily 後台管理系統</div>
       </div>
       <div class="topbar-actions">
         <button class="btn btn-ghost btn-sm" onclick="saveAll()">💾 儲存設定</button>
@@ -574,22 +602,22 @@ body {
 
         <!-- Stats -->
         <div class="grid-4" style="margin-bottom:16px">
-          <div class="stat-tile banana">
+          <div class="stat-tile banana reveal reveal-d1">
             <div class="stat-value" id="ov-us-count">17</div>
             <div class="stat-label">美股追蹤</div>
             <div class="stat-sub" id="ov-us-list">NVDA · AAPL · TSLA ...</div>
           </div>
-          <div class="stat-tile indigo">
+          <div class="stat-tile indigo reveal reveal-d2">
             <div class="stat-value" id="ov-tw-count">4</div>
             <div class="stat-label">台股追蹤</div>
             <div class="stat-sub" id="ov-tw-list">台積電 · 聯發科 ...</div>
           </div>
-          <div class="stat-tile green">
+          <div class="stat-tile green reveal reveal-d3">
             <div class="stat-value" id="ov-feeds">16</div>
             <div class="stat-label">新聞來源</div>
             <div class="stat-sub">RSS + NewsAPI + Ticker</div>
           </div>
-          <div class="stat-tile blue">
+          <div class="stat-tile blue reveal" style="transition-delay:0.32s">
             <div class="stat-value" id="ov-subs">—</div>
             <div class="stat-label">訂閱人數</div>
             <div class="stat-sub">Brevo 列表</div>
@@ -598,7 +626,7 @@ body {
 
         <!-- Recent reports -->
         <div class="grid-2">
-          <div class="card">
+          <div class="card scene-reveal">
             <div class="card-title"><span class="dot"></span>最近發送記錄</div>
             <div id="ov-recent">
               <div class="toggle-row">
@@ -622,7 +650,7 @@ body {
             </div>
           </div>
 
-          <div class="card">
+          <div class="card scene-reveal reveal-d1">
             <div class="card-title"><span class="dot"></span>數據源狀態</div>
             <div class="toggle-row">
               <div class="toggle-info">
@@ -677,7 +705,7 @@ body {
             <div class="card-title"><span class="dot"></span>搜尋並新增</div>
             <div class="search-wrap" style="position:relative">
               <span class="search-icon">⌕</span>
-              <input class="search-input" id="us-search" placeholder="輸入股票代號或公司名稱..." autocomplete="off">
+              <input class="search-input" id="us-search" placeholder="輸入股票代號或公司名稱..." autocomplete="off" aria-label="搜尋美股">
               <span class="search-clear" id="us-clear" onclick="clearSearch('us')">×</span>
               <div class="dropdown" id="us-dropdown"></div>
             </div>
@@ -693,7 +721,7 @@ body {
             <div class="card-title"><span class="dot"></span>搜尋並新增</div>
             <div class="search-wrap" style="position:relative">
               <span class="search-icon">⌕</span>
-              <input class="search-input" id="tw-search" placeholder="輸入股票代號或公司名稱..." autocomplete="off">
+              <input class="search-input" id="tw-search" placeholder="輸入股票代號或公司名稱..." autocomplete="off" aria-label="搜尋台股">
               <span class="search-clear" id="tw-clear" onclick="clearSearch('tw')">×</span>
               <div class="dropdown" id="tw-dropdown"></div>
             </div>
@@ -724,8 +752,8 @@ body {
         <div id="news-tab-us">
           <div id="us-feeds-list"></div>
           <div class="inline-add">
-            <input class="inline-input" id="us-feed-domain" placeholder="domain (e.g. wsj.com)">
-            <input class="inline-input" id="us-feed-url" placeholder="RSS URL (https://...)">
+            <input class="inline-input" id="us-feed-domain" placeholder="domain (e.g. wsj.com)" aria-label="美股新聞來源域名">
+            <input class="inline-input" id="us-feed-url" placeholder="RSS URL (https://...)" aria-label="美股 RSS 網址">
             <button class="btn btn-primary btn-sm" onclick="addFeed('us')">+ 新增</button>
           </div>
         </div>
@@ -734,8 +762,8 @@ body {
         <div id="news-tab-tw" style="display:none">
           <div id="tw-feeds-list"></div>
           <div class="inline-add">
-            <input class="inline-input" id="tw-feed-domain" placeholder="domain (e.g. cnyes.com)">
-            <input class="inline-input" id="tw-feed-url" placeholder="RSS URL (https://...)">
+            <input class="inline-input" id="tw-feed-domain" placeholder="domain (e.g. cnyes.com)" aria-label="台股新聞來源域名">
+            <input class="inline-input" id="tw-feed-url" placeholder="RSS URL (https://...)" aria-label="台股 RSS 網址">
             <button class="btn btn-primary btn-sm" onclick="addFeed('tw')">+ 新增</button>
           </div>
         </div>
@@ -746,7 +774,7 @@ body {
             <div class="card-title"><span class="dot"></span>NewsAPI 域名白名單</div>
             <div class="tags-wrap" id="domain-tags"></div>
             <div class="inline-add" style="margin-top:14px">
-              <input class="inline-input" id="domain-input" placeholder="新增域名 (e.g. bloomberg.com)">
+              <input class="inline-input" id="domain-input" placeholder="新增域名 (e.g. bloomberg.com)" aria-label="新增 NewsAPI 白名單域名">
               <button class="btn btn-primary btn-sm" onclick="addDomain()">+ 新增</button>
             </div>
           </div>
@@ -897,7 +925,7 @@ body {
               <div>
                 <div class="settings-label">報告日期</div>
               </div>
-              <input type="date" class="settings-select settings-control" id="deploy-date">
+              <input type="date" class="settings-select settings-control" id="deploy-date" aria-label="報告日期">
             </div>
             <div class="settings-row">
               <div>
@@ -1011,6 +1039,11 @@ async function doLogin() {
     if (email !== ADMIN_EMAIL) { err.style.display = "block"; return; }
   }
 
+  if (document.getElementById("auth-remember")?.checked) {
+    localStorage.setItem("md-admin-email-saved", email);
+  } else {
+    localStorage.removeItem("md-admin-email-saved");
+  }
   localStorage.setItem("md-admin-email", email);
   bootAdmin(email);
 }
@@ -1469,10 +1502,21 @@ function toast(msg, isErr = false) {
     bootAdmin(email);
   } else {
     document.getElementById("auth-screen").style.display = "flex";
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      const card = document.querySelector(".auth-card");
+      if (card) card.classList.add("visible");
+    }));
+    const savedAdminEmail = localStorage.getItem("md-admin-email-saved");
+    if (savedAdminEmail) {
+      document.getElementById("auth-email").value = savedAdminEmail;
+      document.getElementById("auth-remember").checked = true;
+      document.getElementById("auth-pw").focus();
+    }
     document.getElementById("auth-email").addEventListener("keydown", e => { if(e.key==="Enter") document.getElementById("auth-pw").focus(); });
     document.getElementById("auth-pw").addEventListener("keydown", e => { if(e.key==="Enter") doLogin(); });
   }
 })();
 </script>
+<script src="ui-pro.js"></script>
 </body>
 </html>
