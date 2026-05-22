@@ -181,14 +181,19 @@ async function linePush(token, userId, text) {
   return { ok: false, status: res.status, body: (await res.text()).slice(0, 300) };
 }
 
-// 完整偵測→推播管線。dryRun=true 時不寫 KV 狀態、不真推。
-async function runPipeline(env, { dryRun }) {
+// 完整偵測→推播管線。
+//   push    —— true 才真的呼叫 LINE 推播。
+//   persist —— true 才寫入 KV(seen / 推播計數 / 狀態紀錄)。
+// scheduled() 一律 persist:true(每則新聞只評估一次,避免 AI 成本爆炸);
+// /dry-run 端點 persist:false(純檢視,每次重新評估)。
+async function runPipeline(env, { push, persist }) {
   const report = {
     ts: new Date().toISOString(),
-    dryRun,
+    push, persist,
     counts: { fetched: 0, alreadySeen: 0, rulePassed: 0, premiumMatched: 0, aiEvaluated: 0, wouldPush: 0, pushed: 0 },
     premiumUniverse: [],
     candidates: [],
+    fired: [],
     errors: [],
   };
 
@@ -211,7 +216,7 @@ async function runPipeline(env, { dryRun }) {
 
     const eventType = classify(`${news.title} ${news.summary}`);
     if (!eventType) {
-      if (!dryRun) await env.USER_PREFS.put(seenKey, report.ts, { expirationTtl: SEEN_TTL });
+      if (persist) await env.USER_PREFS.put(seenKey, report.ts, { expirationTtl: SEEN_TTL });
       continue;
     }
     report.counts.rulePassed++;
@@ -219,7 +224,7 @@ async function runPipeline(env, { dryRun }) {
     // 比對 Premium 持有者
     const holders = recipients.filter((r) => news.tickers.some((t) => r.holdings.has(t)));
     if (!holders.length) {
-      if (!dryRun) await env.USER_PREFS.put(seenKey, report.ts, { expirationTtl: SEEN_TTL });
+      if (persist) await env.USER_PREFS.put(seenKey, report.ts, { expirationTtl: SEEN_TTL });
       report.candidates.push({
         title: news.title, source: news.source, url: news.url,
         tickers: news.tickers, eventType, severity: null,
@@ -250,15 +255,15 @@ async function runPipeline(env, { dryRun }) {
       continue;
     }
     if (severity < SEVERITY_THRESHOLD) {
-      if (!dryRun) await env.USER_PREFS.put(seenKey, report.ts, { expirationTtl: SEEN_TTL });
+      if (persist) await env.USER_PREFS.put(seenKey, report.ts, { expirationTtl: SEEN_TTL });
       report.candidates.push(cand);
       continue;
     }
 
     // 通過門檻 → 逐持有者推播(去重 + 每日上限)
     const today = twDate();
-    const token = dryRun ? null : await lineToken(env);
-    if (!dryRun && !token) {
+    const token = push ? await lineToken(env) : null;
+    if (push && !token) {
       report.errors.push("line:無推播 token");
       report.candidates.push(cand);
       continue;
@@ -277,7 +282,7 @@ async function runPipeline(env, { dryRun }) {
         continue;
       }
       report.counts.wouldPush++;
-      if (dryRun) {
+      if (!push) {
         cand.recipients.push({ email: h.email, ticker: hit, status: "would-push" });
         continue;
       }
@@ -300,15 +305,24 @@ async function runPipeline(env, { dryRun }) {
     }
 
     report.candidates.push(cand);
+    report.fired.push({
+      ts: report.ts, title: news.title, url: news.url, source: news.source,
+      severity, reason, tickers: news.tickers, eventType, recipients: cand.recipients,
+    });
     // 全部持有者處理完才標 seen(推播失敗的會在 errors,但 seen 仍標,避免重複轟炸;
     // 失敗者個別重綁後由新事件觸發)。
-    if (!dryRun) await env.USER_PREFS.put(seenKey, report.ts, { expirationTtl: SEEN_TTL });
+    if (persist) await env.USER_PREFS.put(seenKey, report.ts, { expirationTtl: SEEN_TTL });
   }
 
-  if (!dryRun) {
+  if (persist) {
     await env.USER_PREFS.put("alert:laststatus", JSON.stringify({
-      ts: report.ts, counts: report.counts, errors: report.errors.slice(0, 10),
+      ts: report.ts, push, counts: report.counts, errors: report.errors.slice(0, 10),
     }));
+    if (report.fired.length) {
+      let recent = [];
+      try { recent = JSON.parse((await env.USER_PREFS.get("alert:recent")) || "[]"); } catch {}
+      await env.USER_PREFS.put("alert:recent", JSON.stringify([...report.fired, ...recent].slice(0, 40)));
+    }
   }
   return report;
 }
@@ -316,7 +330,8 @@ async function runPipeline(env, { dryRun }) {
 export default {
   async scheduled(event, env, ctx) {
     const enabled = (await env.USER_PREFS.get("alert:enabled")) === "true";
-    ctx.waitUntil(runPipeline(env, { dryRun: !enabled }));
+    // 不論 dry/live 都 persist:每則新聞只評估一次,控 AI 成本。
+    ctx.waitUntil(runPipeline(env, { push: enabled, persist: true }));
   },
 
   async fetch(request, env) {
@@ -344,13 +359,19 @@ export default {
 
     if (url.pathname === "/dry-run") {
       try {
-        return json(await runPipeline(env, { dryRun: true }));
+        return json(await runPipeline(env, { push: false, persist: false }));
       } catch (e) {
         return json({ ok: false, error: e.message, stack: e.stack }, 500);
       }
     }
 
-    return new Response("MarketDaily alert-worker — /check /dry-run", {
+    // 近期達標(severity≥7)的提醒紀錄 —— dry-run 觀察期用來看「會推什麼」。
+    if (url.pathname === "/recent") {
+      const raw = await env.USER_PREFS.get("alert:recent");
+      return json({ recent: raw ? JSON.parse(raw) : [] });
+    }
+
+    return new Response("MarketDaily alert-worker — /check /dry-run /recent", {
       status: 200,
       headers: { "content-type": "text/plain; charset=utf-8" },
     });

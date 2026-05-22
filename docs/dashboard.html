@@ -650,9 +650,7 @@ nav {
       <div class="card-title">⚡ 即時 LINE 重大新聞提醒</div>
       <div class="card-desc">重大新聞影響到你的持股時,立刻用 LINE 通知你,不必等隔天日報。Premium 專屬功能。</div>
       <div id="line-unbound-box" style="display:none;margin-top:14px;">
-        <div style="font-size:12px;color:var(--text2);line-height:1.7;margin-bottom:14px;padding:10px 13px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.22);border-radius:10px;">⚠️ 綁定前,請先在 LINE 把 <strong>MarketDaily 官方帳號</strong> 加為好友,提醒才送得到。</div>
-        <label for="line-pwd" style="display:block;font-size:12px;font-weight:700;color:var(--text2);margin-bottom:7px;">輸入密碼確認</label>
-        <input type="password" id="line-pwd" placeholder="••••••••" autocomplete="current-password" style="width:100%;padding:13px 16px;background:var(--input-bg);border:1px solid var(--input-border);border-radius:var(--radius-sm);font-size:14px;font-family:inherit;color:var(--text);outline:none;transition:all 0.2s;margin-bottom:14px;" onkeydown="if(event.key==='Enter')bindLine()">
+        <div style="font-size:12px;color:var(--text2);line-height:1.7;margin-bottom:14px;padding:10px 13px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.22);border-radius:10px;">⚠️ 綁定前,請先 <a href="https://line.me/R/ti/p/@516nponm" target="_blank" rel="noopener" style="color:#fbbf24;font-weight:700;">加 MarketDaily 官方帳號好友</a>,提醒才送得到。</div>
         <button class="save-btn" onclick="bindLine()" id="line-bind-btn" style="margin-top:0;background:#06C755;">綁定 LINE →</button>
         <div style="display:none;margin-top:12px;font-size:13px;color:#f87171;text-align:center;" id="line-err"></div>
       </div>
@@ -852,6 +850,7 @@ async function doLogin() {
     if (document.getElementById("remember-me").checked) { localStorage.setItem("md-saved-email", email); localStorage.setItem("md-saved-pwd", password); }
     else { localStorage.removeItem("md-saved-email"); localStorage.removeItem("md-saved-pwd"); }
     localStorage.setItem("md-email", email); localStorage.setItem("md-plan", data.plan || "free");
+    sessionStorage.setItem("md-pwd", password);
     showDashboard(email, data.plan || "free");
   } catch { errEl.textContent = "網路錯誤，請稍後再試"; errEl.style.display = "block"; }
   finally { btn.disabled = false; btn.textContent = "進入我的專區 →"; }
@@ -871,6 +870,7 @@ async function doSetPassword() {
     if (!data.ok) { errEl.textContent = "設定失敗，請稍後再試"; errEl.style.display = "block"; return; }
     if (document.getElementById("remember-me") && document.getElementById("remember-me").checked) { localStorage.setItem("md-saved-email", _pendingEmail); localStorage.setItem("md-saved-pwd", password); }
     localStorage.setItem("md-email", _pendingEmail); localStorage.setItem("md-plan", data.plan || "free");
+    sessionStorage.setItem("md-pwd", password);
     showDashboard(_pendingEmail, data.plan || "free");
   } catch { errEl.textContent = "網路錯誤，請稍後再試"; errEl.style.display = "block"; }
   finally { btn.disabled = false; btn.textContent = "設定並進入 →"; }
@@ -887,6 +887,7 @@ function doLogout() {
   if (_countdownTimer) { clearInterval(_countdownTimer); _countdownTimer = null; }
   const wrap = document.getElementById("sync-countdown"); if (wrap) wrap.style.display = "none";
   localStorage.removeItem("md-email"); localStorage.removeItem("md-plan");
+  sessionStorage.removeItem("md-pwd");
   document.getElementById("dashboard").style.display = "none";
   document.getElementById("login-screen").style.display = "flex";
   document.getElementById("login-form").style.display = "block";
@@ -937,30 +938,43 @@ async function setupLineCard(email, plan) {
   document.getElementById("line-unbound-box").style.display = bound ? "none" : "block";
 }
 
-async function bindLine() {
+// 直接沿用登入時的密碼,不再請用戶重輸;只有取不到(換頁/未登入)才補問。
+async function bindLine(retryPwd) {
   const email = localStorage.getItem("md-email");
-  const password = document.getElementById("line-pwd").value;
+  let password = retryPwd || sessionStorage.getItem("md-pwd") || localStorage.getItem("md-saved-pwd");
   const errEl = document.getElementById("line-err");
   const btn = document.getElementById("line-bind-btn");
-  errEl.style.display = "none";
-  if (!password) { errEl.textContent = "請輸入密碼"; errEl.style.display = "block"; return; }
+  if (errEl) errEl.style.display = "none";
+  if (!email) { if (errEl) { errEl.textContent = "請重新登入"; errEl.style.display = "block"; } return; }
+  if (!password) {
+    password = prompt("請輸入你的帳號密碼以綁定 LINE");
+    if (!password) return;
+  }
   btn.disabled = true; btn.textContent = "處理中...";
+  let data;
   try {
     const res = await fetch(WORKER_URL + "/line/login", {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
     });
-    const data = await res.json();
-    if (data.authUrl) { window.location.href = data.authUrl; return; }
-    errEl.textContent = data.error === "auth" ? "密碼錯誤" : "綁定失敗,請稍後再試";
-    errEl.style.display = "block";
-  } catch { errEl.textContent = "網路錯誤,請稍後再試"; errEl.style.display = "block"; }
-  finally { btn.disabled = false; btn.textContent = "綁定 LINE →"; }
+    data = await res.json();
+  } catch {
+    btn.disabled = false; btn.textContent = "綁定 LINE →";
+    errEl.textContent = "網路錯誤,請稍後再試"; errEl.style.display = "block"; return;
+  }
+  btn.disabled = false; btn.textContent = "綁定 LINE →";
+  if (data.authUrl) { sessionStorage.setItem("md-pwd", password); window.location.href = data.authUrl; return; }
+  if (data.error === "auth") {
+    const p = prompt("帳號密碼不正確,請重新輸入");
+    if (p) bindLine(p);
+    return;
+  }
+  errEl.textContent = "綁定失敗,請稍後再試"; errEl.style.display = "block";
 }
 
 async function unbindLine() {
   const email = localStorage.getItem("md-email");
-  const password = localStorage.getItem("md-saved-pwd") || prompt("解除綁定 — 請輸入你的密碼");
+  const password = sessionStorage.getItem("md-pwd") || localStorage.getItem("md-saved-pwd") || prompt("解除綁定 — 請輸入你的密碼");
   if (!password) return;
   try {
     const res = await fetch(WORKER_URL + "/line/unbind", {
