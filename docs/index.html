@@ -2421,9 +2421,14 @@ if ('serviceWorker' in navigator) {
 <script src="onboarding-tour.js"></script>
 <script>
 MDTour.mount([
-  { selector: "#hero-email", title: "第 1 步:輸入你的 Email", body: "在這個框框打上你的電子信箱,這就是以後收股市報告的信箱。" },
-  { selector: "#hero-check-btn", title: "第 2 步:按「繼續」", body: "Email 打好後,按這個按鈕進入下一步。" },
-  { title: "接下來會發生什麼", body: "系統會請你選方案(選免費就可以)、設定一組密碼。完成後,點上面的「我的專區」就能登入。任何時候需要教學,點右下角的「❓ 新手教學」。" }
+  { selector: "#hero-email",
+    title: { zh: "第 1 步:輸入你的 Email", en: "Step 1: Enter your email" },
+    body: { zh: "在這個框框打上你的電子信箱,這就是以後收股市報告的信箱。", en: "Type your email here — this is where your daily market reports will be delivered." } },
+  { selector: "#hero-check-btn",
+    title: { zh: "第 2 步:按「繼續」", en: "Step 2: Click “Continue”" },
+    body: { zh: "Email 打好後,按這個按鈕進入下一步。", en: "Once your email is in, click this button to move on." } },
+  { title: { zh: "接下來會發生什麼", en: "What happens next" },
+    body: { zh: "系統會請你選方案(選免費就可以)、設定一組密碼。完成後,點上面的「我的專區」就能登入。任何時候需要教學,點右下角的「❓ 新手教學」。", en: "You’ll pick a plan (free works fine) and set a password. After that, click “My Account” up top to log in. Need the tour again anytime? Click “❓ Guide” at the bottom-right." } }
 ], { tourId: "index", auto: true });
 </script>
 </body>

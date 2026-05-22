@@ -43,6 +43,22 @@
   var steps = [], idx = 0, tourId = "default", active = false;
   var els = {};
 
+  // 跟隨網站語言(localStorage "md-lang",預設 zh)。
+  function lang() {
+    try { return localStorage.getItem("md-lang") === "en" ? "en" : "zh"; }
+    catch (e) { return "zh"; }
+  }
+  var UI = {
+    zh: { fab: "新手教學", next: "下一步 →", done: "完成 ✓", prev: "上一步", skip: "跳過教學" },
+    en: { fab: "Guide", next: "Next →", done: "Done ✓", prev: "Back", skip: "Skip" }
+  };
+  function T(k) { return UI[lang()][k]; }
+  // 步驟文字可給字串或 {zh,en};物件則依語言取值。
+  function txt(v) {
+    if (v && typeof v === "object") return v[lang()] || v.zh || v.en || "";
+    return v == null ? "" : v;
+  }
+
   function injectStyle() {
     if (document.getElementById("md-tour-style")) return;
     var s = document.createElement("style");
@@ -56,8 +72,8 @@
     var b = document.createElement("button");
     b.id = "md-tour-fab";
     b.type = "button";
-    b.innerHTML = "<span>❓</span> 新手教學";
-    b.setAttribute("aria-label", "開啟新手教學");
+    b.innerHTML = "<span>❓</span> " + T("fab");
+    b.setAttribute("aria-label", T("fab"));
     b.addEventListener("click", start);
     document.body.appendChild(b);
   }
@@ -177,14 +193,14 @@
   function bubbleHTML(step) {
     var isLast = idx === steps.length - 1;
     return "<div class='md-t-prog'>" + (idx + 1) + " / " + steps.length + "</div>"
-      + "<div class='md-t-title'>" + esc(step.title) + "</div>"
-      + "<div class='md-t-body'>" + esc(step.body) + "</div>"
+      + "<div class='md-t-title'>" + esc(txt(step.title)) + "</div>"
+      + "<div class='md-t-body'>" + esc(txt(step.body)) + "</div>"
       + "<div class='md-t-btns'>"
-      + (idx > 0 ? "<button type='button' id='md-t-prev' class='md-t-b2'>上一步</button>" : "")
+      + (idx > 0 ? "<button type='button' id='md-t-prev' class='md-t-b2'>" + T("prev") + "</button>" : "")
       + "<button type='button' id='md-t-next' class='md-t-b1'>"
-      + (isLast ? "完成 ✓" : "下一步 →") + "</button>"
+      + (isLast ? T("done") : T("next")) + "</button>"
       + "</div>"
-      + "<button type='button' id='md-t-skip' class='md-t-skip'>跳過教學</button>";
+      + "<button type='button' id='md-t-skip' class='md-t-skip'>" + T("skip") + "</button>";
   }
 
   function positionBubble(el) {

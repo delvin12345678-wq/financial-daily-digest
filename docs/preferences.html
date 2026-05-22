@@ -555,8 +555,12 @@ async function doAutoSave() {
 <script src="onboarding-tour.js"></script>
 <script>
 MDTour.mount([
-  { selector: "#us-search", title: "搜尋你的股票", body: "在這裡打股票代號或公司名稱,例如「台積電」或「NVDA」,點一下就加入清單。" },
-  { selector: "#save-status", title: "自動儲存", body: "你選好的股票會自動儲存,不用按任何按鈕 — 隨時改、隨時生效,明天起的報告就會分析你的股票。" }
+  { selector: "#us-search",
+    title: { zh: "搜尋你的股票", en: "Search for your stocks" },
+    body: { zh: "在這裡打股票代號或公司名稱,例如「台積電」或「NVDA」,點一下就加入清單。", en: "Type a ticker or company name here — e.g. “TSMC” or “NVDA” — and click to add it." } },
+  { selector: "#save-status",
+    title: { zh: "自動儲存", en: "Auto-save" },
+    body: { zh: "你選好的股票會自動儲存,不用按任何按鈕 — 隨時改、隨時生效,明天起的報告就會分析你的股票。", en: "Your picks save automatically — no button needed. Change them anytime; tomorrow’s report follows your latest list." } }
 ], { tourId: "preferences-stocks", auto: true });
 </script>
 </body>

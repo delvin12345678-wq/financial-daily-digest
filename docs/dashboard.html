@@ -291,6 +291,18 @@ nav {
 .msg.success { background: rgba(16,185,129,0.12); color: #4ade80; border: 1px solid rgba(16,185,129,0.25); }
 .msg.error { background: rgba(239,68,68,0.12); color: #f87171; border: 1px solid rgba(239,68,68,0.25); }
 
+/* Auto-save status */
+.save-status {
+  padding: 13px 16px; border-radius: var(--radius-sm);
+  font-size: 13px; font-weight: 600; margin-bottom: 14px; text-align: center;
+  color: var(--text2); background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  transition: color 0.25s, background 0.25s, border-color 0.25s;
+}
+.save-status.saving { color: var(--primary-light); }
+.save-status.saved  { background: rgba(16,185,129,0.12); color: #4ade80; border-color: rgba(16,185,129,0.25); }
+.save-status.error  { background: rgba(239,68,68,0.12); color: #f87171; border-color: rgba(239,68,68,0.25); cursor: pointer; }
+
 /* Set password form */
 #set-password-form .login-label { margin-top: 0; }
 
@@ -623,9 +635,7 @@ nav {
       <span class="cap-count" id="cap-count">已追蹤 0 檔</span>
       <a href="pricing.html" class="cap-upgrade" id="cap-upgrade" style="display:none;">升級可追蹤更多 →</a>
     </div>
-    <button class="save-btn" id="save-btn" onclick="savePreferences()">儲存設定</button>
-    <div class="msg success" id="success-msg">✅ 設定已儲存！明天起的報告會依你的選股客製化。</div>
-    <div class="msg error" id="error-msg"></div>
+    <div class="save-status" id="save-status" onclick="doAutoSave()">你的選擇會自動儲存,不需要按任何按鈕。</div>
 
     <!-- Change Password -->
     <div class="card" id="change-pwd-card" style="margin-top:8px;">
@@ -764,11 +774,13 @@ function addStock(market, sym, name) {
   renderTags(market); updateStats();
   document.getElementById(`${market}-search`).value = "";
   document.getElementById(`${market}-dropdown`).classList.remove("open");
+  scheduleSave();
 }
 
 function removeStock(market, sym) {
   selected[market] = selected[market].filter(s => s.sym !== sym);
   renderTags(market); updateStats();
+  scheduleSave();
 }
 
 function renderTags(market) {
@@ -902,7 +914,7 @@ function doLogout() {
 async function showDashboard(email, plan) {
   document.getElementById("login-screen").style.display = "none";
   document.getElementById("dashboard").style.display = "block";
-  if (window.mdStockTour) setTimeout(window.mdStockTour, 700);
+  setTimeout(function () { if (window.mdStockTour) window.mdStockTour(); }, 700);
   const name = email.split("@")[0];
   document.getElementById("hero-name").textContent = `👋 嗨，${name}！`;
   document.getElementById("nav-email").textContent = email;
@@ -1006,6 +1018,7 @@ async function loadPreferences(email) {
     (data.us_stocks || []).forEach(sym => { const f = US_STOCKS.find(([s])=>s===sym); selected.us.push({ sym, name: f ? f[1] : sym }); });
     (data.tw_stocks || []).forEach(sym => { const f = TW_STOCKS.find(([s])=>s===sym); selected.tw.push({ sym, name: f ? f[1] : sym }); });
     renderTags("us"); renderTags("tw"); updateStats();
+    _lastSaved = curPayload();
   } catch {}
 }
 
@@ -1595,18 +1608,49 @@ async function doChangePassword() {
   finally { btn.disabled = false; btn.textContent = "確認修改 →"; }
 }
 
-async function savePreferences() {
+// ── 自動儲存:選股 / 移除後即時存檔,不需手動按鈕 ──
+let _saveTimer = null, _lastSaved = null;
+
+function setSaveStatus(state, text) {
+  const el = document.getElementById("save-status");
+  if (!el) return;
+  el.className = "save-status" + (state ? " " + state : "");
+  el.textContent = text;
+}
+
+function curPayload() {
+  const email = localStorage.getItem("md-email") || "";
+  return JSON.stringify({ email, us_stocks: selected.us.map(s=>s.sym), tw_stocks: selected.tw.map(s=>s.sym) });
+}
+
+// 去抖動:連續選股只在停手 0.65 秒後送一次。
+function scheduleSave() {
+  clearTimeout(_saveTimer);
+  setSaveStatus("", "● 變更將自動儲存…");
+  _saveTimer = setTimeout(doAutoSave, 650);
+}
+
+async function doAutoSave() {
+  clearTimeout(_saveTimer);
   const email = localStorage.getItem("md-email");
-  const successEl = document.getElementById("success-msg"); const errorEl = document.getElementById("error-msg");
-  successEl.style.display = "none"; errorEl.style.display = "none";
-  const btn = document.getElementById("save-btn"); btn.disabled = true; btn.textContent = "儲存中...";
+  if (!email) return;
+  const payload = curPayload();
+  if (payload === _lastSaved) { setSaveStatus("saved", "✅ 已儲存"); return; }
+  setSaveStatus("saving", "儲存中…");
   try {
-    const res = await fetch(WORKER_URL + "/save-preferences", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email, us_stocks: selected.us.map(s=>s.sym), tw_stocks: selected.tw.map(s=>s.sym) }) });
+    const res = await fetch(WORKER_URL + "/save-preferences", {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: payload,
+    });
     const data = await res.json();
-    if (data.ok) { successEl.style.display = "block"; setTimeout(() => successEl.style.display="none", 4000); }
-    else { errorEl.textContent = "❌ 儲存失敗，請稍後再試"; errorEl.style.display = "block"; }
-  } catch { errorEl.textContent = "❌ 網路錯誤，請稍後再試"; errorEl.style.display = "block"; }
-  finally { btn.disabled = false; btn.textContent = "儲存設定"; }
+    if (data.ok) {
+      _lastSaved = payload;
+      setSaveStatus("saved", "✅ 已自動儲存 — 明天的報告就會依這份清單客製");
+    } else {
+      setSaveStatus("error", "⚠️ 儲存失敗,點這裡重試");
+    }
+  } catch {
+    setSaveStatus("error", "⚠️ 網路錯誤,點這裡重試");
+  }
 }
 
 let _refCode = "";
@@ -1781,14 +1825,24 @@ init();
 <script src="onboarding-tour.js"></script>
 <script>
 MDTour.mount([
-  { selector: "#login-email", title: "第 1 步:輸入 Email", body: "打上你訂閱時用的電子信箱。" },
-  { selector: "#login-password", title: "第 2 步:輸入密碼", body: "輸入你的密碼。如果是第一次登入,系統會先請你設定一組新密碼。" },
-  { selector: "#login-btn", title: "第 3 步:進入專區", body: "按這個按鈕,就能進入你的個人專區。" }
+  { selector: "#login-email",
+    title: { zh: "第 1 步:輸入 Email", en: "Step 1: Enter your email" },
+    body: { zh: "打上你訂閱時用的電子信箱。", en: "Enter the email you subscribed with." } },
+  { selector: "#login-password",
+    title: { zh: "第 2 步:輸入密碼", en: "Step 2: Enter your password" },
+    body: { zh: "輸入你的密碼。如果是第一次登入,系統會先請你設定一組新密碼。", en: "Enter your password. On your first login, you’ll be asked to set one." } },
+  { selector: "#login-btn",
+    title: { zh: "第 3 步:進入專區", en: "Step 3: Enter your account" },
+    body: { zh: "按這個按鈕,就能進入你的個人專區。", en: "Click this button to enter your personal account area." } }
 ], { tourId: "dashboard-login", auto: true });
 window.mdStockTour = function () {
   MDTour.mount([
-    { selector: "#us-search", title: "搜尋你的股票", body: "在這裡打股票代號或公司名稱,例如「台積電」或「NVDA」,點一下就加入清單。" },
-    { selector: "#save-btn", title: "記得按儲存", body: "選好股票後,按「儲存設定」。明天起的報告就會特別分析你的股票。" }
+    { selector: "#us-search",
+      title: { zh: "搜尋你的股票", en: "Search for your stocks" },
+      body: { zh: "在這裡打股票代號或公司名稱,例如「台積電」或「NVDA」,點一下就加入清單。", en: "Type a ticker or company name here — e.g. “TSMC” or “NVDA” — and click to add it to your list." } },
+    { selector: "#save-status",
+      title: { zh: "自動儲存", en: "Auto-save" },
+      body: { zh: "你選好的股票會自動儲存,不用按任何按鈕 — 隨時改、隨時生效,明天起的報告就會分析你的股票。", en: "Your picks save automatically — no button needed. Change them anytime; tomorrow’s report will follow your latest list." } }
   ], { tourId: "dashboard-stocks", auto: true });
 };
 </script>
