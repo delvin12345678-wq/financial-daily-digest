@@ -138,8 +138,11 @@ def cmd_publish():
             ok, detail = fn(env, image_url, cap)
         except KeyError as e:
             ok, detail = False, f"缺少 {e}"
-        results[plat] = {"ok": ok, "detail": str(detail)}
-        print(f"  {'✅' if ok else '❌'} {plat}: {detail}")
+        # X 已改付費、未充值 → 任何失敗都軟略過,不算數;補 credits 後自動恢復發文。
+        soft = not ok and plat == "x"
+        results[plat] = {"ok": ok, "skipped": soft, "detail": str(detail)}
+        mark = "✅" if ok else ("⏭️" if soft else "❌")
+        print(f"  {mark} {plat}: {'(X 改手動,略過)' if soft else ''}{detail}")
     log = OUT_DIR / "digest_post_log.jsonl"
     log.parent.mkdir(parents=True, exist_ok=True)
     with log.open("a", encoding="utf-8") as f:

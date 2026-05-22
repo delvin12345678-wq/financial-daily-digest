@@ -450,8 +450,11 @@ def cmd_post(env, post_id, only=None):
             ok, detail = fn(env, media_url, caption_for(post["caption"], plat, line_url))
         except KeyError as e:
             ok, detail = False, f".env 缺少 {e}"
-        results[plat] = {"ok": ok, "detail": str(detail)}
-        print(f"  {'✅' if ok else '❌'} {plat}: {detail}")
+        # X 已改付費、未充值 → 任何失敗都軟略過;補 credits 後自動恢復發文。
+        soft = not ok and plat == "x"
+        results[plat] = {"ok": ok, "skipped": soft, "detail": str(detail)}
+        mark = "✅" if ok else ("⏭️" if soft else "❌")
+        print(f"  {mark} {plat}: {'(X 改手動,略過)' if soft else ''}{detail}")
     LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
     with LOG_FILE.open("a", encoding="utf-8") as f:
         f.write(json.dumps({"ts": datetime.now().isoformat(), "post": post_id,
