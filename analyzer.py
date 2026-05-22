@@ -2,48 +2,25 @@ import re
 import time
 import requests
 import stock_names
-from config import GEMINI_API_KEY, GROQ_API_KEY
+from config import GEMINI_API_KEY
 
-GEMINI_MODEL = "gemini-2.5-flash"
-GEMINI_URL = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent"
+# 免費 LLM 引擎：Gemini Flash 系列（免費，無需付費）。
+# flash-latest 品質佳為主；flash-lite 免費層每日額度最高，作為備援確保不斷線。
+GEMINI_MODELS = ["gemini-flash-latest", "gemini-2.5-flash-lite"]
+GEMINI_BASE = "https://generativelanguage.googleapis.com/v1beta/models"
 
-# 主引擎：Groq（免費層每日 1000 次，遠高於 Gemini 免費層每日 20 次）
-GROQ_MODEL = "llama-3.3-70b-versatile"
-GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
-
-
-def _call_groq(prompt: str) -> str:
-    if not GROQ_API_KEY:
-        raise RuntimeError("未設定 GROQ_API_KEY")
-    payload = {
-        "model": GROQ_MODEL,
-        "messages": [
-            {"role": "system", "content": (
-                "你是嚴謹的財經日報 HTML 生成器。必須完整輸出使用者要求的每一個 HTML "
-                "區塊與欄位，凡是標示「必填、強制、每一張都要」的內容一律不可省略。"
-                "只輸出 HTML 本身，不要 markdown code block，不要任何多餘說明。"
-            )},
-            {"role": "user", "content": prompt},
-        ],
-        "temperature": 0.4,
-        "max_tokens": 16000,
-    }
-    headers = {"Authorization": f"Bearer {GROQ_API_KEY}", "Content-Type": "application/json"}
-    resp = None
-    for attempt in range(4):
-        resp = requests.post(GROQ_URL, json=payload, headers=headers, timeout=120)
-        if resp.status_code in (429, 500, 502, 503) and attempt < 3:
-            time.sleep(15 if resp.status_code == 429 else 6)
-            continue
-        resp.raise_for_status()
-        break
-    return resp.json()["choices"][0]["message"]["content"].strip()
+_SYSTEM_PROMPT = (
+    "你是嚴謹的財經日報 HTML 生成器。必須完整輸出使用者要求的每一個 HTML 區塊與欄位，"
+    "凡是標示「必填、強制、每一張都要」的內容一律不可省略。"
+    "只輸出 HTML 本身，不要 markdown code block，不要任何多餘說明。"
+)
 
 
-def _call_gemini(prompt: str) -> str:
+def _call_gemini(prompt: str, model: str) -> str:
     if not GEMINI_API_KEY:
         raise RuntimeError("未設定 GEMINI_API_KEY")
     payload = {
+        "systemInstruction": {"parts": [{"text": _SYSTEM_PROMPT}]},
         "contents": [{"parts": [{"text": prompt}]}],
         "generationConfig": {
             "temperature": 0.4,
@@ -51,12 +28,12 @@ def _call_gemini(prompt: str) -> str:
             "thinkingConfig": {"thinkingBudget": 0},
         },
     }
-    url = f"{GEMINI_URL}?key={GEMINI_API_KEY}"
+    url = f"{GEMINI_BASE}/{model}:generateContent?key={GEMINI_API_KEY}"
     resp = None
     for attempt in range(4):
         resp = requests.post(url, json=payload, timeout=120)
         if resp.status_code in (429, 500, 502, 503) and attempt < 3:
-            time.sleep(20 if resp.status_code == 429 else 8)
+            time.sleep(12 if resp.status_code == 429 else 6)
             continue
         resp.raise_for_status()
         break
@@ -64,12 +41,17 @@ def _call_gemini(prompt: str) -> str:
 
 
 def _llm_generate(prompt: str) -> str:
-    """免費優先：Groq 為主引擎，失敗才退回 Gemini 備援。"""
-    try:
-        return _call_groq(prompt)
-    except Exception as e:
-        print(f"  [LLM] Groq 失敗，改用 Gemini 備援（{e}）")
-        return _call_gemini(prompt)
+    """免費 LLM 引擎鏈：依序嘗試各 Gemini 免費模型，全部失敗才報錯。"""
+    last_err = None
+    for model in GEMINI_MODELS:
+        try:
+            out = _call_gemini(prompt, model)
+            print(f"  [LLM] 使用 {model}")
+            return out
+        except Exception as e:
+            last_err = e
+            print(f"  [LLM] {model} 失敗（{e}）")
+    raise RuntimeError(f"所有免費 LLM 引擎都失敗：{last_err}")
 
 
 def get_personalized_subject(data: dict, us_stocks: list, tw_stocks: list, date: str) -> str:
@@ -149,8 +131,11 @@ def _format_market_data(data: dict, user_us_stocks: list = None, user_tw_stocks:
             lines.append(f"  {stock_names.display_name(sym)}（{sym}）: {d['price']} ({d['change_pct']:+.2f}%){flag}")
 
     lines.append("\n【台股個股】")
-    for sym, d in tw.items():
-        if sym != "^TWII":
+    core_tw = ["2330", "2454", "2317"]
+    show_tw = list(dict.fromkeys((user_tw_stocks or []) + core_tw))
+    for sym in show_tw:
+        d = tw.get(sym)
+        if d:
             flag = " ⭐持倉" if user_tw_stocks and sym in user_tw_stocks else ""
             lines.append(f"  {stock_names.display_name(sym, d.get('name'))}（{sym}）: {d['price']} ({d['change_pct']:+.2f}%){flag}")
 
