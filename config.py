@@ -37,7 +37,8 @@ NEWS_WHITELIST_DOMAINS = [
 ]
 
 TW_NEWS_WHITELIST_DOMAINS = [
-    "cna.com.tw", "udn.com", "ctee.com.tw", "anue.com.tw"
+    "cna.com.tw", "udn.com", "ctee.com.tw", "anue.com.tw",
+    "cnyes.com", "moneydj.com", "technews.tw", "bnext.com.tw"
 ]
 
 VAGUE_KEYWORDS = [

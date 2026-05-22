@@ -215,22 +215,70 @@ def fetch_us_news(extra_tickers: list = None):
     return api_articles + rss_articles + ticker_articles
 
 
-def fetch_tw_rss_news() -> list:
+def _fetch_cnyes_tw_news(limit: int = 15) -> list:
+    """Fetch TW stock news from cnyes.com API."""
+    categories = ["tw_stock", "headline"]
     articles = []
     cutoff = datetime.now() - timedelta(hours=36)
-    feeds = get_tw_feeds() or TW_RSS_FEEDS
-    for domain, url in feeds:
+    seen = set()
+    for cat in categories:
+        try:
+            resp = requests.get(
+                f"https://news.cnyes.com/api/v3/news/category/{cat}",
+                params={"limit": limit},
+                headers={"User-Agent": "Mozilla/5.0"},
+                timeout=10,
+            )
+            items = resp.json().get("items", {}).get("data", [])
+            for item in items:
+                title = item.get("title", "").strip()
+                if not title or title in seen:
+                    continue
+                pub_ts = item.get("publishAt", 0)
+                published = datetime.fromtimestamp(pub_ts) if pub_ts else None
+                if published and published < cutoff:
+                    continue
+                news_id = item.get("newsId", "")
+                url = f"https://news.cnyes.com/news/id/{news_id}" if news_id else "https://news.cnyes.com"
+                seen.add(title)
+                articles.append({
+                    "title": title,
+                    "description": item.get("summary", "")[:200],
+                    "url": url,
+                    "source": {"name": "cnyes.com"},
+                    "publishedAt": published.isoformat() if published else "",
+                    "lang": "zh",
+                })
+        except Exception:
+            continue
+    return articles
+
+
+def fetch_tw_rss_news() -> list:
+    articles = _fetch_cnyes_tw_news()
+    cutoff = datetime.now() - timedelta(hours=36)
+    seen_titles = {a["title"] for a in articles}
+
+    fallback_feeds = [
+        ("moneydj.com", "https://www.moneydj.com/KMDJ/RSS/RSSFeed.aspx?svc=NW"),
+        ("cna.com.tw",  "https://feeds.feedburner.com/cnafinance"),
+    ]
+    for domain, url in fallback_feeds:
         try:
             feed = feedparser.parse(url)
             for entry in feed.entries[:10]:
+                title = entry.get("title", "").strip()
+                if not title or title in seen_titles:
+                    continue
                 published = None
                 if hasattr(entry, "published_parsed") and entry.published_parsed:
                     import time
                     published = datetime.fromtimestamp(time.mktime(entry.published_parsed))
                 if published and published < cutoff:
                     continue
+                seen_titles.add(title)
                 articles.append({
-                    "title": entry.get("title", ""),
+                    "title": title,
                     "description": entry.get("summary", "")[:200],
                     "url": entry.get("link", f"https://{domain}"),
                     "source": {"name": domain},
