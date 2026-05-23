@@ -973,7 +973,7 @@ footer {
               <li style="font-size:12px;color:rgba(255,255,255,0.72);padding:4px 0 4px 16px;position:relative;"><span style="position:absolute;left:0;color:#818cf8;font-weight:800;">✓</span><span data-i18n="pp3">LINE Bot 雙向 AI 對話</span></li>
               <li style="font-size:12px;color:rgba(255,255,255,0.72);padding:4px 0 4px 16px;position:relative;"><span style="position:absolute;left:0;color:#818cf8;font-weight:800;">✓</span><span data-i18n="pp4">重大新聞 LINE 即時推播</span></li>
             </ul>
-            <a id="stripe-plan-btn" href="https://buy.stripe.com/cNi3cu74FbI80uSfrG4Ja03" target="_blank" rel="noopener noreferrer" class="plan-mini-btn paid" style="width:100%;display:block;text-align:center;" data-i18n="price_pro_btn">7 折試讀 →</a>
+            <a id="stripe-plan-btn" href="https://buy.stripe.com/aFafZg4WxcMca5senC4Ja06?prefilled_promo_code=TRIAL" target="_blank" rel="noopener noreferrer" class="plan-mini-btn paid" style="width:100%;display:block;text-align:center;" data-i18n="price_pro_btn">7 折試讀 →</a>
           </div>
           <!-- Premium 完整版(直接訂閱者)-->
           <div class="plan-mini-card">
@@ -1516,7 +1516,7 @@ footer {
         <li data-i18n="pp3">LINE Bot 雙向 AI 對話</li>
         <li data-i18n="pp4">重大新聞 LINE 即時推播</li>
       </ul>
-      <a class="pricing-btn btn-pro" href="https://buy.stripe.com/cNi3cu74FbI80uSfrG4Ja03" target="_blank" rel="noopener noreferrer" data-i18n="price_pro_btn">7 折試讀 →</a>
+      <a class="pricing-btn btn-pro" href="https://buy.stripe.com/aFafZg4WxcMca5senC4Ja06?prefilled_promo_code=TRIAL" target="_blank" rel="noopener noreferrer" data-i18n="price_pro_btn">7 折試讀 →</a>
     </div>
     <!-- Premium -->
     <div class="pricing-card scene-from-right">
@@ -1863,7 +1863,7 @@ footer {
     <h2 data-i18n="cta_title">讓每個早晨更聰明</h2>
     <p data-i18n="cta_sub">Premium 試讀首月 NT$299 · 30 天退費保證 · 隨時取消</p>
     <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:16px;">
-      <a href="https://buy.stripe.com/cNi3cu74FbI80uSfrG4Ja03" target="_blank" rel="noopener noreferrer" class="cta-btn" data-i18n="cta_btn">立即訂閱 Pro →</a>
+      <a href="https://buy.stripe.com/aFafZg4WxcMca5senC4Ja06?prefilled_promo_code=TRIAL" target="_blank" rel="noopener noreferrer" class="cta-btn" data-i18n="cta_btn">立即訂閱 Pro →</a>
       <a href="pricing.html" class="cta-btn" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.8);" data-i18n="cta_see_plans">查看所有方案</a>
       <a href="https://line.me/R/ti/p/@516nponm" target="_blank" rel="noopener noreferrer" class="cta-btn line" data-i18n="cta_line">💬 追蹤我們的 LINE</a>
     </div>
@@ -2234,7 +2234,7 @@ async function checkEmail() {
       document.getElementById("new-invite-email").value = email;
       document.getElementById("invite-sec-email").value = email;
       const stripBtn = document.getElementById("stripe-plan-btn");
-      if (stripBtn) stripBtn.href = `https://buy.stripe.com/cNi3cu74FbI80uSfrG4Ja03?prefilled_email=${encodeURIComponent(email)}`;
+      if (stripBtn) stripBtn.href = `https://buy.stripe.com/aFafZg4WxcMca5senC4Ja06?prefilled_promo_code=TRIAL?prefilled_email=${encodeURIComponent(email)}`;
       document.getElementById("new-user-step").style.display = "block";
     }
   } catch {
