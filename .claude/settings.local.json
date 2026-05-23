@@ -3,5 +3,19 @@
     "allow": [
       "Bash(claude --version)"
     ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash '/Users/delvin/Downloads/Delvin agent/.claude/hooks/block-mass-email.sh'",
+            "statusMessage": "檢查寄信封鎖規則..."
+          }
+        ]
+      }
+    ]
   }
 }

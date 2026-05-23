@@ -213,6 +213,7 @@ noise grain、scroll progress bar、page transition wipe、magnetic buttons、cl
 - 格式：名稱 + 一行中文用途說明
 
 ## 重要慣例（從過去 session 學到）
+- **🚫 禁止手動寄信（用戶 2026-05-22 明確指令）**：非台灣時間早上 7:00，禁止做任何會寄 email 給訂閱者的動作 —— 包括手動觸發 `daily_digest` workflow、跑 `send_*.py` 測試腳本、直接 curl Brevo 寄信 API。日報**只能**由 digest-cron worker 的排程 cron（每天 06:55 UTC）自動寄出。**唯一例外**：新訂閱者歡迎信，由 Cloudflare Worker 在註冊當下自動發送，允許。已加 PreToolUse hook（`.claude/hooks/block-mass-email.sh`）強制攔截。任何發信動作有疑慮一律先問用戶，不可自行觸發。
 - **不加自訂游標**：ui-pro.js 裡的 custom cursor 已刪除，不要再加
 - **Email 樣式**：日報一律用完整 HTML 卡片樣式，不能是純文字
 - **台股顯示**：偏好 tag 要同時顯示股票代碼 + 公司名稱
