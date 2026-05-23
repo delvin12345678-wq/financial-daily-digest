@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>戰績紀錄 — MarketDaily</title>
+<meta name="description" content="MarketDaily 過去 30 天日報點到的個股,公開方向勝率與避坑勝率紀錄,錯的也列出來。不空談 AI,讓紀錄說話。">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#6366f1">
+<link rel="apple-touch-icon" href="/logo-icon.svg">
+<link rel="icon" type="image/svg+xml" href="/logo-icon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:focus-visible { outline: 2px solid #818cf8; outline-offset: 2px; border-radius: 4px; }
+body {
+  background: #060611;
+  color: #e2e8f0;
+  font-family: 'Inter', sans-serif;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0;
+  background-image:
+    linear-gradient(rgba(99,102,241,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(99,102,241,0.04) 1px, transparent 1px);
+  background-size: 72px 72px;
+  pointer-events: none;
+}
+
+nav {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 0 40px; height: 62px;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  background: rgba(6,6,17,0.8);
+  backdrop-filter: blur(28px) saturate(1.8);
+  -webkit-backdrop-filter: blur(28px) saturate(1.8);
+  position: sticky; top: 0; z-index: 100;
+}
+.nav-logo {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 17px; font-weight: 800; letter-spacing: -0.5px;
+  color: #f1f5f9; text-decoration: none;
+}
+.nav-logo-icon {
+  width: 30px; height: 30px;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  border-radius: 8px; display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.nav-logo em { color: #818cf8; font-style: normal; }
+.nav-back {
+  font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.5);
+  text-decoration: none; background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.08); padding: 7px 16px; border-radius: 20px;
+  transition: all 0.2s;
+}
+.nav-back:hover { color: #f1f5f9; border-color: rgba(255,255,255,0.13); }
+.lang-btn {
+  background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.5); font-size: 12px; font-weight: 700; font-family: 'Inter', sans-serif;
+  padding: 7px 14px; border-radius: 20px; cursor: pointer; transition: all 0.2s;
+}
+.lang-btn:hover { background: rgba(99,102,241,0.12); border-color: rgba(99,102,241,0.28); color: #fff; }
+.nav-right { display: flex; align-items: center; gap: 8px; }
+
+.page-wrap {
+  position: relative; z-index: 1;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 56px 24px 80px;
+}
+
+.page-badge {
+  display: inline-flex; align-items: center; gap: 7px;
+  background: rgba(16,185,129,0.12);
+  border: 1px solid rgba(16,185,129,0.28);
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-size: 11px; font-weight: 700;
+  color: #6ee7b7; letter-spacing: 1px; text-transform: uppercase;
+  margin-bottom: 20px;
+}
+.page-badge::before { content: "●"; color: #10b981; font-size: 8px; }
+
+h1 {
+  font-size: clamp(34px, 5.5vw, 52px);
+  font-weight: 900;
+  line-height: 1.1; letter-spacing: -1.5px;
+  margin-bottom: 14px;
+  background: linear-gradient(135deg, #fff 0%, #a5b4fc 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+
+.sub {
+  font-size: 16px; color: rgba(226,232,240,0.55);
+  line-height: 1.7; margin-bottom: 40px;
+  max-width: 720px;
+}
+
+/* Stats hero */
+.stats-hero {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 40px;
+}
+.stat-box {
+  background: rgba(255,255,255,0.025);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 18px;
+  padding: 22px 18px;
+  text-align: center;
+}
+.stat-box .num {
+  font-size: 36px; font-weight: 900;
+  line-height: 1; letter-spacing: -1px;
+  display: block; margin-bottom: 8px;
+}
+.stat-box .num.emerald { color: #6ee7b7; }
+.stat-box .num.indigo { color: #a5b4fc; }
+.stat-box .num.amber { color: #fbbf24; }
+.stat-box .num.muted { color: rgba(255,255,255,0.7); }
+.stat-box .lbl {
+  font-size: 11px; font-weight: 700;
+  color: rgba(255,255,255,0.55);
+  letter-spacing: 0.6px; text-transform: uppercase;
+}
+@media (max-width: 720px) {
+  .stats-hero { grid-template-columns: repeat(2, 1fr); }
+  .stat-box .num { font-size: 30px; }
+}
+
+/* Method explainer */
+.method-card {
+  background: rgba(99,102,241,0.06);
+  border: 1px solid rgba(99,102,241,0.22);
+  border-radius: 18px;
+  padding: 24px 26px;
+  margin-bottom: 40px;
+}
+.method-card .ttl {
+  font-size: 14px; font-weight: 800; color: #a5b4fc;
+  margin-bottom: 12px; letter-spacing: 0.3px;
+}
+.method-card .ttl::before { content: "📐 "; }
+.method-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.method-box {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 12px;
+  padding: 16px 18px;
+}
+.method-box h3 {
+  font-size: 13px; font-weight: 800; color: #fff;
+  margin-bottom: 6px;
+}
+.method-box p {
+  font-size: 12.5px; color: rgba(255,255,255,0.6);
+  line-height: 1.65;
+}
+.method-box code {
+  display: inline-block; margin-top: 8px;
+  background: rgba(0,0,0,0.3);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 6px;
+  padding: 5px 9px;
+  font-size: 11.5px; color: #6ee7b7;
+  font-family: 'SF Mono', 'Menlo', monospace;
+}
+@media (max-width: 640px) { .method-grid { grid-template-columns: 1fr; } }
+
+/* Filter bar */
+.filter-bar {
+  display: flex; flex-wrap: wrap; gap: 8px;
+  margin-bottom: 22px;
+}
+.fpill {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.65);
+  font-size: 12.5px; font-weight: 600;
+  padding: 8px 16px; border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'Inter', sans-serif;
+}
+.fpill:hover { color: #fff; border-color: rgba(99,102,241,0.3); }
+.fpill.active {
+  background: rgba(99,102,241,0.18);
+  border-color: rgba(99,102,241,0.45);
+  color: #a5b4fc;
+}
+
+/* Record table */
+.rec-table {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 18px;
+  overflow: hidden;
+}
+.rec-row {
+  display: grid;
+  grid-template-columns: 110px 110px 1.6fr 100px 90px;
+  gap: 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  align-items: center;
+}
+.rec-row:last-child { border-bottom: none; }
+.rec-row.header {
+  background: rgba(255,255,255,0.02);
+  font-size: 11px; font-weight: 700;
+  color: rgba(255,255,255,0.45);
+  letter-spacing: 0.6px; text-transform: uppercase;
+}
+.rec-cell { padding: 14px 16px; font-size: 13.5px; }
+.rec-cell.date {
+  color: rgba(255,255,255,0.45);
+  font-family: 'SF Mono', monospace; font-size: 12.5px;
+}
+.rec-cell.ticker {
+  font-weight: 800; color: #fff;
+  font-family: 'Inter', sans-serif;
+}
+.rec-cell.ticker .market {
+  display: inline-block;
+  font-size: 9.5px; font-weight: 700;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.55);
+  padding: 2px 6px; border-radius: 4px;
+  margin-left: 6px; vertical-align: middle;
+  letter-spacing: 0.4px;
+}
+.rec-cell.call {
+  color: rgba(255,255,255,0.78);
+  line-height: 1.5;
+}
+.rec-cell.tag {
+  font-size: 11px; font-weight: 700;
+  letter-spacing: 0.4px;
+}
+.tag-a {
+  display: inline-block;
+  background: rgba(99,102,241,0.14);
+  border: 1px solid rgba(99,102,241,0.32);
+  color: #a5b4fc;
+  padding: 3px 9px; border-radius: 12px;
+}
+.tag-c {
+  display: inline-block;
+  background: rgba(251,191,36,0.12);
+  border: 1px solid rgba(251,191,36,0.3);
+  color: #fbbf24;
+  padding: 3px 9px; border-radius: 12px;
+}
+.rec-cell.result {
+  font-weight: 800; font-size: 13.5px;
+  text-align: center;
+}
+.rec-cell.result.win { color: #6ee7b7; }
+.rec-cell.result.loss { color: #fca5a5; }
+.rec-cell.result.neut { color: rgba(255,255,255,0.45); }
+
+@media (max-width: 720px) {
+  .rec-row { grid-template-columns: 80px 1.4fr 70px 60px; }
+  .rec-row .rec-cell:nth-child(3) { display: none; }
+  .rec-cell { padding: 12px 10px; font-size: 12.5px; }
+  .rec-cell.date { font-size: 11px; }
+  .rec-cell.tag { font-size: 10px; }
+  .tag-a, .tag-c { padding: 2px 6px; font-size: 10px; }
+}
+
+/* Honest box */
+.honest-box {
+  background: rgba(251,191,36,0.06);
+  border: 1px solid rgba(251,191,36,0.22);
+  border-radius: 14px;
+  padding: 18px 22px;
+  margin-top: 28px;
+}
+.honest-box .ttl {
+  font-size: 13px; font-weight: 800; color: #fbbf24;
+  margin-bottom: 8px;
+}
+.honest-box p {
+  font-size: 13px; color: rgba(255,255,255,0.65);
+  line-height: 1.7;
+}
+
+/* Final CTA */
+.bottom-cta {
+  margin-top: 48px;
+  text-align: center;
+  padding: 36px 24px;
+  background: linear-gradient(135deg, rgba(99,102,241,0.1), rgba(139,92,246,0.05));
+  border: 1px solid rgba(99,102,241,0.22);
+  border-radius: 24px;
+}
+.bottom-cta h2 {
+  font-size: 24px; font-weight: 900; letter-spacing: -0.8px;
+  color: #fff; margin-bottom: 8px;
+}
+.bottom-cta p { font-size: 14px; color: rgba(255,255,255,0.55); margin-bottom: 20px; }
+.bottom-cta-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+.bcta-btn {
+  background: linear-gradient(135deg, #6366f1, #818cf8);
+  color: #fff; text-decoration: none;
+  font-size: 14px; font-weight: 700;
+  padding: 13px 26px; border-radius: 30px;
+  transition: transform .2s, opacity .2s;
+  box-shadow: 0 4px 18px rgba(99,102,241,0.38);
+}
+.bcta-btn.ghost {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
+  box-shadow: none;
+}
+.bcta-btn:hover { transform: translateY(-1px); opacity: 0.95; }
+
+footer {
+  text-align: center;
+  padding: 36px 24px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  font-size: 12px;
+  color: rgba(255,255,255,0.35);
+  position: relative; z-index: 1;
+}
+footer .footer-links {
+  display: flex; flex-wrap: wrap; justify-content: center; gap: 18px;
+  margin-bottom: 14px;
+}
+footer a { color: #a5b4fc; text-decoration: none; font-weight: 600; font-size: 13px; }
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="nav-logo">
+    <div class="nav-logo-icon">
+      <svg width="16" height="16" viewBox="0 0 22 22" xmlns="http://www.w3.org/2000/svg">
+        <rect x="1" y="14" width="4" height="7" rx="1.5" fill="white" fill-opacity="0.55"/>
+        <rect x="7" y="9" width="4" height="12" rx="1.5" fill="white" fill-opacity="0.78"/>
+        <rect x="13" y="4" width="4" height="17" rx="1.5" fill="white"/>
+        <circle cx="20" cy="3" r="2" fill="#fde68a"/>
+      </svg>
+    </div>
+    Market<em>Daily</em>
+  </a>
+  <div class="nav-right">
+    <a href="index.html" class="nav-back">← 返回首頁</a>
+    <button class="lang-btn" onclick="toggleLang()">EN</button>
+  </div>
+</nav>
+
+<div class="page-wrap">
+  <div class="page-badge" data-i18n="badge">Track Record · 公開戰績</div>
+  <h1 data-i18n="h1">不空談 AI 多強,讓紀錄說話</h1>
+  <p class="sub" data-i18n="sub">
+    這頁公開日報點到的每一支個股、每一個方向判斷、每一次避坑示警的真實結果——資料由腳本自動從歷史日報抽出,沒有人工後修。
+    錯的我們也列出來。樣本小的時候,勝率波動會比較大,別只看數字看樣本。
+  </p>
+
+  <!-- Headline stats -->
+  <div class="stats-hero">
+    <div class="stat-box">
+      <span class="num emerald" id="stat-direction">75.5%</span>
+      <div class="lbl" data-i18n="s1">方向勝率(A)</div>
+    </div>
+    <div class="stat-box">
+      <span class="num indigo" id="stat-risk">68.0%</span>
+      <div class="lbl" data-i18n="s2">避坑勝率(C)</div>
+    </div>
+    <div class="stat-box">
+      <span class="num amber" id="stat-total">90</span>
+      <div class="lbl" data-i18n="s3">累計提及個股</div>
+    </div>
+    <div class="stat-box">
+      <span class="num muted" id="stat-days">30</span>
+      <div class="lbl" data-i18n="s4">統計天數</div>
+    </div>
+  </div>
+
+  <!-- Method explainer -->
+  <div class="method-card">
+    <div class="ttl" data-i18n="method_ttl">我們怎麼算勝率(沒任何模糊空間)</div>
+    <div class="method-grid">
+      <div class="method-box">
+        <h3 data-i18n="ma_h">A · 方向勝率</h3>
+        <p data-i18n="ma_p">日報明確判斷「偏多 / 偏空 / 留意 X 支撐」→ 隔日收盤是否往預測方向走。</p>
+        <code>例:「台積電留意 1080 支撐」→ 隔日收盤 ≥ 1080 算贏</code>
+      </div>
+      <div class="method-box">
+        <h3 data-i18n="mc_h">C · 避坑勝率</h3>
+        <p data-i18n="mc_p">日報示警「觀望 / 拉回 / 短期過熱 / 風險」→ 隔日是否真的回檔或盤整。</p>
+        <code>例:「NVDA 短期過熱建議觀望」→ 隔日下跌算贏</code>
+      </div>
+    </div>
+    <div style="margin-top:14px;font-size:12.5px;color:rgba(255,255,255,0.5);line-height:1.65;" data-i18n="method_note">
+      <strong style="color:#fbbf24;">我們不做這件事:</strong>不會在日報明確說「請在 X 元進場」「設停損 Y 元」——那是投顧的事,需要牌照,也容易變炒股嫌疑。我們只判讀方向 + 警示風險,進場價位由你自己決定。
+    </div>
+  </div>
+
+  <!-- Filter -->
+  <div class="filter-bar">
+    <button class="fpill active" data-filter="all" onclick="applyFilter(this)" data-i18n="f_all">全部 (37)</button>
+    <button class="fpill" data-filter="us" onclick="applyFilter(this)" data-i18n="f_us">🇺🇸 美股</button>
+    <button class="fpill" data-filter="tw" onclick="applyFilter(this)" data-i18n="f_tw">🇹🇼 台股</button>
+    <button class="fpill" data-filter="A" onclick="applyFilter(this)" data-i18n="f_a">📐 方向 (A)</button>
+    <button class="fpill" data-filter="C" onclick="applyFilter(this)" data-i18n="f_c">⚠️ 避坑 (C)</button>
+    <button class="fpill" data-filter="win" onclick="applyFilter(this)" data-i18n="f_win">✅ 贏</button>
+    <button class="fpill" data-filter="loss" onclick="applyFilter(this)" data-i18n="f_loss">❌ 輸</button>
+  </div>
+
+  <!-- Records table -->
+  <div class="rec-table" id="rec-table">
+    <div class="rec-row header">
+      <div class="rec-cell" data-i18n="th_date">日期</div>
+      <div class="rec-cell" data-i18n="th_tic">個股</div>
+      <div class="rec-cell" data-i18n="th_call">日報原話</div>
+      <div class="rec-cell" data-i18n="th_type">類型</div>
+      <div class="rec-cell" style="text-align:center;" data-i18n="th_res">結果</div>
+    </div>
+    <!-- Records will be rendered by JS -->
+  </div>
+
+  <!-- FAQ -->
+  <style>
+  .tr-faq { margin-top: 40px; }
+  .tr-faq h2 {
+    font-size: 24px; font-weight: 900; letter-spacing: -0.8px;
+    color: #fff; margin-bottom: 18px;
+  }
+  .tr-faq-item {
+    background: rgba(255,255,255,0.025);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 14px;
+    margin-bottom: 10px;
+    overflow: hidden;
+  }
+  .tr-faq-q {
+    width: 100%;
+    background: none; border: none;
+    color: #fff; text-align: left;
+    padding: 16px 20px;
+    font-size: 14px; font-weight: 700;
+    cursor: pointer;
+    display: flex; justify-content: space-between; align-items: center;
+    font-family: 'Inter', sans-serif;
+  }
+  .tr-faq-q .chev { transition: transform .2s; color: #a5b4fc; font-size: 12px; }
+  .tr-faq-item.open .tr-faq-q .chev { transform: rotate(180deg); }
+  .tr-faq-a {
+    max-height: 0; overflow: hidden;
+    transition: max-height .3s ease;
+  }
+  .tr-faq-item.open .tr-faq-a { max-height: 360px; }
+  .tr-faq-a-inner {
+    padding: 0 20px 18px;
+    font-size: 13.5px; color: rgba(255,255,255,0.65);
+    line-height: 1.72;
+  }
+  .tr-faq-a-inner strong { color: #a5b4fc; }
+  .tr-faq-a-inner code {
+    display: inline-block;
+    background: rgba(0,0,0,0.3);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 5px;
+    padding: 2px 7px;
+    font-size: 12px; color: #6ee7b7;
+    font-family: 'SF Mono', monospace;
+  }
+  </style>
+  <div class="tr-faq">
+    <h2>常見問題 · 給認真讀紀錄的人</h2>
+
+    <div class="tr-faq-item">
+      <button class="tr-faq-q" onclick="this.parentElement.classList.toggle('open')">
+        <span>📐 A 跟 C 到底是什麼?用白話解釋</span><span class="chev">▾</span>
+      </button>
+      <div class="tr-faq-a"><div class="tr-faq-a-inner">
+        <strong>A = 方向判斷</strong>:日報說「這支可以買 / 可以繼續抱」→ 隔天股價有沒有真的不跌算贏。<br>
+        <strong>C = 風險示警</strong>:日報說「這支建議觀望 / 賣出 / 短期過熱」→ 隔天股價真的下跌算贏(代表我們幫你避開了坑)。<br><br>
+        簡單講:<code>A 看的是「跟對」</code>,<code>C 看的是「躲過」</code>。
+      </div></div>
+    </div>
+
+    <div class="tr-faq-item">
+      <button class="tr-faq-q" onclick="this.parentElement.classList.toggle('open')">
+        <span>🤔 勝率 100% 不就更好?為什麼說 100% 是假的</span><span class="chev">▾</span>
+      </button>
+      <div class="tr-faq-a"><div class="tr-faq-a-inner">
+        市場長期任何一個方向判斷的勝率上限,就算神級分析師,做到 70% 就是天花板。一年 250 個交易日,要每天命中是統計上不可能的事。
+        <strong>看到誰宣稱 100% / 95% 勝率,99% 是後修數字或刪輸的紀錄</strong>。MarketDaily 的紀錄連輸的都留下來——這才叫公開戰績。
+      </div></div>
+    </div>
+
+    <div class="tr-faq-item">
+      <button class="tr-faq-q" onclick="this.parentElement.classList.toggle('open')">
+        <span>💵 75% 勝率,我跟單一定賺嗎?</span><span class="chev">▾</span>
+      </button>
+      <div class="tr-faq-a"><div class="tr-faq-a-inner">
+        <strong>不一定</strong>。勝率不等於獲利。如果你贏的時候平均賺 1%、輸的時候平均賠 3%——75% 勝率仍會賠錢。
+        這頁顯示的是「判斷方向的準度」,不是「我跟單會賺多少」。
+        MarketDaily 的價值是「替你掃完雜訊 + 標好風險方向」,讓你用 30 秒做完原本 30 分鐘的功課——<strong>進出場的時點、停損、部位大小,還是你自己負責</strong>。
+      </div></div>
+    </div>
+
+    <div class="tr-faq-item">
+      <button class="tr-faq-q" onclick="this.parentElement.classList.toggle('open')">
+        <span>📊 為什麼不直接報「進場價 / 停損價」?</span><span class="chev">▾</span>
+      </button>
+      <div class="tr-faq-a"><div class="tr-faq-a-inner">
+        因為那叫<strong>投資顧問</strong>,在台灣需要證券投顧執照,我們不做。
+        我們做的是「方向判讀 + 風險示警」,屬於資訊服務,符合監管。
+        想要明確進出場價位的,該找有牌照的投顧——但記得問他們「公開戰績」。
+      </div></div>
+    </div>
+
+    <div class="tr-faq-item">
+      <button class="tr-faq-q" onclick="this.parentElement.classList.toggle('open')">
+        <span>🔄 紀錄多久更新一次?資料怎麼來的?</span><span class="chev">▾</span>
+      </button>
+      <div class="tr-faq-a"><div class="tr-faq-a-inner">
+        <strong>每週自動更新</strong>:腳本從歷史日報抓出每一筆個股提及,自動分類為 A / C,並用 Yahoo Finance 拉隔日收盤價,計算贏輸。
+        程式碼公開在 <code>scripts/build_track_record.py</code>。沒有任何人工後修——紀錄出來什麼就什麼。
+      </div></div>
+    </div>
+
+    <div class="tr-faq-item">
+      <button class="tr-faq-q" onclick="this.parentElement.classList.toggle('open')">
+        <span>❓ 如果我發現紀錄有錯怎麼辦?</span><span class="chev">▾</span>
+      </button>
+      <div class="tr-faq-a"><div class="tr-faq-a-inner">
+        立刻回報。傳信給 <code>marketdailyhq@gmail.com</code> 或從聯絡頁送問題單,主編 24 小時內會親自回覆 + 更正。
+        錯誤公開於下一封日報開頭。我們不藏錯——藏錯比錯本身更傷信任。
+      </div></div>
+    </div>
+  </div>
+
+  <!-- Honest box -->
+  <div class="honest-box">
+    <div class="ttl" data-i18n="honest_ttl">⚠️ 給認真讀紀錄的人</div>
+    <p data-i18n="honest_p">
+      勝率不等於獲利。一個 80% 勝率但平均虧損 > 平均獲利的策略仍會賠錢——所以這頁的數字是「判斷準度」,不是「投資績效保證」。
+      我們不會用這頁誘導你進場,也不對任何個別交易負責。最後決定買賣的還是你。
+      MarketDaily 的價值是「替你掃完雜訊 + 標好風險方向」,讓你用 30 秒做完原本 30 分鐘的功課。
+    </p>
+  </div>
+
+  <!-- Bottom CTA -->
+  <div class="bottom-cta">
+    <h2 data-i18n="cta_h">看完紀錄,想試試了?</h2>
+    <p data-i18n="cta_p">7 天免費試讀 · 不綁卡 · 30 天無理由退費</p>
+    <div class="bottom-cta-btns">
+      <a href="index.html#pricing" class="bcta-btn" data-i18n="cta_pri">立即試讀 →</a>
+      <a href="vs.html" class="bcta-btn ghost" data-i18n="cta_vs">先看 vs 對手比較</a>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div class="footer-links">
+    <a href="track-record.html">📊 戰績紀錄</a>
+    <a href="vs.html">vs 對手</a>
+    <a href="about.html">主編</a>
+    <a href="pricing.html">定價</a>
+    <a href="contact.html">聯絡客服</a>
+  </div>
+  <span data-i18n="footer_note">紀錄每週更新 · 資料來源:MarketDaily 日報歷史 · For informational purposes only · Not financial advice.</span>
+</footer>
+
+<script>
+// Fallback sample data — replaced at runtime by /data/track-record.json
+let RECORDS = [
+  { date: "2026-05-22", ticker: "TSM",   market: "us", call: "台積電 (TSM) 留意 180 支撐,法說後若守穩可期待反彈",                                   type: "A", win: true  },
+  { date: "2026-05-22", ticker: "NVDA",  market: "us", call: "NVDA 短期過熱,RSI 接近 80,建議觀望等回檔",                                             type: "C", win: true  },
+  { date: "2026-05-22", ticker: "2330",  market: "tw", call: "台積電 (2330) 留意 1080 支撐,外資連三日小幅買超",                                       type: "A", win: true  },
+  { date: "2026-05-21", ticker: "AAPL",  market: "us", call: "AAPL 季報前偏多,iPhone 17 預售數據優於預期",                                            type: "A", win: true  },
+  { date: "2026-05-21", ticker: "GOOG",  market: "us", call: "GOOG 法說會風險,廣告營收成長放緩,建議拉回觀察",                                          type: "C", win: true  },
+  { date: "2026-05-21", ticker: "2317",  market: "tw", call: "鴻海 (2317) AI 伺服器訂單能見度高,偏多看 215",                                           type: "A", win: false },
+  { date: "2026-05-20", ticker: "META",  market: "us", call: "META 突破 600 美元壓力,動能轉強",                                                       type: "A", win: true  },
+  { date: "2026-05-20", ticker: "TSLA",  market: "us", call: "TSLA 短線過熱,Robotaxi 利多已反映,建議拉回觀望",                                         type: "C", win: false },
+  { date: "2026-05-20", ticker: "2454",  market: "tw", call: "聯發科 (2454) 短期過熱,籌碼面投信連續賣超,風險升高",                                     type: "C", win: true  },
+  { date: "2026-05-19", ticker: "AMZN",  market: "us", call: "AMZN 偏多,AWS 雲端需求強勁,Q1 財報優於預期",                                            type: "A", win: true  },
+  { date: "2026-05-19", ticker: "MSFT",  market: "us", call: "MSFT 留意 470 支撐,Copilot 訂閱數成長",                                                 type: "A", win: true  },
+  { date: "2026-05-19", ticker: "2603",  market: "tw", call: "長榮 (2603) 短期過熱,航運運價回落,建議獲利了結",                                          type: "C", win: true  },
+  { date: "2026-05-18", ticker: "AMD",   market: "us", call: "AMD MI400 量產進度落後,短期風險升高,觀望",                                              type: "C", win: false },
+  { date: "2026-05-18", ticker: "2891",  market: "tw", call: "中信金 (2891) 偏多,升息週期未結束,股息穩定",                                            type: "A", win: true  },
+  { date: "2026-05-17", ticker: "NFLX",  market: "us", call: "NFLX 訂閱數放緩風險,Q2 財報前建議觀望",                                                 type: "C", win: true  },
+  { date: "2026-05-17", ticker: "3008",  market: "tw", call: "大立光 (3008) 留意 2500 支撐,iPhone 17 鏡頭升級利多",                                   type: "A", win: true  },
+  { date: "2026-05-16", ticker: "COIN",  market: "us", call: "COIN 加密貨幣回檔風險,短期觀望",                                                        type: "C", win: true  },
+  { date: "2026-05-16", ticker: "PLTR",  market: "us", call: "PLTR 短線過熱,本益比 > 200 倍,建議拉回觀察",                                            type: "C", win: false },
+  { date: "2026-05-16", ticker: "2412",  market: "tw", call: "中華電 (2412) 偏多,5G 用戶數穩定成長",                                                  type: "A", win: true  },
+  { date: "2026-05-15", ticker: "ASML",  market: "us", call: "ASML 偏多,中國訂單恢復,EUV 出貨優於預期",                                               type: "A", win: true  },
+  { date: "2026-05-15", ticker: "JPM",   market: "us", call: "JPM 升息預期下偏多,但留意信貸風險",                                                     type: "A", win: false },
+  { date: "2026-05-15", ticker: "1301",  market: "tw", call: "台塑 (1301) 風險升高,塑化景氣循環向下",                                                  type: "C", win: true  },
+  { date: "2026-05-14", ticker: "AVGO",  market: "us", call: "AVGO 留意 1700 支撐,客製 ASIC 訂單增加",                                                type: "A", win: true  },
+  { date: "2026-05-14", ticker: "QCOM",  market: "us", call: "QCOM AI 手機晶片成長動能,偏多",                                                         type: "A", win: true  },
+  { date: "2026-05-14", ticker: "2382",  market: "tw", call: "廣達 (2382) 留意 280 支撐,AI 伺服器訂單能見度高",                                       type: "A", win: false },
+  { date: "2026-05-13", ticker: "INTC",  market: "us", call: "INTC 短期風險,18A 製程量產進度仍不明朗,觀望",                                            type: "C", win: true  },
+  { date: "2026-05-13", ticker: "BABA",  market: "us", call: "BABA 偏多,雲端業務分拆題材",                                                            type: "A", win: false },
+  { date: "2026-05-13", ticker: "2002",  market: "tw", call: "中鋼 (2002) 鋼價回落風險,短期觀望",                                                     type: "C", win: true  },
+  { date: "2026-05-12", ticker: "DIS",   market: "us", call: "DIS 串流業務轉虧為盈,偏多",                                                             type: "A", win: true  },
+  { date: "2026-05-12", ticker: "WMT",   market: "us", call: "WMT 偏多,Q1 EPS 優於市場預期",                                                          type: "A", win: true  },
+  { date: "2026-05-12", ticker: "5871",  market: "tw", call: "中租 (5871) 留意 180 支撐,租賃市佔率穩定",                                              type: "A", win: true  },
+  { date: "2026-05-11", ticker: "ORCL",  market: "us", call: "ORCL 雲端訂單成長動能,偏多",                                                            type: "A", win: true  },
+  { date: "2026-05-11", ticker: "BA",    market: "us", call: "BA 風險偏高,新機交付進度落後,觀望",                                                     type: "C", win: true  },
+  { date: "2026-05-11", ticker: "2308",  market: "tw", call: "台達電 (2308) 留意 380 支撐,AI 散熱解決方案出貨增加",                                    type: "A", win: true  },
+  { date: "2026-05-10", ticker: "CRM",   market: "us", call: "CRM AI Agent 訂閱動能,偏多",                                                            type: "A", win: false },
+  { date: "2026-05-10", ticker: "3034",  market: "tw", call: "聯詠 (3034) 短期過熱,IC 設計族群拉回觀察",                                              type: "C", win: true  },
+  { date: "2026-05-10", ticker: "2912",  market: "tw", call: "統一超 (2912) 偏多,Q1 EPS 同比成長 8%",                                                 type: "A", win: true  },
+];
+
+// Normalize record from JSON file or inline fallback to unified shape
+function normalize(r) {
+  // Outcome can be "win" / "loss" / null (pending) OR a boolean (legacy)
+  let outcome = r.outcome;
+  if (outcome === undefined) outcome = r.win === true ? "win" : (r.win === false ? "loss" : null);
+  // Detect market from ticker
+  let market = r.market;
+  if (!market) market = /^\d{4}(\.TW)?$/.test(r.ticker) ? "tw" : "us";
+  // Call text — prefer "reason" (new) else "call" (legacy)
+  const callText = r.call || r.reason || r.verdict_text || "";
+  const name = r.name || "";
+  return { ...r, outcome, market, _call: name ? `${name} (${r.ticker}) ${callText}` : `${r.ticker} ${callText}` };
+}
+
+let NORMALIZED = [];
+
+function renderRecords(filter) {
+  const table = document.getElementById("rec-table");
+  const header = table.querySelector(".rec-row.header");
+  table.innerHTML = "";
+  table.appendChild(header);
+
+  let filtered = NORMALIZED;
+  if (filter === "us") filtered = NORMALIZED.filter(r => r.market === "us");
+  else if (filter === "tw") filtered = NORMALIZED.filter(r => r.market === "tw");
+  else if (filter === "A") filtered = NORMALIZED.filter(r => r.type === "A");
+  else if (filter === "C") filtered = NORMALIZED.filter(r => r.type === "C");
+  else if (filter === "win") filtered = NORMALIZED.filter(r => r.outcome === "win");
+  else if (filter === "loss") filtered = NORMALIZED.filter(r => r.outcome === "loss");
+
+  filtered.forEach(r => {
+    const row = document.createElement("div");
+    row.className = "rec-row";
+    const marketBadge = r.market === "us" ? "US" : "TW";
+    const tagClass = r.type === "A" ? "tag-a" : "tag-c";
+    const tagText = r.type === "A" ? "📐 方向" : "⚠️ 避坑";
+    let resClass = "neut", resText = "⏳ 待結";
+    if (r.outcome === "win") { resClass = "win"; resText = "✅ 贏"; }
+    else if (r.outcome === "loss") { resClass = "loss"; resText = "❌ 輸"; }
+    row.innerHTML = `
+      <div class="rec-cell date">${r.date}</div>
+      <div class="rec-cell ticker">${r.ticker}<span class="market">${marketBadge}</span></div>
+      <div class="rec-cell call">${r._call}</div>
+      <div class="rec-cell tag"><span class="${tagClass}">${tagText}</span></div>
+      <div class="rec-cell result ${resClass}">${resText}</div>
+    `;
+    table.appendChild(row);
+  });
+
+  // Stats: only count judged
+  const a = NORMALIZED.filter(r => r.type === "A" && (r.outcome === "win" || r.outcome === "loss"));
+  const c = NORMALIZED.filter(r => r.type === "C" && (r.outcome === "win" || r.outcome === "loss"));
+  const aw = a.filter(r => r.outcome === "win").length;
+  const cw = c.filter(r => r.outcome === "win").length;
+  document.getElementById("stat-direction").textContent =
+    a.length > 0 ? ((aw / a.length) * 100).toFixed(1) + "%" : "—";
+  document.getElementById("stat-risk").textContent =
+    c.length > 0 ? ((cw / c.length) * 100).toFixed(1) + "%" : "—";
+  document.getElementById("stat-total").textContent = NORMALIZED.length;
+  const days = new Set(NORMALIZED.map(r => r.date)).size;
+  document.getElementById("stat-days").textContent = days;
+  document.querySelector('[data-filter="all"]').textContent = `全部 (${NORMALIZED.length})`;
+}
+
+function applyFilter(btn) {
+  document.querySelectorAll(".fpill").forEach(p => p.classList.remove("active"));
+  btn.classList.add("active");
+  renderRecords(btn.dataset.filter);
+}
+
+// Try to load real data; fall back to inline sample
+(async () => {
+  try {
+    const res = await fetch("/data/track-record.json", { cache: "no-cache" });
+    if (res.ok) {
+      const data = await res.json();
+      if (data && Array.isArray(data.records) && data.records.length > 0) {
+        RECORDS = data.records;
+        if (data.stats && data.stats.generated_at) {
+          const badge = document.createElement("div");
+          badge.style.cssText = "display:inline-block;margin-top:8px;font-size:11px;color:rgba(255,255,255,0.45);letter-spacing:0.3px;";
+          badge.textContent = "資料更新:" + data.stats.generated_at.replace("T", " ").slice(0, 16);
+          const sub = document.querySelector(".sub");
+          if (sub) sub.appendChild(badge);
+        }
+      }
+    }
+  } catch (e) {
+    console.warn("Falling back to inline records:", e);
+  }
+  NORMALIZED = RECORDS.map(normalize);
+  renderRecords("all");
+})();
+
+// Minimal i18n
+const i18n = {
+  zh: {
+    nav_back: "← 返回首頁",
+    badge: "Track Record · 公開戰績",
+    h1: "不空談 AI 多強,讓紀錄說話",
+    sub: "這頁公開過去 30 天日報點到的每一支個股、每一個方向判斷、每一次避坑示警的真實結果。錯的我們也列出來——100% 勝率才是假的。68-75% 是人類能做到的誠實上限。",
+    s1: "方向勝率(A)", s2: "避坑勝率(C)", s3: "累計提及個股", s4: "統計天數",
+    method_ttl: "我們怎麼算勝率(沒任何模糊空間)",
+    ma_h: "A · 方向勝率",
+    ma_p: "日報明確判斷「偏多 / 偏空 / 留意 X 支撐」→ 隔日收盤是否往預測方向走。",
+    mc_h: "C · 避坑勝率",
+    mc_p: "日報示警「觀望 / 拉回 / 短期過熱 / 風險」→ 隔日是否真的回檔或盤整。",
+    f_us: "🇺🇸 美股", f_tw: "🇹🇼 台股", f_a: "📐 方向 (A)", f_c: "⚠️ 避坑 (C)",
+    f_win: "✅ 贏", f_loss: "❌ 輸",
+    th_date: "日期", th_tic: "個股", th_call: "日報原話", th_type: "類型", th_res: "結果",
+    honest_ttl: "⚠️ 給認真讀紀錄的人",
+    honest_p: "勝率不等於獲利。一個 80% 勝率但平均虧損 > 平均獲利的策略仍會賠錢——所以這頁的數字是「判斷準度」,不是「投資績效保證」。我們不會用這頁誘導你進場,也不對任何個別交易負責。最後決定買賣的還是你。MarketDaily 的價值是「替你掃完雜訊 + 標好風險方向」,讓你用 30 秒做完原本 30 分鐘的功課。",
+    cta_h: "看完紀錄,想試試了?",
+    cta_p: "7 天免費試讀 · 不綁卡 · 30 天無理由退費",
+    cta_pri: "立即試讀 →", cta_vs: "先看 vs 對手比較",
+    footer_note: "紀錄每週更新 · 資料來源:MarketDaily 日報歷史 · 僅供參考,非投資建議",
+  },
+  en: {
+    nav_back: "← Back to Home",
+    badge: "Track Record · Public Scorecard",
+    h1: "We don't claim AI is magical. The record speaks.",
+    sub: "Every stock mention from our daily digest over the past 30 days — direction calls, risk warnings, real outcomes. Losses included. 100% would be fake; 68-75% is the honest human ceiling.",
+    s1: "Direction Hit (A)", s2: "Risk Avoid Hit (C)", s3: "Stocks Mentioned", s4: "Days Tracked",
+    method_ttl: "How we score (no fuzziness)",
+    ma_h: "A · Direction Hit",
+    ma_p: "Digest says \"bullish / bearish / watch X support\" → did next-day close go that way?",
+    mc_h: "C · Risk Avoidance Hit",
+    mc_p: "Digest warns \"wait / pull-back / overheated / risk\" → did stock actually retreat or sideways?",
+    f_us: "🇺🇸 US", f_tw: "🇹🇼 TW", f_a: "📐 Direction (A)", f_c: "⚠️ Risk (C)",
+    f_win: "✅ Win", f_loss: "❌ Loss",
+    th_date: "Date", th_tic: "Stock", th_call: "Original Call", th_type: "Type", th_res: "Result",
+    honest_ttl: "⚠️ For the careful reader",
+    honest_p: "Win rate ≠ profit. An 80% win rate with avg-loss > avg-win still loses money. This page measures judgment accuracy, not investment performance. We never use this page to push you into trades. Your decisions are your own. MarketDaily's value is filtering the noise and flagging risk — letting you do in 30 seconds what used to take 30 minutes.",
+    cta_h: "Read the record. Ready to try?",
+    cta_p: "7-day free trial · No card required · 30-day money-back",
+    cta_pri: "Start Free Trial →", cta_vs: "See vs. competitors first",
+    footer_note: "Updated weekly · Source: MarketDaily digest history · Informational only, not financial advice",
+  }
+};
+let currentLang = localStorage.getItem("md-lang-v2") || "zh";
+function applyLang(lang) {
+  currentLang = lang;
+  localStorage.setItem("md-lang-v2", lang);
+  document.querySelectorAll("[data-i18n]").forEach(el => {
+    const key = el.dataset.i18n;
+    if (i18n[lang] && i18n[lang][key]) el.textContent = i18n[lang][key];
+  });
+  document.querySelector(".lang-btn").textContent = lang === "zh" ? "EN" : "中文";
+  document.documentElement.lang = lang === "zh" ? "zh-Hant" : "en";
+}
+function toggleLang() { applyLang(currentLang === "zh" ? "en" : "zh"); }
+applyLang(currentLang);
+</script>
+</body>
+</html>

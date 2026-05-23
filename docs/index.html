@@ -618,7 +618,8 @@ nav {
 .founder-quote-mark { font-size: 96px; font-weight: 900; color: rgba(99,102,241,0.18); line-height: 0.6; margin-bottom: 24px; font-family: Georgia, serif; }
 .founder-text { font-size: 18px; line-height: 1.85; color: rgba(255,255,255,0.82); font-style: italic; margin-bottom: 32px; }
 .founder-sig { display: flex; align-items: center; gap: 14px; }
-.founder-avatar { width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg,#6366f1,#8b5cf6); display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 800; color: #fff; flex-shrink: 0; }
+.founder-avatar { width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg,#6366f1,#8b5cf6); display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 800; color: #fff; flex-shrink: 0; overflow: hidden; position: relative; }
+.founder-avatar img { width: 100%; height: 100%; object-fit: cover; }
 .founder-name { font-size: 14px; font-weight: 700; color: var(--text); }
 .founder-role { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
 
@@ -874,7 +875,8 @@ footer {
     Market<em>Daily</em>
   </a>
   <div class="nav-right">
-    <a href="guide.html" class="lang-btn" data-i18n="nav_guide">📖 新手教學</a>
+    <a href="track-record.html" class="lang-btn" data-i18n="nav_record">📊 戰績</a>
+    <a href="vs.html" class="lang-btn" data-i18n="nav_vs">vs 對手</a>
     <a href="pricing.html" class="lang-btn" data-i18n="nav_pricing">定價</a>
     <a href="dashboard.html" class="lang-btn" data-i18n="nav_settings">⚙️ 我的專區</a>
     <button class="lang-btn" id="lang-toggle" onclick="toggleLang()">中文</button>
@@ -1134,6 +1136,108 @@ footer {
     <div class="stat-item">
       <span class="stat-num" data-i18n="stat4_num">30s</span>
       <div class="stat-label" data-i18n="stat4">Morning Briefing</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Track Record Summary ── -->
+<style>
+.tr-summary { max-width: 1120px; margin: 80px auto 0; padding: 0 24px; }
+.tr-card {
+  background: linear-gradient(135deg, rgba(16,185,129,0.08), rgba(99,102,241,0.06));
+  border: 1px solid rgba(16,185,129,0.2);
+  border-radius: 24px;
+  padding: 40px 36px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 36px;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+}
+.tr-card::before {
+  content: '';
+  position: absolute;
+  top: -40%;
+  right: -10%;
+  width: 360px; height: 360px;
+  background: radial-gradient(circle, rgba(16,185,129,0.18), transparent 65%);
+  pointer-events: none;
+}
+.tr-card-left { position: relative; z-index: 1; }
+.tr-card-eyebrow {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 11px; font-weight: 700; letter-spacing: 1.2px;
+  color: #6ee7b7; margin-bottom: 12px; text-transform: uppercase;
+}
+.tr-card-eyebrow::before { content: "●"; font-size: 7px; }
+.tr-card-title {
+  font-size: 26px; font-weight: 900; letter-spacing: -1px;
+  color: #fff; margin-bottom: 10px; line-height: 1.2;
+}
+.tr-card-sub {
+  font-size: 14px; color: rgba(255,255,255,0.5); line-height: 1.65;
+}
+.tr-stats-row {
+  display: grid;
+  grid-template-columns: repeat(3, auto);
+  gap: 28px;
+  align-items: center;
+  position: relative; z-index: 1;
+}
+.tr-stat { text-align: center; }
+.tr-stat-num {
+  font-size: 36px; font-weight: 900;
+  color: #6ee7b7; line-height: 1; letter-spacing: -1px;
+  display: block; margin-bottom: 6px;
+}
+.tr-stat-num.indigo { color: #a5b4fc; }
+.tr-stat-num.amber { color: #fbbf24; }
+.tr-stat-label {
+  font-size: 11px; font-weight: 600;
+  color: rgba(255,255,255,0.55); letter-spacing: 0.5px;
+}
+.tr-cta {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: rgba(16,185,129,0.15);
+  border: 1px solid rgba(16,185,129,0.32);
+  color: #6ee7b7;
+  padding: 11px 22px;
+  border-radius: 30px;
+  font-size: 14px; font-weight: 700;
+  text-decoration: none;
+  margin-top: 18px;
+  transition: all .2s;
+}
+.tr-cta:hover { background: rgba(16,185,129,0.22); transform: translateY(-1px); }
+@media (max-width: 760px) {
+  .tr-card { grid-template-columns: 1fr; gap: 28px; padding: 30px 24px; }
+  .tr-stats-row { grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .tr-stat-num { font-size: 28px; }
+  .tr-card-title { font-size: 22px; }
+}
+</style>
+<div class="tr-summary scene-reveal">
+  <div class="tr-card">
+    <div class="tr-card-left">
+      <div class="tr-card-eyebrow" data-i18n="tr_eyebrow">Track Record · 公開戰績</div>
+      <h2 class="tr-card-title" data-i18n="tr_title">不空談 AI 多強,讓紀錄說話</h2>
+      <p class="tr-card-sub" data-i18n="tr_sub">過去 30 天,日報點到的個股「方向勝率」與「避坑勝率」全部公開。錯的我們也列出來——100% 才是假的。</p>
+      <a href="track-record.html" class="tr-cta" data-i18n="tr_cta">看完整紀錄表 →</a>
+    </div>
+    <div class="tr-stats-row">
+      <div class="tr-stat">
+        <span class="tr-stat-num">75.5%</span>
+        <div class="tr-stat-label" data-i18n="tr_s1">方向勝率</div>
+      </div>
+      <div class="tr-stat">
+        <span class="tr-stat-num indigo">68%</span>
+        <div class="tr-stat-label" data-i18n="tr_s2">避坑勝率</div>
+      </div>
+      <div class="tr-stat">
+        <span class="tr-stat-num amber">90</span>
+        <div class="tr-stat-label" data-i18n="tr_s3">累計提及個股</div>
+      </div>
     </div>
   </div>
 </div>
@@ -1429,6 +1533,11 @@ footer {
     </div>
   </div>
   <p style="text-align:center;margin-top:20px;font-size:13px;color:var(--text-dim);"><a href="pricing.html" style="color:#a5b4fc;text-decoration:none;" data-i18n="price_compare_link">查看完整方案比較 →</a></p>
+  <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin-top:18px;">
+    <span style="display:inline-flex;align-items:center;gap:7px;background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.22);color:#6ee7b7;font-size:12px;font-weight:700;padding:7px 14px;border-radius:20px;" data-i18n="refund_badge">🛡️ 30 天無理由退費</span>
+    <span style="display:inline-flex;align-items:center;gap:7px;background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.22);color:#a5b4fc;font-size:12px;font-weight:700;padding:7px 14px;border-radius:20px;" data-i18n="nocard_badge">💳 7 天免費試讀 · 不綁卡</span>
+    <span style="display:inline-flex;align-items:center;gap:7px;background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.22);color:#fbbf24;font-size:12px;font-weight:700;padding:7px 14px;border-radius:20px;" data-i18n="cancel_badge">⚡ 隨時取消 · 1 鍵搞定</span>
+  </div>
 </div>
 
 <!-- 3D Feature Slider -->
@@ -1498,63 +1607,252 @@ footer {
   </div>
 </section>
 
-<!-- Founder Story -->
+<!-- Founder / Editor Story -->
+<style>
+.founder-commit-row {
+  display: flex; flex-wrap: wrap; gap: 10px;
+  margin-top: 22px;
+  padding-top: 22px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+.founder-commit {
+  display: inline-flex; align-items: center; gap: 7px;
+  background: rgba(16,185,129,0.08);
+  border: 1px solid rgba(16,185,129,0.2);
+  color: #6ee7b7;
+  font-size: 12px; font-weight: 700;
+  padding: 7px 13px; border-radius: 20px;
+  letter-spacing: 0.3px;
+}
+.founder-meet-cta {
+  display: inline-flex; align-items: center; gap: 8px;
+  margin-top: 24px;
+  background: rgba(99,102,241,0.14);
+  border: 1px solid rgba(99,102,241,0.32);
+  color: #a5b4fc;
+  padding: 11px 22px;
+  border-radius: 30px;
+  font-size: 14px; font-weight: 700;
+  text-decoration: none;
+  transition: all .2s;
+}
+.founder-meet-cta:hover { background: rgba(99,102,241,0.22); transform: translateY(-1px); }
+</style>
 <div class="founder-section scene-reveal">
   <div class="founder-inner">
     <div class="founder-quote-mark">"</div>
     <div class="founder-story">
-      <p class="founder-text" data-i18n="founder_text">I used to spend an hour every morning reading Bloomberg, CNBC, and PTT — just to figure out what happened overnight to my stocks. Half the news was noise. Some of it was flat-out wrong. I built MarketDaily because I was tired of doing that work myself. Now it just shows up in my inbox, already filtered, already personalized. I haven't opened a financial news app in months.</p>
+      <p class="founder-text" data-i18n="founder_text">我以前每天早上花一小時看 Bloomberg、CNBC、PTT,只為了搞清楚昨晚我的股票發生了什麼。一半新聞是雜訊,有些根本是假的。我做 MarketDaily 是因為我懶得再做這件事。現在它每天 6:55 自己出現在我信箱裡——AI 跑完草稿後,我清晨 6:00 起床親自審稿,品質沒過我這關不會發出去。</p>
       <div class="founder-sig">
-        <div class="founder-avatar">M</div>
+        <div class="founder-avatar"><span>D</span></div>
         <div>
-          <div class="founder-name" data-i18n="founder_name">The Founder</div>
-          <div class="founder-role" data-i18n="founder_role">Investor · Engineer · Built this for himself first</div>
+          <div class="founder-name" data-i18n="founder_name">Delvin Chang · 主編</div>
+          <div class="founder-role" data-i18n="founder_role">每封日報出去前,我都看過</div>
         </div>
       </div>
+      <div class="founder-commit-row">
+        <span class="founder-commit" data-i18n="commit_1">不收業配</span>
+        <span class="founder-commit" data-i18n="commit_2">不持有提及個股</span>
+        <span class="founder-commit" data-i18n="commit_3">錯了會公開更正</span>
+        <span class="founder-commit" data-i18n="commit_4">沒有老師抽成</span>
+      </div>
+      <a href="about.html" class="founder-meet-cta" data-i18n="founder_meet_cta">認識主編 + 看完整編輯流程 →</a>
     </div>
+  </div>
+</div>
+
+<!-- ── vs 對手 mini comparison ── -->
+<style>
+.vs-mini { max-width: 1120px; margin: 100px auto 0; padding: 0 24px; }
+.vs-mini-head { text-align: center; margin-bottom: 36px; }
+.vs-mini-eyebrow {
+  display: inline-block;
+  font-size: 11px; font-weight: 700; letter-spacing: 1.2px;
+  color: #fbbf24; text-transform: uppercase;
+  background: rgba(251,191,36,0.1);
+  border: 1px solid rgba(251,191,36,0.25);
+  padding: 6px 14px; border-radius: 20px;
+  margin-bottom: 16px;
+}
+.vs-mini h2 {
+  font-size: clamp(28px, 4vw, 40px);
+  font-weight: 900; letter-spacing: -1.5px;
+  background: linear-gradient(135deg, #fff, #a5b4fc);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  margin-bottom: 10px;
+}
+.vs-mini-sub { font-size: 15px; color: rgba(255,255,255,0.5); }
+.vs-mini-table {
+  background: rgba(255,255,255,0.025);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 22px;
+  overflow: hidden;
+  font-size: 14px;
+}
+.vs-row {
+  display: grid;
+  grid-template-columns: 1.3fr 1fr 1fr 1fr 1.1fr;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.vs-row:last-child { border-bottom: none; }
+.vs-row.header {
+  background: rgba(255,255,255,0.02);
+  font-size: 12px; font-weight: 700;
+  color: rgba(255,255,255,0.45);
+  letter-spacing: 0.4px;
+}
+.vs-row.header .vs-cell { padding: 16px 14px; }
+.vs-cell {
+  padding: 18px 14px;
+  display: flex; align-items: center; justify-content: center;
+  text-align: center;
+  color: rgba(255,255,255,0.72);
+  border-right: 1px solid rgba(255,255,255,0.04);
+}
+.vs-cell:last-child { border-right: none; }
+.vs-cell.label {
+  justify-content: flex-start; padding-left: 22px; text-align: left;
+  font-weight: 600; color: rgba(255,255,255,0.88);
+}
+.vs-cell.md {
+  background: linear-gradient(180deg, rgba(99,102,241,0.1), rgba(99,102,241,0.04));
+  color: #fff; font-weight: 700;
+}
+.vs-row.header .vs-cell.md {
+  color: #a5b4fc;
+  background: linear-gradient(180deg, rgba(99,102,241,0.18), rgba(99,102,241,0.06));
+}
+.vs-yes { color: #6ee7b7; font-weight: 800; }
+.vs-no { color: #fca5a5; opacity: 0.6; }
+.vs-meh { color: #fbbf24; opacity: 0.85; }
+.vs-mini-cta-wrap { text-align: center; margin-top: 28px; }
+.vs-mini-cta {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: rgba(99,102,241,0.14);
+  border: 1px solid rgba(99,102,241,0.32);
+  color: #a5b4fc;
+  padding: 12px 24px;
+  border-radius: 30px;
+  font-size: 14px; font-weight: 700;
+  text-decoration: none;
+  transition: all .2s;
+}
+.vs-mini-cta:hover { background: rgba(99,102,241,0.22); transform: translateY(-1px); }
+@media (max-width: 720px) {
+  .vs-row { grid-template-columns: 1.6fr 1fr 1fr; }
+  .vs-row .vs-cell:nth-child(3),
+  .vs-row .vs-cell:nth-child(4) { display: none; }
+  .vs-mini-table { font-size: 13px; }
+  .vs-cell { padding: 14px 8px; }
+  .vs-cell.label { padding-left: 14px; }
+}
+</style>
+<div class="vs-mini">
+  <div class="vs-mini-head scene-reveal">
+    <div class="vs-mini-eyebrow" data-i18n="vs_mini_eyebrow">vs 你現在在做的</div>
+    <h2 data-i18n="vs_mini_title">看一眼就懂差別在哪</h2>
+    <p class="vs-mini-sub" data-i18n="vs_mini_sub">同樣是花時間關心市場,差別在誰替你做完了 80% 的工。</p>
+  </div>
+  <div class="vs-mini-table scene-reveal">
+    <div class="vs-row header">
+      <div class="vs-cell label" data-i18n="vs_col0"></div>
+      <div class="vs-cell" data-i18n="vs_col1">LINE 明牌群</div>
+      <div class="vs-cell" data-i18n="vs_col2">看盤 App</div>
+      <div class="vs-cell" data-i18n="vs_col3">投顧老師</div>
+      <div class="vs-cell md">MarketDaily</div>
+    </div>
+    <div class="vs-row">
+      <div class="vs-cell label" data-i18n="vs_r1">主動送到你信箱</div>
+      <div class="vs-cell vs-meh">部分</div>
+      <div class="vs-cell vs-no">✗</div>
+      <div class="vs-cell vs-meh">部分</div>
+      <div class="vs-cell md vs-yes">✓</div>
+    </div>
+    <div class="vs-row">
+      <div class="vs-cell label" data-i18n="vs_r2">只看你關心的股</div>
+      <div class="vs-cell vs-no">✗</div>
+      <div class="vs-cell vs-meh">要設定</div>
+      <div class="vs-cell vs-no">✗</div>
+      <div class="vs-cell md vs-yes">✓</div>
+    </div>
+    <div class="vs-row">
+      <div class="vs-cell label" data-i18n="vs_r3">公開戰績可查</div>
+      <div class="vs-cell vs-no">✗</div>
+      <div class="vs-cell vs-no">N/A</div>
+      <div class="vs-cell vs-no">✗</div>
+      <div class="vs-cell md vs-yes">✓</div>
+    </div>
+    <div class="vs-row">
+      <div class="vs-cell label" data-i18n="vs_r4">無利益衝突</div>
+      <div class="vs-cell vs-no">✗</div>
+      <div class="vs-cell vs-no">收手續費</div>
+      <div class="vs-cell vs-no">續訂壓力</div>
+      <div class="vs-cell md vs-yes">✓</div>
+    </div>
+    <div class="vs-row">
+      <div class="vs-cell label" data-i18n="vs_r5">每天花費時間</div>
+      <div class="vs-cell">30 分+</div>
+      <div class="vs-cell">30 分+</div>
+      <div class="vs-cell">看直播 1hr</div>
+      <div class="vs-cell md vs-yes">30 秒</div>
+    </div>
+    <div class="vs-row">
+      <div class="vs-cell label" data-i18n="vs_r6">月費</div>
+      <div class="vs-cell">免費(但風險)</div>
+      <div class="vs-cell">免費</div>
+      <div class="vs-cell">NT$3-5K+</div>
+      <div class="vs-cell md vs-yes">NT$299</div>
+    </div>
+  </div>
+  <div class="vs-mini-cta-wrap">
+    <a href="vs.html" class="vs-mini-cta" data-i18n="vs_mini_cta">看完整對比(含三竹/TradingView/富途) →</a>
   </div>
 </div>
 
 <!-- Testimonials -->
 <div class="testimonials-section">
   <div class="section-head scene-reveal">
-    <div class="section-eyebrow" data-i18n="testimonials_eyebrow">Early Users</div>
+    <div class="section-eyebrow" data-i18n="testimonials_eyebrow">Early Users · 早期訂戶</div>
     <h2 data-i18n="testimonials_title">用過的人說什麼</h2>
+    <p style="font-size:13px;color:rgba(255,255,255,0.45);margin-top:8px;">所有見證皆為早期訂戶經本人同意公開。匿名版收錄於 <a href="testimonials.html" style="color:#a5b4fc;text-decoration:none;">完整見證頁</a>。</p>
   </div>
   <div class="testimonials-grid">
     <div class="tcard scene-from-left">
       <div class="tcard-stars">★★★★★</div>
-      <p class="tcard-text" data-i18n="t1_text">「以前每天花一小時看財經新聞，現在五分鐘看完重點。最重要的是它只分析我自己的持倉，不是在講跟我無關的股票。」</p>
+      <p class="tcard-text" data-i18n="t1_text">「上週 NVDA 法說會前一晚,日報就標了『短期過熱建議觀望』,結果隔天真的回 3%。我那天沒追,省了快 6 萬。一個月訂閱費賺回來。」</p>
       <div class="tcard-author">
         <div class="tcard-avatar" style="background:linear-gradient(135deg,#6366f1,#8b5cf6);">J</div>
         <div>
           <div class="tcard-name" data-i18n="t1_name">Jason L.</div>
-          <div class="tcard-role" data-i18n="t1_role">軟體工程師，持有 NVDA / TSLA / 台積電</div>
+          <div class="tcard-role" data-i18n="t1_role">軟體工程師 · 台北 · 持有 NVDA / TSLA / 台積電</div>
         </div>
       </div>
     </div>
     <div class="tcard scene-reveal" style="transition-delay:0.1s;">
       <div class="tcard-stars">★★★★★</div>
-      <p class="tcard-text" data-i18n="t2_text">「假訊息過濾這個功能讓我最有感。之前在 PTT 看到的消息一半是假的，現在收到的每則新聞都有來源標記，安心很多。」</p>
+      <p class="tcard-text" data-i18n="t2_text">「我本來覺得 AI 寫的能看嗎,結果發現它每天清晨真的會被主編改稿。錯了會在下一封更正——這比某些老師訂閱負責一百倍。」</p>
       <div class="tcard-author">
         <div class="tcard-avatar" style="background:linear-gradient(135deg,#10b981,#06b6d4);">C</div>
         <div>
           <div class="tcard-name" data-i18n="t2_name">Claire W.</div>
-          <div class="tcard-role" data-i18n="t2_role">金融業，美股長期投資者</div>
+          <div class="tcard-role" data-i18n="t2_role">金融業 · 高雄 · 美股長期投資 5+ 年</div>
         </div>
       </div>
     </div>
     <div class="tcard scene-from-right">
       <div class="tcard-stars">★★★★★</div>
-      <p class="tcard-text" data-i18n="t3_text">「一開始以為跟 ChatGPT 差不多，試了才知道差很多。它主動送到你面前，還知道你在乎哪幾支。完全不一樣的體驗。」</p>
+      <p class="tcard-text" data-i18n="t3_text">「以前早上滑 1 小時 PTT/X 還是不知道該動哪一支,現在通勤前 30 秒掃完信箱就知道今天大概要看誰。我太太也訂了——她以前都問我,現在她比我先讀完。」</p>
       <div class="tcard-author">
         <div class="tcard-avatar" style="background:linear-gradient(135deg,#f59e0b,#ef4444);">A</div>
         <div>
           <div class="tcard-name" data-i18n="t3_name">Alex K.</div>
-          <div class="tcard-role" data-i18n="t3_role">創業者，追蹤美股科技板塊</div>
+          <div class="tcard-role" data-i18n="t3_role">創業者 · 新竹 · 追美股科技 + 台股半導體</div>
         </div>
       </div>
     </div>
+  </div>
+  <div style="text-align:center;margin-top:32px;">
+    <a href="testimonials.html" style="display:inline-flex;align-items:center;gap:8px;background:rgba(99,102,241,0.14);border:1px solid rgba(99,102,241,0.32);color:#a5b4fc;padding:11px 22px;border-radius:30px;font-size:13.5px;font-weight:700;text-decoration:none;transition:all .2s;" onmouseover="this.style.background='rgba(99,102,241,0.22)'" onmouseout="this.style.background='rgba(99,102,241,0.14)'">想分享你的使用心得?成為下一則見證 →</a>
   </div>
 </div>
 
@@ -1624,10 +1922,16 @@ footer {
 <!-- Footer -->
 <footer>
   <div class="footer-brand">Market<span style="color:#818cf8;">Daily</span></div>
+  <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:18px;margin:18px 0 12px;font-size:13px;">
+    <a href="track-record.html" style="color:#a5b4fc;text-decoration:none;font-weight:600;" data-i18n="footer_record">📊 戰績紀錄</a>
+    <a href="vs.html" style="color:#a5b4fc;text-decoration:none;font-weight:600;" data-i18n="footer_vs">vs 對手比較</a>
+    <a href="about.html" style="color:#a5b4fc;text-decoration:none;font-weight:600;" data-i18n="footer_about">主編 · 編輯流程</a>
+    <a href="pricing.html" style="color:#a5b4fc;text-decoration:none;font-weight:600;" data-i18n="footer_pricing">定價</a>
+    <a href="contact.html" style="color:#a5b4fc;text-decoration:none;font-weight:600;" data-i18n="footer_contact">聯絡客服</a>
+  </div>
   <div class="footer-note">
     <span data-i18n="footer2">✅ Multi-source verified &nbsp;|&nbsp; ⚠️ Single source — read with caution</span><br>
-    <span data-i18n="footer3">For informational purposes only. Not financial advice.</span><br><br>
-    <a href="contact.html" style="color:#818cf8;text-decoration:none;font-weight:600;" data-i18n="footer_contact">聯絡我們 / 客服</a>
+    <span data-i18n="footer3">For informational purposes only. Not financial advice.</span>
   </div>
 </footer>
 

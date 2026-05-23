@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>主編 Delvin · 編輯流程 — MarketDaily</title>
+<meta name="description" content="認識 MarketDaily 主編 Delvin Chang。每天清晨 6:00 親自審稿、不收業配、不持有提及個股、錯了公開更正——你信任的是人,不是匿名 AI。">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#6366f1">
+<link rel="apple-touch-icon" href="/logo-icon.svg">
+<link rel="icon" type="image/svg+xml" href="/logo-icon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:focus-visible { outline: 2px solid #818cf8; outline-offset: 2px; border-radius: 4px; }
+body {
+  background: #060611;
+  color: #e2e8f0;
+  font-family: 'Inter', sans-serif;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0;
+  background-image:
+    linear-gradient(rgba(99,102,241,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(99,102,241,0.04) 1px, transparent 1px);
+  background-size: 72px 72px;
+  pointer-events: none;
+}
+
+nav {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 0 40px; height: 62px;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  background: rgba(6,6,17,0.8);
+  backdrop-filter: blur(28px) saturate(1.8);
+  -webkit-backdrop-filter: blur(28px) saturate(1.8);
+  position: sticky; top: 0; z-index: 100;
+}
+.nav-logo {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 17px; font-weight: 800; letter-spacing: -0.5px;
+  color: #f1f5f9; text-decoration: none;
+}
+.nav-logo-icon {
+  width: 30px; height: 30px;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  border-radius: 8px; display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.nav-logo em { color: #818cf8; font-style: normal; }
+.nav-back {
+  font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.5);
+  text-decoration: none; background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.08); padding: 7px 16px; border-radius: 20px;
+  transition: all 0.2s;
+}
+.nav-back:hover { color: #f1f5f9; border-color: rgba(255,255,255,0.13); }
+.lang-btn {
+  background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.5); font-size: 12px; font-weight: 700; font-family: 'Inter', sans-serif;
+  padding: 7px 14px; border-radius: 20px; cursor: pointer; transition: all 0.2s;
+}
+.lang-btn:hover { background: rgba(99,102,241,0.12); border-color: rgba(99,102,241,0.28); color: #fff; }
+.nav-right { display: flex; align-items: center; gap: 8px; }
+
+.page-wrap {
+  position: relative; z-index: 1;
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 64px 24px 80px;
+}
+
+/* Hero */
+.profile-hero {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 40px;
+  align-items: center;
+  margin-bottom: 56px;
+}
+.profile-avatar {
+  width: 220px; height: 220px;
+  border-radius: 26px;
+  box-shadow: 0 20px 60px rgba(99,102,241,0.4),
+              inset 0 0 0 1px rgba(255,255,255,0.12);
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 22% 18%, rgba(255,255,255,0.28), transparent 50%),
+    radial-gradient(circle at 80% 100%, rgba(236,72,153,0.4), transparent 55%),
+    linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #c026d3 100%);
+}
+.profile-avatar svg.bg-chart {
+  position: absolute;
+  inset: 0;
+  width: 100%; height: 100%;
+  opacity: 0.16;
+  pointer-events: none;
+}
+.profile-avatar .monogram {
+  position: absolute;
+  inset: 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  color: #fff;
+  font-weight: 900;
+  letter-spacing: -3px;
+  z-index: 2;
+}
+.profile-avatar .monogram .mono-d {
+  font-size: 92px; line-height: 1;
+  text-shadow: 0 4px 22px rgba(0,0,0,0.3);
+  margin-bottom: 4px;
+}
+.profile-avatar .monogram .mono-tag {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.78);
+  background: rgba(0,0,0,0.18);
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 14px;
+  padding: 4px 11px;
+  backdrop-filter: blur(8px);
+}
+.profile-avatar .grid-overlay {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+  background-size: 22px 22px;
+  pointer-events: none;
+}
+.profile-avatar .corner-tag {
+  position: absolute;
+  top: 12px; left: 12px;
+  font-family: 'SF Mono', ui-monospace, monospace;
+  font-size: 9.5px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.65);
+  letter-spacing: 0.5px;
+  background: rgba(0,0,0,0.22);
+  padding: 3px 7px;
+  border-radius: 6px;
+  backdrop-filter: blur(6px);
+  z-index: 2;
+}
+.profile-avatar .pulse-dot {
+  position: absolute; bottom: 14px; right: 14px;
+  width: 12px; height: 12px;
+  background: #10b981;
+  border-radius: 50%;
+  border: 3px solid rgba(0,0,0,0.4);
+  box-shadow: 0 0 0 0 rgba(16,185,129,0.7);
+  animation: avatar-pulse 2.4s ease-in-out infinite;
+  z-index: 3;
+}
+@keyframes avatar-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(16,185,129,0.7); }
+  50% { box-shadow: 0 0 0 8px rgba(16,185,129,0); }
+}
+.page-badge {
+  display: inline-flex; align-items: center; gap: 7px;
+  background: rgba(99,102,241,0.12);
+  border: 1px solid rgba(99,102,241,0.28);
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-size: 11px; font-weight: 700;
+  color: #a5b4fc; letter-spacing: 1px; text-transform: uppercase;
+  margin-bottom: 18px;
+}
+.page-badge::before { content: "●"; color: #6366f1; font-size: 8px; }
+h1 {
+  font-size: clamp(34px, 5.5vw, 48px);
+  font-weight: 900;
+  line-height: 1.1; letter-spacing: -1.5px;
+  margin-bottom: 12px;
+  background: linear-gradient(135deg, #fff 0%, #a5b4fc 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.role-line {
+  font-size: 15px; color: rgba(255,255,255,0.6);
+  margin-bottom: 16px;
+}
+.qual-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.qual-pill {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.78);
+  font-size: 11.5px; font-weight: 700;
+  padding: 6px 12px; border-radius: 16px;
+}
+@media (max-width: 720px) {
+  .profile-hero { grid-template-columns: 1fr; gap: 24px; text-align: center; }
+  .profile-avatar { width: 160px; height: 160px; font-size: 70px; margin: 0 auto; }
+  .qual-row { justify-content: center; }
+}
+
+/* Body section */
+.section { margin-bottom: 48px; }
+.section h2 {
+  font-size: 24px; font-weight: 900; letter-spacing: -0.8px;
+  color: #fff; margin-bottom: 16px;
+}
+.section h2 .num {
+  display: inline-block;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: #fff;
+  width: 28px; height: 28px;
+  border-radius: 8px;
+  text-align: center; line-height: 28px;
+  font-size: 14px; font-weight: 800;
+  margin-right: 10px;
+  vertical-align: middle;
+}
+.section p {
+  font-size: 15px; color: rgba(255,255,255,0.7);
+  line-height: 1.8;
+  margin-bottom: 14px;
+}
+.section p strong { color: #fff; }
+
+/* Why box */
+.why-box {
+  background: rgba(255,255,255,0.025);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 18px;
+  padding: 28px 30px;
+}
+.why-box .quote-mark {
+  font-size: 64px; color: rgba(99,102,241,0.3);
+  font-family: 'Inter', serif;
+  line-height: 0.8; margin-bottom: 6px;
+}
+
+/* Workflow timeline */
+.timeline {
+  position: relative;
+  padding-left: 28px;
+}
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 9px; top: 8px; bottom: 8px;
+  width: 2px;
+  background: linear-gradient(180deg, rgba(99,102,241,0.4), rgba(99,102,241,0.05));
+}
+.tl-item {
+  position: relative;
+  padding-bottom: 24px;
+}
+.tl-item::before {
+  content: '';
+  position: absolute;
+  left: -24px; top: 7px;
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  background: #6366f1;
+  border: 3px solid #060611;
+  box-shadow: 0 0 0 2px rgba(99,102,241,0.4);
+}
+.tl-time {
+  font-size: 11.5px; font-weight: 800;
+  color: #a5b4fc;
+  letter-spacing: 0.8px;
+  font-family: 'SF Mono', monospace;
+  margin-bottom: 4px;
+}
+.tl-title {
+  font-size: 15px; font-weight: 700;
+  color: #fff; margin-bottom: 4px;
+}
+.tl-desc {
+  font-size: 13.5px; color: rgba(255,255,255,0.55);
+  line-height: 1.7;
+}
+
+/* Commits */
+.commit-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+.commit-card {
+  background: rgba(16,185,129,0.05);
+  border: 1px solid rgba(16,185,129,0.2);
+  border-radius: 14px;
+  padding: 18px 20px;
+}
+.commit-card .commit-h {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 14px; font-weight: 800;
+  color: #6ee7b7;
+  margin-bottom: 8px;
+}
+.commit-card .commit-h::before { content: "✓"; font-size: 16px; }
+.commit-card p {
+  font-size: 13px; color: rgba(255,255,255,0.65);
+  line-height: 1.65;
+}
+@media (max-width: 640px) { .commit-grid { grid-template-columns: 1fr; } }
+
+/* Sig */
+.signature-block {
+  margin-top: 16px;
+  padding: 24px 26px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 16px;
+}
+.sig-line1 {
+  font-family: 'Brush Script MT', 'Snell Roundhand', cursive;
+  font-size: 38px;
+  color: #fff;
+  letter-spacing: 1px;
+  margin-bottom: 6px;
+  background: linear-gradient(135deg, #fff, #a5b4fc);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.sig-line2 {
+  font-size: 12px; color: rgba(255,255,255,0.45);
+  letter-spacing: 0.4px;
+}
+
+/* CTA */
+.bottom-cta {
+  margin-top: 56px;
+  text-align: center;
+  padding: 36px 24px;
+  background: linear-gradient(135deg, rgba(99,102,241,0.1), rgba(139,92,246,0.05));
+  border: 1px solid rgba(99,102,241,0.22);
+  border-radius: 24px;
+}
+.bottom-cta h2 {
+  font-size: 24px; font-weight: 900; letter-spacing: -0.8px;
+  color: #fff; margin-bottom: 10px;
+}
+.bottom-cta p { font-size: 14px; color: rgba(255,255,255,0.55); margin-bottom: 20px; }
+.bottom-cta-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+.bcta-btn {
+  background: linear-gradient(135deg, #6366f1, #818cf8);
+  color: #fff; text-decoration: none;
+  font-size: 14px; font-weight: 700;
+  padding: 13px 26px; border-radius: 30px;
+  transition: transform .2s, opacity .2s;
+  box-shadow: 0 4px 18px rgba(99,102,241,0.38);
+}
+.bcta-btn.ghost {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
+  box-shadow: none;
+}
+.bcta-btn:hover { transform: translateY(-1px); opacity: 0.95; }
+
+footer {
+  text-align: center;
+  padding: 36px 24px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  font-size: 12px;
+  color: rgba(255,255,255,0.35);
+  position: relative; z-index: 1;
+}
+footer .footer-links {
+  display: flex; flex-wrap: wrap; justify-content: center; gap: 18px;
+  margin-bottom: 14px;
+}
+footer a { color: #a5b4fc; text-decoration: none; font-weight: 600; font-size: 13px; }
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="nav-logo">
+    <div class="nav-logo-icon">
+      <svg width="16" height="16" viewBox="0 0 22 22" xmlns="http://www.w3.org/2000/svg">
+        <rect x="1" y="14" width="4" height="7" rx="1.5" fill="white" fill-opacity="0.55"/>
+        <rect x="7" y="9" width="4" height="12" rx="1.5" fill="white" fill-opacity="0.78"/>
+        <rect x="13" y="4" width="4" height="17" rx="1.5" fill="white"/>
+        <circle cx="20" cy="3" r="2" fill="#fde68a"/>
+      </svg>
+    </div>
+    Market<em>Daily</em>
+  </a>
+  <div class="nav-right">
+    <a href="index.html" class="nav-back">← 返回首頁</a>
+    <button class="lang-btn" onclick="toggleLang()">EN</button>
+  </div>
+</nav>
+
+<div class="page-wrap">
+  <!-- Profile hero -->
+  <div class="profile-hero">
+    <div class="profile-avatar">
+      <div class="grid-overlay"></div>
+      <svg class="bg-chart" viewBox="0 0 220 220" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+        <path d="M0,170 L22,162 L44,168 L66,150 L88,140 L110,120 L132,128 L154,98 L176,86 L198,68 L220,52"
+              fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <g fill="#ffffff">
+          <rect x="18" y="158" width="5" height="14" rx="1"/>
+          <rect x="40" y="164" width="5" height="10" rx="1"/>
+          <rect x="62" y="146" width="5" height="18" rx="1"/>
+          <rect x="84" y="136" width="5" height="16" rx="1"/>
+          <rect x="106" y="116" width="5" height="20" rx="1"/>
+          <rect x="128" y="124" width="5" height="14" rx="1"/>
+          <rect x="150" y="94" width="5" height="22" rx="1"/>
+          <rect x="172" y="82" width="5" height="18" rx="1"/>
+          <rect x="194" y="64" width="5" height="22" rx="1"/>
+        </g>
+      </svg>
+      <div class="corner-tag">EDITOR · 06:00 TWT</div>
+      <div class="monogram">
+        <div class="mono-d">D</div>
+        <div class="mono-tag">Chief Editor</div>
+      </div>
+      <span class="pulse-dot" title="今日已審稿"></span>
+    </div>
+    <div>
+      <div class="page-badge">主編 · Editor-in-Chief</div>
+      <h1>Delvin Chang</h1>
+      <p class="role-line">每封 MarketDaily 日報出去前,我都看過。</p>
+      <div class="qual-row">
+        <span class="qual-pill">MarketDaily 創辦人</span>
+        <span class="qual-pill">投資者</span>
+        <span class="qual-pill">軟體工程</span>
+        <span class="qual-pill">台美雙線</span>
+      </div>
+      <p style="margin-top:14px;font-size:12px;color:rgba(255,255,255,0.4);line-height:1.6;">
+        每天清晨 6:00 起床審稿,6:30 校核方向,6:50 排程發送。日報出去前我都看過。
+      </p>
+    </div>
+  </div>
+
+  <!-- Why I built this -->
+  <div class="section">
+    <h2><span class="num">1</span>為什麼做 MarketDaily</h2>
+    <div class="why-box">
+      <div class="quote-mark">"</div>
+      <p>
+        我以前每天早上起床第一件事是滑 Bloomberg、CNBC、PTT、Reddit。一個小時下來,我看過 200 條新聞,但對「我自己的股」還是一頭霧水。
+      </p>
+      <p>
+        更糟的是,一半新聞跟我無關,有些是假的,有些是業配。最後我會在 LINE 群組看別人推什麼明牌,然後跟著買——結果不用想,大部分是賠的。
+      </p>
+      <p>
+        我懶得再做這件事。所以我自己寫了一套 AI Pipeline,讓它每天清晨幫我做完掃新聞、過濾假訊息、針對我的持股做摘要——然後寄到我自己信箱。
+      </p>
+      <p>
+        <strong>用了 6 個月,我幾乎沒打開過財經 App。</strong>朋友看到後說「給我也用一下」,於是有了 MarketDaily。
+      </p>
+    </div>
+  </div>
+
+  <!-- Daily workflow -->
+  <div class="section">
+    <h2><span class="num">2</span>每天清晨的編輯流程</h2>
+    <p style="margin-bottom:24px;">這不是「全 AI 自動發送」——是 <strong>AI 起稿 + 主編親自審稿</strong>。日報每天經過下面 6 個關卡,任何一關沒過就不發。</p>
+    <div class="timeline">
+      <div class="tl-item">
+        <div class="tl-time">04:30 TWT</div>
+        <div class="tl-title">AI Pipeline 啟動</div>
+        <div class="tl-desc">系統開始掃 75+ 個全球財經來源(Reuters / Bloomberg / WSJ / 經濟日報 / Anue / 鉅亨...),依照訂戶持股清單分桶歸類。</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-time">05:30 TWT</div>
+        <div class="tl-title">多源交叉驗證 + 假新聞篩選</div>
+        <div class="tl-desc">每則新聞至少 2 個獨立來源驗證才標 ✅,單一來源標 ⚠️。看不出真假的整篇剔除。</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-time">06:00 TWT</div>
+        <div class="tl-title">主編 Delvin 起床審稿</div>
+        <div class="tl-desc">我每天 6 點起床,第一件事是打開後台讀完當日所有 AI 草稿。語氣、判斷、邏輯有問題的當場改。</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-time">06:30 TWT</div>
+        <div class="tl-title">方向 + 風險二次校核</div>
+        <div class="tl-desc">每支提及個股的方向判斷(偏多/偏空)和風險示警,我自己再讀一次。覺得 AI 寫錯的退回重改。</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-time">06:50 TWT</div>
+        <div class="tl-title">最終放行 → 排程發送</div>
+        <div class="tl-desc">確認沒有業配、沒有炒作、沒有錯字、沒有我會自己看不下去的內容 → 排程到 6:55 開始寄出。</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-time">06:55 TWT</div>
+        <div class="tl-title">日報送達訂戶信箱</div>
+        <div class="tl-desc">你在台灣早上 7:00 起床、刷牙、喝咖啡的時候——日報已經躺在那裡了。</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Editorial commitments -->
+  <div class="section">
+    <h2><span class="num">3</span>編輯立場 · 我的承諾</h2>
+    <p style="margin-bottom:24px;">下面 6 點是我給每位訂戶的明確承諾。違反任一條,你都可以公開要求退費 + 公告。</p>
+    <div class="commit-grid">
+      <div class="commit-card">
+        <div class="commit-h">不收業配</div>
+        <p>日報絕不收任何個股、券商、投顧的廣告或業配。內容只服務訂戶利益。</p>
+      </div>
+      <div class="commit-card">
+        <div class="commit-h">不持有提及個股</div>
+        <p>當天日報明確提到「偏多/偏空/留意」的個股,我自己「不會」在前後 3 天進出。</p>
+      </div>
+      <div class="commit-card">
+        <div class="commit-h">錯了公開更正</div>
+        <p>判斷錯了或事實錯了,隔天日報開頭公開更正。戰績頁也會列輸的部分,不藏。</p>
+      </div>
+      <div class="commit-card">
+        <div class="commit-h">不報明牌</div>
+        <p>不會說「請在 X 元進場、停損 Y 元」。那是投顧的事,需要牌照。我只給方向與風險。</p>
+      </div>
+      <div class="commit-card">
+        <div class="commit-h">不抽老師佣金</div>
+        <p>沒有任何外部投顧/老師合作。日報的判斷來自 AI 模型 + 我親自校核,沒有第三方利益。</p>
+      </div>
+      <div class="commit-card">
+        <div class="commit-h">不誘導交易</div>
+        <p>商業模式只有訂閱費。你下不下單我都領一樣的錢——所以我沒有理由叫你頻繁進出。</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Signature -->
+  <div class="section">
+    <h2><span class="num">4</span>我的簽名</h2>
+    <p>這頁不是法律文件,但你可以把它當合約讀。</p>
+    <div class="signature-block">
+      <div class="sig-line1">Delvin Chang</div>
+      <div class="sig-line2">MarketDaily Editor-in-Chief · 2026-05-23 起,每封日報出去前我都看過</div>
+    </div>
+  </div>
+
+  <!-- Bottom CTA -->
+  <div class="bottom-cta">
+    <h2>準備好讓早晨變更聰明嗎?</h2>
+    <p>7 天免費試讀 · 不綁卡 · 30 天無理由退費</p>
+    <div class="bottom-cta-btns">
+      <a href="index.html#pricing" class="bcta-btn">立即試讀 →</a>
+      <a href="track-record.html" class="bcta-btn ghost">看公開戰績</a>
+      <a href="vs.html" class="bcta-btn ghost">看對手比較</a>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div class="footer-links">
+    <a href="track-record.html">📊 戰績紀錄</a>
+    <a href="vs.html">vs 對手</a>
+    <a href="about.html">主編</a>
+    <a href="pricing.html">定價</a>
+    <a href="contact.html">聯絡客服</a>
+  </div>
+  <span>主編承諾自 2026-05-23 起生效 · 違反任一條訂戶可公開要求更正</span>
+</footer>
+
+<script>
+function toggleLang() {
+  const btn = document.querySelector(".lang-btn");
+  btn.textContent = btn.textContent === "EN" ? "中文" : "EN";
+}
+</script>
+</body>
+</html>

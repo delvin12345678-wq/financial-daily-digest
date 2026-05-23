@@ -1,0 +1,70 @@
+name: 戰績紀錄每週刷新
+
+# 每週日 15:00 UTC = 台灣時間 23:00,跑完更新 docs/data/track-record.json
+# 並把變更 commit 回 main + 用 wrangler 部署到 Cloudflare Pages。
+on:
+  schedule:
+    - cron: "0 15 * * 0"     # 每週日 23:00 TWT
+  workflow_dispatch:          # 手動觸發備援
+
+permissions:
+  contents: write             # 用來 push commit 回 main
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install deps
+        run: pip install beautifulsoup4
+
+      - name: Build track-record.json
+        run: python3 scripts/build_track_record.py
+
+      - name: Show diff summary
+        run: |
+          echo "=== git status ==="
+          git status --short
+          echo "=== json stats ==="
+          python3 -c "import json; d=json.load(open('docs/data/track-record.json')); print(json.dumps(d['stats'], indent=2, ensure_ascii=False))"
+
+      - name: Commit JSON if changed
+        id: commit_step
+        run: |
+          if [[ -z "$(git status --short docs/data/track-record.json)" ]]; then
+            echo "no_changes=true" >> "$GITHUB_OUTPUT"
+            echo "No changes to track-record.json, skipping commit."
+            exit 0
+          fi
+          git config user.name "marketdaily-bot"
+          git config user.email "marketdailyhq@gmail.com"
+          git add docs/data/track-record.json
+          git commit -m "chore(track-record): weekly auto-refresh $(date -u +%Y-%m-%d)"
+          git push origin HEAD:main
+          echo "no_changes=false" >> "$GITHUB_OUTPUT"
+
+      - name: Setup Node (for wrangler)
+        if: steps.commit_step.outputs.no_changes != 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Deploy to Cloudflare Pages
+        if: steps.commit_step.outputs.no_changes != 'true'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: a92082d84f08b1d4883facbf1a1dc445
+        run: |
+          npx wrangler@latest pages deploy docs \
+            --project-name marketdaily \
+            --commit-dirty=true \
+            --commit-message "Weekly track-record refresh"

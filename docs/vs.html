@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MarketDaily vs 三竹/TradingView/富途/CMoney/Morning Brew — 對手全面比較</title>
+<meta name="description" content="MarketDaily 與三竹股市、TradingView、富途牛牛、Morning Brew、CMoney 全面對比:誰主動推送、誰個人化、誰有公開戰績、誰沒有利益衝突。一張表看清楚。">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#6366f1">
+<link rel="apple-touch-icon" href="/logo-icon.svg">
+<link rel="icon" type="image/svg+xml" href="/logo-icon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:focus-visible { outline: 2px solid #818cf8; outline-offset: 2px; border-radius: 4px; }
+body {
+  background: #060611;
+  color: #e2e8f0;
+  font-family: 'Inter', sans-serif;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0;
+  background-image:
+    linear-gradient(rgba(99,102,241,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(99,102,241,0.04) 1px, transparent 1px);
+  background-size: 72px 72px;
+  pointer-events: none;
+}
+
+nav {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 0 40px; height: 62px;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  background: rgba(6,6,17,0.8);
+  backdrop-filter: blur(28px) saturate(1.8);
+  -webkit-backdrop-filter: blur(28px) saturate(1.8);
+  position: sticky; top: 0; z-index: 100;
+}
+.nav-logo {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 17px; font-weight: 800; letter-spacing: -0.5px;
+  color: #f1f5f9; text-decoration: none;
+}
+.nav-logo-icon {
+  width: 30px; height: 30px;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  border-radius: 8px; display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.nav-logo em { color: #818cf8; font-style: normal; }
+.nav-back {
+  font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.5);
+  text-decoration: none; background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.08); padding: 7px 16px; border-radius: 20px;
+  transition: all 0.2s;
+}
+.nav-back:hover { color: #f1f5f9; border-color: rgba(255,255,255,0.13); }
+.lang-btn {
+  background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.5); font-size: 12px; font-weight: 700; font-family: 'Inter', sans-serif;
+  padding: 7px 14px; border-radius: 20px; cursor: pointer; transition: all 0.2s;
+}
+.lang-btn:hover { background: rgba(99,102,241,0.12); border-color: rgba(99,102,241,0.28); color: #fff; }
+.nav-right { display: flex; align-items: center; gap: 8px; }
+
+.page-wrap {
+  position: relative; z-index: 1;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 56px 24px 80px;
+}
+
+.page-badge {
+  display: inline-flex; align-items: center; gap: 7px;
+  background: rgba(251,191,36,0.12);
+  border: 1px solid rgba(251,191,36,0.28);
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-size: 11px; font-weight: 700;
+  color: #fbbf24; letter-spacing: 1px; text-transform: uppercase;
+  margin-bottom: 20px;
+}
+.page-badge::before { content: "●"; color: #f59e0b; font-size: 8px; }
+
+h1 {
+  font-size: clamp(34px, 5.5vw, 52px);
+  font-weight: 900;
+  line-height: 1.1; letter-spacing: -1.5px;
+  margin-bottom: 14px;
+  background: linear-gradient(135deg, #fff 0%, #a5b4fc 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+
+.sub {
+  font-size: 16px; color: rgba(226,232,240,0.55);
+  line-height: 1.7; margin-bottom: 48px;
+  max-width: 760px;
+}
+
+/* Category tabs */
+.cat-tabs {
+  display: flex; flex-wrap: wrap; gap: 8px;
+  margin-bottom: 28px;
+}
+.cat-pill {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.6);
+  font-size: 12.5px; font-weight: 700;
+  padding: 9px 16px; border-radius: 20px;
+  cursor: pointer; transition: all .2s;
+  font-family: 'Inter', sans-serif;
+}
+.cat-pill:hover { color: #fff; border-color: rgba(99,102,241,0.3); }
+.cat-pill.active {
+  background: rgba(99,102,241,0.18);
+  border-color: rgba(99,102,241,0.45);
+  color: #a5b4fc;
+}
+
+/* Comparison table */
+.cmp-wrap {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 22px;
+  overflow: hidden;
+  margin-bottom: 28px;
+}
+.cmp-row {
+  display: grid;
+  grid-template-columns: 1.3fr repeat(5, 1fr);
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.cmp-row:last-child { border-bottom: none; }
+.cmp-row.header {
+  background: rgba(255,255,255,0.02);
+  font-size: 12px; font-weight: 700;
+  color: rgba(255,255,255,0.6);
+  letter-spacing: 0.5px;
+  position: sticky; top: 62px; z-index: 5;
+}
+.cmp-row.header .cmp-cell { padding: 18px 12px; align-items: flex-end; }
+.cmp-cell {
+  padding: 16px 12px;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  text-align: center;
+  color: rgba(255,255,255,0.78);
+  font-size: 13px;
+  border-right: 1px solid rgba(255,255,255,0.04);
+  min-height: 60px;
+}
+.cmp-cell:last-child { border-right: none; }
+.cmp-cell.label {
+  align-items: flex-start; justify-content: center;
+  text-align: left;
+  padding-left: 22px; padding-right: 14px;
+  font-weight: 600; color: rgba(255,255,255,0.92);
+  font-size: 14px;
+}
+.cmp-cell.md {
+  background: linear-gradient(180deg, rgba(99,102,241,0.12), rgba(99,102,241,0.04));
+  color: #fff; font-weight: 800;
+}
+.cmp-row.header .cmp-cell.md {
+  background: linear-gradient(180deg, rgba(99,102,241,0.22), rgba(99,102,241,0.08));
+}
+.cmp-name {
+  font-size: 13px; font-weight: 800; color: #fff;
+  margin-bottom: 4px;
+}
+.cmp-name.md { color: #a5b4fc; }
+.cmp-tagline {
+  font-size: 10.5px; font-weight: 600;
+  color: rgba(255,255,255,0.4);
+  letter-spacing: 0.3px;
+}
+.cmp-yes { color: #6ee7b7; font-size: 17px; font-weight: 800; }
+.cmp-no { color: #fca5a5; font-size: 17px; opacity: 0.55; }
+.cmp-meh { color: #fbbf24; font-size: 11.5px; font-weight: 700; }
+.cmp-val { font-size: 12.5px; font-weight: 700; color: rgba(255,255,255,0.8); }
+.cmp-val.win { color: #6ee7b7; }
+.cmp-val.bad { color: #fca5a5; }
+
+.cmp-section-row {
+  background: rgba(99,102,241,0.06);
+  padding: 12px 22px;
+  font-size: 11.5px; font-weight: 800;
+  color: #a5b4fc;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  border-top: 1px solid rgba(99,102,241,0.15);
+  border-bottom: 1px solid rgba(99,102,241,0.15);
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 880px) {
+  .cmp-row { grid-template-columns: 1.4fr 1fr 1fr 1fr; }
+  .cmp-row .cmp-cell:nth-child(4),
+  .cmp-row .cmp-cell:nth-child(5) { display: none; }
+  .cmp-cell { font-size: 12px; padding: 12px 6px; min-height: 50px; }
+  .cmp-cell.label { font-size: 12.5px; padding-left: 14px; }
+  .cmp-name { font-size: 11.5px; }
+  .cmp-tagline { font-size: 9.5px; }
+  .cmp-yes, .cmp-no { font-size: 14px; }
+  .cmp-val { font-size: 11px; }
+}
+
+/* Why us cards */
+.why-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-top: 56px;
+}
+.why-card {
+  background: rgba(255,255,255,0.025);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 16px;
+  padding: 22px 22px;
+}
+.why-card .ico { font-size: 26px; margin-bottom: 10px; }
+.why-card h3 {
+  font-size: 15px; font-weight: 800; color: #fff;
+  margin-bottom: 8px;
+}
+.why-card p {
+  font-size: 13px; color: rgba(255,255,255,0.6);
+  line-height: 1.7;
+}
+@media (max-width: 720px) { .why-grid { grid-template-columns: 1fr; } }
+
+/* Use case rows */
+.uc-section { margin-top: 64px; }
+.uc-section h2 {
+  font-size: 26px; font-weight: 900; letter-spacing: -1px;
+  margin-bottom: 6px;
+  background: linear-gradient(135deg, #fff, #a5b4fc);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.uc-section .uc-sub {
+  font-size: 14px; color: rgba(255,255,255,0.5);
+  margin-bottom: 28px;
+}
+.uc-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.uc-box {
+  border-radius: 16px;
+  padding: 22px;
+  position: relative;
+}
+.uc-box.bad {
+  background: rgba(239,68,68,0.05);
+  border: 1px solid rgba(239,68,68,0.18);
+}
+.uc-box.good {
+  background: rgba(16,185,129,0.06);
+  border: 1px solid rgba(16,185,129,0.22);
+}
+.uc-box .ttl {
+  font-size: 12px; font-weight: 800;
+  letter-spacing: 0.4px;
+  margin-bottom: 12px;
+}
+.uc-box.bad .ttl { color: #fca5a5; }
+.uc-box.good .ttl { color: #6ee7b7; }
+.uc-box ul { list-style: none; }
+.uc-box li {
+  font-size: 13px; color: rgba(255,255,255,0.75);
+  padding: 5px 0 5px 22px; position: relative;
+  line-height: 1.6;
+}
+.uc-box.bad li::before {
+  content: "✗"; position: absolute; left: 0; color: #fca5a5; font-weight: 800;
+}
+.uc-box.good li::before {
+  content: "✓"; position: absolute; left: 0; color: #6ee7b7; font-weight: 800;
+}
+@media (max-width: 640px) { .uc-row { grid-template-columns: 1fr; } }
+
+/* CTA */
+.bottom-cta {
+  margin-top: 64px;
+  text-align: center;
+  padding: 40px 24px;
+  background: linear-gradient(135deg, rgba(99,102,241,0.12), rgba(139,92,246,0.06));
+  border: 1px solid rgba(99,102,241,0.25);
+  border-radius: 24px;
+}
+.bottom-cta h2 {
+  font-size: 26px; font-weight: 900; letter-spacing: -1px;
+  color: #fff; margin-bottom: 10px;
+}
+.bottom-cta p { font-size: 14px; color: rgba(255,255,255,0.55); margin-bottom: 20px; }
+.bottom-cta-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+.bcta-btn {
+  background: linear-gradient(135deg, #6366f1, #818cf8);
+  color: #fff; text-decoration: none;
+  font-size: 14px; font-weight: 700;
+  padding: 13px 26px; border-radius: 30px;
+  transition: transform .2s, opacity .2s;
+  box-shadow: 0 4px 18px rgba(99,102,241,0.38);
+}
+.bcta-btn.ghost {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
+  box-shadow: none;
+}
+.bcta-btn:hover { transform: translateY(-1px); opacity: 0.95; }
+
+footer {
+  text-align: center;
+  padding: 36px 24px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  font-size: 12px;
+  color: rgba(255,255,255,0.35);
+  position: relative; z-index: 1;
+}
+footer .footer-links {
+  display: flex; flex-wrap: wrap; justify-content: center; gap: 18px;
+  margin-bottom: 14px;
+}
+footer a { color: #a5b4fc; text-decoration: none; font-weight: 600; font-size: 13px; }
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="nav-logo">
+    <div class="nav-logo-icon">
+      <svg width="16" height="16" viewBox="0 0 22 22" xmlns="http://www.w3.org/2000/svg">
+        <rect x="1" y="14" width="4" height="7" rx="1.5" fill="white" fill-opacity="0.55"/>
+        <rect x="7" y="9" width="4" height="12" rx="1.5" fill="white" fill-opacity="0.78"/>
+        <rect x="13" y="4" width="4" height="17" rx="1.5" fill="white"/>
+        <circle cx="20" cy="3" r="2" fill="#fde68a"/>
+      </svg>
+    </div>
+    Market<em>Daily</em>
+  </a>
+  <div class="nav-right">
+    <a href="index.html" class="nav-back">← 返回首頁</a>
+    <button class="lang-btn" onclick="toggleLang()">EN</button>
+  </div>
+</nav>
+
+<div class="page-wrap">
+  <div class="page-badge">VS · 對手全面比較</div>
+  <h1>MarketDaily vs 其他你在用的東西</h1>
+  <p class="sub">
+    我們不怕比較。把市面上所有跟「幫你看市場」相關的服務攤開對比——看盤 App、券商工具、財經 newsletter、投顧老師——你會發現 MarketDaily 站的位置很乾淨:沒有人在做「主動推送 + 深度個人化 + 公開戰績 + 無利益衝突」這四件套。
+  </p>
+
+  <!-- Category tabs -->
+  <div class="cat-tabs">
+    <button class="cat-pill active" onclick="switchCat('all', this)">全部對手</button>
+    <button class="cat-pill" onclick="switchCat('app', this)">📱 看盤 App</button>
+    <button class="cat-pill" onclick="switchCat('news', this)">📨 Newsletter</button>
+    <button class="cat-pill" onclick="switchCat('tw', this)">🇹🇼 台灣財經服務</button>
+  </div>
+
+  <!-- Comparison table -->
+  <div class="cmp-wrap" id="cmp-table">
+    <!-- Headers -->
+    <div class="cmp-row header">
+      <div class="cmp-cell label"></div>
+      <div class="cmp-cell">
+        <div class="cmp-name md">MarketDaily</div>
+        <div class="cmp-tagline">主動推送 + 個人化</div>
+      </div>
+      <div class="cmp-cell" data-cat="app">
+        <div class="cmp-name">三竹股市</div>
+        <div class="cmp-tagline">台灣看盤通用</div>
+      </div>
+      <div class="cmp-cell" data-cat="app">
+        <div class="cmp-name">TradingView</div>
+        <div class="cmp-tagline">全球圖表工具</div>
+      </div>
+      <div class="cmp-cell" data-cat="app">
+        <div class="cmp-name">富途牛牛</div>
+        <div class="cmp-tagline">跨境券商 + 社群</div>
+      </div>
+      <div class="cmp-cell" data-cat="news">
+        <div class="cmp-name">Morning Brew</div>
+        <div class="cmp-tagline">美國財經 Newsletter</div>
+      </div>
+    </div>
+
+    <!-- Section: 推送方式 -->
+    <div class="cmp-section-row">📬 推送方式 & 個人化</div>
+
+    <div class="cmp-row">
+      <div class="cmp-cell label">主動送到信箱 / LINE</div>
+      <div class="cmp-cell md"><span class="cmp-yes">✓</span></div>
+      <div class="cmp-cell" data-cat="app"><span class="cmp-no">✗</span></div>
+      <div class="cmp-cell" data-cat="app"><span class="cmp-meh">部分(警示)</span></div>
+      <div class="cmp-cell" data-cat="app"><span class="cmp-meh">App 通知</span></div>
+      <div class="cmp-cell" data-cat="news"><span class="cmp-yes">✓</span></div>
+    </div>
+
+    <div class="cmp-row">
+      <div class="cmp-cell label">只分析你持股的個股</div>
+      <div class="cmp-cell md"><span class="cmp-yes">✓</span></div>
+      <div class="cmp-cell" data-cat="app"><span class="cmp-meh">要自己設定</span></div>
+      <div class="cmp-cell" data-cat="app"><span class="cmp-meh">要自己 watchlist</span></div>
+      <div class="cmp-cell" data-cat="app"><span class="cmp-meh">要自己 watchlist</span></div>
+      <div class="cmp-cell" data-cat="news"><span class="cmp-no">✗</span></div>
+    </div>
+
+    <div class="cmp-row">
+      <div class="cmp-cell label">繁中 + 美股台股雙線</div>
+      <div class="cmp-cell md"><span class="cmp-yes">✓</span></div>
+      <div class="cmp-cell" data-cat="app"><span class="cmp-meh">只台股</span></div>
+      <div class="cmp-cell" data-cat="app"><span class="cmp-meh">中文弱</span></div>
+      <div class="cmp-cell" data-cat="app"><span class="cmp-meh">台灣身份尷尬</span></div>
+      <div class="cmp-cell" data-cat="news"><span class="cmp-no">純英文</span></div>
+    </div>
+
+    <!-- Section: AI 判讀 -->
+    <div class="cmp-section-row">🧠 判讀 vs 工具</div>
+
+    <div class="cmp-row">
+      <div class="cmp-cell label">AI 替你判讀方向</div>
+      <div class="cmp-cell md"><span class="cmp-yes">✓</span></div>
+      <div class="cmp-cell" data-cat="app"><span class="cmp-no">純數據</span></div>
+      <div class="cmp-cell" data-cat="app"><span class="cmp-no">純工具</span></div>
+      <div class="cmp-cell" data-cat="app"><span class="cmp-meh">基礎 AI 選股</span></div>
+      <div class="cmp-cell" data-cat="news"><span class="cmp-meh">人類編輯</span></div>
+    </div>
+
+    <div class="cmp-row">
+      <div class="cmp-cell label">風險示警 (避坑)</div>
+      <div class="cmp-cell md"><span class="cmp-yes">✓</span></div>
+      <div class="cmp-cell" data-cat="app"><span class="cmp-no">✗</span></div>
+      <div class="cmp-cell" data-cat="app"><span class="cmp-no">✗</span></div>
+      <div class="cmp-cell" data-cat="app"><span class="cmp-no">✗</span></div>
+      <div class="cmp-cell" data-cat="news"><span class="cmp-meh">偶爾</span></div>
+    </div>
+
+    <div class="cmp-row">
+      <div class="cmp-cell label">假新聞 / 多源交叉驗證</div>
+      <div class="cmp-cell md"><span class="cmp-yes">✓</span></div>
+      <div class="cmp-cell" data-cat="app"><span class="cmp-no">✗</span></div>
+      <div class="cmp-cell" data-cat="app"><span class="cmp-no">✗</span></div>
+      <div class="cmp-cell" data-cat="app"><span class="cmp-no">✗</span></div>
+      <div class="cmp-cell" data-cat="news"><span class="cmp-meh">人工把關</span></div>
+    </div>
+
+    <!-- Section: 信任 -->
+    <div class="cmp-section-row">🛡️ 信任 & 透明度</div>
+
+    <div class="cmp-row">
+      <div class="cmp-cell label">公開戰績可查</div>
+      <div class="cmp-cell md"><span class="cmp-yes">✓</span></div>
+      <div class="cmp-cell" data-cat="app"><span class="cmp-no">N/A</span></div>
+      <div class="cmp-cell" data-cat="app"><span class="cmp-no">N/A</span></div>
+      <div class="cmp-cell" data-cat="app"><span class="cmp-no">N/A</span></div>
+      <div class="cmp-cell" data-cat="news"><span class="cmp-no">✗</span></div>
+    </div>
+
+    <div class="cmp-row">
+      <div class="cmp-cell label">無利益衝突</div>
+      <div class="cmp-cell md"><span class="cmp-yes">✓</span></div>
+      <div class="cmp-cell" data-cat="app"><span class="cmp-no">收券商授權</span></div>
+      <div class="cmp-cell" data-cat="app"><span class="cmp-no">訂閱續訂壓力</span></div>
+      <div class="cmp-cell" data-cat="app"><span class="cmp-no">收手續費</span></div>
+      <div class="cmp-cell" data-cat="news"><span class="cmp-no">廣告變現</span></div>
+    </div>
+
+    <div class="cmp-row">
+      <div class="cmp-cell label">主編公開身份 + 立場</div>
+      <div class="cmp-cell md"><span class="cmp-yes">✓</span></div>
+      <div class="cmp-cell" data-cat="app"><span class="cmp-no">公司</span></div>
+      <div class="cmp-cell" data-cat="app"><span class="cmp-no">匿名社群</span></div>
+      <div class="cmp-cell" data-cat="app"><span class="cmp-no">公司</span></div>
+      <div class="cmp-cell" data-cat="news"><span class="cmp-meh">編輯部</span></div>
+    </div>
+
+    <!-- Section: 時間/成本 -->
+    <div class="cmp-section-row">⏱️ 時間 & 成本</div>
+
+    <div class="cmp-row">
+      <div class="cmp-cell label">每天花費時間</div>
+      <div class="cmp-cell md"><span class="cmp-val win">30 秒</span></div>
+      <div class="cmp-cell" data-cat="app"><span class="cmp-val bad">30 分+</span></div>
+      <div class="cmp-cell" data-cat="app"><span class="cmp-val bad">1 hr+</span></div>
+      <div class="cmp-cell" data-cat="app"><span class="cmp-val bad">30 分+</span></div>
+      <div class="cmp-cell" data-cat="news"><span class="cmp-val">5 分</span></div>
+    </div>
+
+    <div class="cmp-row">
+      <div class="cmp-cell label">月費</div>
+      <div class="cmp-cell md"><span class="cmp-val win">NT$299</span></div>
+      <div class="cmp-cell" data-cat="app"><span class="cmp-val">免費</span></div>
+      <div class="cmp-cell" data-cat="app"><span class="cmp-val">US$15-60</span></div>
+      <div class="cmp-cell" data-cat="app"><span class="cmp-val">免費(手續費)</span></div>
+      <div class="cmp-cell" data-cat="news"><span class="cmp-val">免費</span></div>
+    </div>
+
+    <div class="cmp-row">
+      <div class="cmp-cell label">學習門檻</div>
+      <div class="cmp-cell md"><span class="cmp-val win">零</span></div>
+      <div class="cmp-cell" data-cat="app"><span class="cmp-val">中</span></div>
+      <div class="cmp-cell" data-cat="app"><span class="cmp-val bad">高</span></div>
+      <div class="cmp-cell" data-cat="app"><span class="cmp-val">中</span></div>
+      <div class="cmp-cell" data-cat="news"><span class="cmp-val win">零</span></div>
+    </div>
+
+    <!-- TW services category -->
+    <div class="cmp-section-row" data-cat="tw">🇹🇼 台灣財經服務 (CMoney / 玩股網 / HiStock 老師訂閱)</div>
+
+    <div class="cmp-row" data-cat="tw">
+      <div class="cmp-cell label">主編敢公開個人持股</div>
+      <div class="cmp-cell md"><span class="cmp-yes">✓ 不持有提及個股</span></div>
+      <div class="cmp-cell" data-cat="tw" style="grid-column: 2 / -1;"><span class="cmp-no" style="font-size:13px;">幾乎沒有人這樣做(常見利益衝突)</span></div>
+    </div>
+
+    <div class="cmp-row" data-cat="tw">
+      <div class="cmp-cell label">月費</div>
+      <div class="cmp-cell md"><span class="cmp-val win">NT$299</span></div>
+      <div class="cmp-cell" data-cat="tw" style="grid-column: 2 / -1;"><span class="cmp-val bad" style="font-size:13px;">老師訂閱常見 NT$3,000 - 10,000+ / 月</span></div>
+    </div>
+
+    <div class="cmp-row" data-cat="tw">
+      <div class="cmp-cell label">是否會「報明牌」</div>
+      <div class="cmp-cell md"><span class="cmp-val win">不會</span></div>
+      <div class="cmp-cell" data-cat="tw" style="grid-column: 2 / -1;"><span class="cmp-val bad" style="font-size:13px;">明牌文化盛行(常被監管質疑)</span></div>
+    </div>
+  </div>
+
+  <!-- Why us cards -->
+  <div class="why-grid">
+    <div class="why-card">
+      <div class="ico">📬</div>
+      <h3>主動 vs 被動</h3>
+      <p>看盤 App、券商工具、TradingView——全部都要你「主動打開、主動滑、主動找」。MarketDaily 是唯一「自己出現在你信箱」的選項。</p>
+    </div>
+    <div class="why-card">
+      <div class="ico">🎯</div>
+      <h3>只看你的股 vs 一份送全部</h3>
+      <p>Morning Brew、Bloomberg 一份送 400 萬人,內容你都得看完才知道跟你有沒有關。MarketDaily 只給你你持有/追蹤的個股。</p>
+    </div>
+    <div class="why-card">
+      <div class="ico">🛡️</div>
+      <h3>無衝突 vs 全部都有衝突</h3>
+      <p>券商要你下單(手續費)、TradingView 要你續訂、老師要你續費、媒體要你看廣告。MarketDaily 只收訂閱費,不從你下單賺一塊錢。</p>
+    </div>
+  </div>
+
+  <!-- Use case section -->
+  <div class="uc-section">
+    <h2>早晨 7:00 — 你的一天怎麼開始?</h2>
+    <p class="uc-sub">同樣是關心市場,你的早晨可能長這兩種樣子之一。</p>
+
+    <div class="uc-row">
+      <div class="uc-box bad">
+        <div class="ttl">😩 沒有 MarketDaily 的早晨</div>
+        <ul>
+          <li>6:45 鬧鐘響,刷牙時順手滑 X / Reddit / Discord 看美股盤後</li>
+          <li>7:00 開 Bloomberg / CNBC App 找「跟我股有關的新聞」</li>
+          <li>7:15 切到 cnYES / Anue 看台股早盤訊息</li>
+          <li>7:30 開三竹/富途看盤,猶豫該不該動 NVDA</li>
+          <li>7:45 看 LINE 投顧群,有人在喊明牌,看不出真假</li>
+          <li>8:00 通勤路上還在滑,沒有結論,焦慮上班</li>
+        </ul>
+      </div>
+      <div class="uc-box good">
+        <div class="ttl">📩 有 MarketDaily 的早晨</div>
+        <ul>
+          <li>6:55 MarketDaily 已躺在你信箱</li>
+          <li>7:00 喝咖啡,30 秒看完今天該關心的 3 個重點</li>
+          <li>7:01 你的 NVDA 今天動能轉強,日報明確標出</li>
+          <li>7:01 你的 2330 留意 1080 支撐,理由給齊</li>
+          <li>7:02 看完,該動就動,該守就守</li>
+          <li>7:05 把省下的 55 分鐘拿去做更值錢的事</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom CTA -->
+  <div class="bottom-cta">
+    <h2>看完對比,你決定。</h2>
+    <p>7 天免費試讀 · 不綁卡 · 30 天無理由退費</p>
+    <div class="bottom-cta-btns">
+      <a href="index.html#pricing" class="bcta-btn">立即試讀 →</a>
+      <a href="track-record.html" class="bcta-btn ghost">看公開戰績</a>
+      <a href="about.html" class="bcta-btn ghost">認識主編</a>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div class="footer-links">
+    <a href="track-record.html">📊 戰績紀錄</a>
+    <a href="vs.html">vs 對手</a>
+    <a href="about.html">主編</a>
+    <a href="pricing.html">定價</a>
+    <a href="contact.html">聯絡客服</a>
+  </div>
+  <span>對比資料整理自各服務官方資訊 · 僅供決策參考</span>
+</footer>
+
+<script>
+function switchCat(cat, btn) {
+  document.querySelectorAll(".cat-pill").forEach(p => p.classList.remove("active"));
+  btn.classList.add("active");
+
+  const allRows = document.querySelectorAll(".cmp-row, .cmp-section-row, .cmp-cell[data-cat]");
+  if (cat === "all") {
+    document.querySelectorAll("[data-cat]").forEach(el => { el.style.display = ""; });
+    return;
+  }
+  // For category filtering: hide rows/cells not matching the cat
+  document.querySelectorAll(".cmp-section-row").forEach(el => {
+    const c = el.dataset.cat;
+    el.style.display = (!c || c === cat) ? "" : "none";
+  });
+  document.querySelectorAll(".cmp-row").forEach(row => {
+    const c = row.dataset.cat;
+    if (c && c !== cat) { row.style.display = "none"; return; }
+    row.style.display = "";
+  });
+  document.querySelectorAll(".cmp-cell[data-cat]").forEach(cell => {
+    const c = cell.dataset.cat;
+    cell.style.display = (c === cat) ? "" : "none";
+  });
+}
+
+function toggleLang() {
+  // Lightweight — for now just keep zh-only on this comparison page
+  const btn = document.querySelector(".lang-btn");
+  btn.textContent = btn.textContent === "EN" ? "中文" : "EN";
+}
+</script>
+</body>
+</html>
