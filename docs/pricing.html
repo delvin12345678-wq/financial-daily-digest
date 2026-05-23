@@ -169,11 +169,14 @@ main { position: relative; z-index: 1; }
 .pricing-section { padding: 0 24px 96px; }
 .pricing-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 20px;
-  max-width: 1060px;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  max-width: 820px;
   margin: 0 auto;
   align-items: start;
+}
+@media (max-width: 680px) {
+  .pricing-grid { grid-template-columns: 1fr; }
 }
 
 /* ── TIER CARD ── */
@@ -351,6 +354,9 @@ main { position: relative; z-index: 1; }
   color: var(--text-muted);
 }
 .compare-table th.col-feature { text-align: left; color: var(--text-dim); }
+.compare-table th.col-pro,
+.compare-table td.cell-pro,
+.compare-table td:nth-child(3) { display: none; }
 .compare-table th.col-pro { color: var(--primary-light); }
 .compare-table th.col-premium { color: #fbbf24; }
 
@@ -688,82 +694,39 @@ footer {
       </ul>
     </div>
 
-    <!-- PREMIUM 試讀首月 (原 PRO 位置) -->
-    <div class="tier-card pro scene-reveal scene-reveal-d2">
-      <div class="tier-name" data-i18n="tier_pro_name">⭐ Premium 試讀</div>
-      <div class="tier-price">
-        <div class="price-prefix" style="font-size:14px;font-weight:700;color:rgba(255,255,255,0.6);margin-right:4px;align-self:flex-end;padding-bottom:14px;" data-i18n="tier_pro_prefix">首月</div>
-        <div class="price-num" id="pro-price-num">299</div>
-        <div class="price-unit" data-i18n="price_per_month">/月</div>
-      </div>
-      <div class="price-annual-note" id="pro-price-note" data-i18n="tier_pro_renew" style="color:rgba(255,255,255,0.45);font-size:12px;">次月起 NT$499/月 · 隨時取消</div>
-      <p class="tier-desc" data-i18n="tier_pro_desc">用 4 折體驗整整一個月 Premium 全功能。覺得不適合,30 天內無理由全額退費。</p>
-      <a class="tier-btn btn-pro" href="https://buy.stripe.com/aFafZg4WxcMca5senC4Ja06?prefilled_promo_code=TRIAL" target="_blank" rel="noopener noreferrer" id="pro-cta" data-i18n="tier_cta_btn">7 折試讀 →</a>
-      <div class="tier-divider"></div>
-      <ul class="feature-list">
-        <li class="feature-item included" style="font-weight:600;">
-          <span class="feature-icon fi-check">✓</span>
-          <span data-i18n="pf1">免費版所有功能</span>
-        </li>
-        <li class="feature-item included">
-          <span class="feature-icon fi-check">✓</span>
-          <span data-i18n="pf2">個人化持倉分析（最多 15 檔）</span>
-        </li>
-        <li class="feature-item included">
-          <span class="feature-icon fi-check">✓</span>
-          <span data-i18n="pf3">美股 + 台股深度追蹤</span>
-        </li>
-        <li class="feature-item included">
-          <span class="feature-icon fi-check">✓</span>
-          <span data-i18n="pf4">二階思考：美股如何影響台灣</span>
-        </li>
-        <li class="feature-item included">
-          <span class="feature-icon fi-check">✓</span>
-          <span data-i18n="pf5">即將公布財報提醒</span>
-        </li>
-        <li class="feature-item included">
-          <span class="feature-icon fi-check">✓</span>
-          <span data-i18n="pf6">持倉損益追蹤</span>
-        </li>
-        <li class="feature-item included">
-          <span class="feature-icon fi-check">✓</span>
-          <span data-i18n="pf7">優先客服回覆</span>
-        </li>
-      </ul>
-    </div>
-
-    <!-- PREMIUM -->
-    <div class="tier-card premium scene-reveal scene-reveal-d3">
-      <div class="badge-popular" data-i18n="badge_popular">最超值</div>
+    <!-- PREMIUM(含試讀首月)-->
+    <div class="tier-card premium scene-reveal scene-reveal-d2">
+      <div class="badge-popular" data-i18n="badge_popular">⭐ 試讀首月 4 折</div>
       <div class="tier-name">Premium</div>
-      <div class="tier-price">
-        <div class="price-num" id="premium-price-num">499</div>
+      <div class="tier-price" style="align-items:baseline;gap:8px;">
+        <div class="price-strike" style="font-size:26px;font-weight:700;color:rgba(255,255,255,0.35);text-decoration:line-through;text-decoration-thickness:2px;">NT$499</div>
+        <div class="price-num" id="premium-price-num">299</div>
         <div class="price-unit" data-i18n="price_per_month">/月</div>
       </div>
-      <div class="price-annual-note" id="premium-price-note">&nbsp;</div>
-      <p class="tier-desc" data-i18n="tier_prem_desc">給高度投入的投資人。無限追蹤、即時警報、月度健檢，全方位掌控投資組合。</p>
-      <a class="tier-btn btn-premium" href="https://buy.stripe.com/fZu5kC88Jh2selI3IY4Ja02" target="_blank" rel="noopener noreferrer" id="premium-cta" data-i18n="tier_cta_btn">立即訂閱 →</a>
+      <div class="price-annual-note" id="premium-price-note" data-i18n="premium_trial_note" style="color:#fde68a;font-size:13px;font-weight:600;">首月 NT$299 · 之後 NT$499/月 · 隨時取消</div>
+      <p class="tier-desc" data-i18n="tier_prem_desc">給高度投入的投資人。無限追蹤、即時警報、月度健檢、LINE Bot 雙向 AI 對話,全方位掌控投資組合。</p>
+      <a class="tier-btn btn-premium" href="https://buy.stripe.com/aFafZg4WxcMca5senC4Ja06?prefilled_promo_code=TRIAL" target="_blank" rel="noopener noreferrer" id="premium-cta" data-i18n="tier_cta_btn">7 折試讀首月 →</a>
       <div class="tier-divider"></div>
       <ul class="feature-list">
         <li class="feature-item included" style="font-weight:600;">
           <span class="feature-icon fi-check">✓</span>
-          <span data-i18n="pmf1">Pro 所有功能</span>
+          <span data-i18n="pmf1">免費版所有功能</span>
         </li>
         <li class="feature-item included">
           <span class="feature-icon fi-check">✓</span>
-          <span data-i18n="pmf2">無限股票追蹤</span>
+          <span data-i18n="pmf2">個人化持倉分析(無限追蹤)</span>
         </li>
         <li class="feature-item included">
           <span class="feature-icon fi-check">✓</span>
-          <span data-i18n="pmf3">即時 LINE 重大新聞提醒</span>
+          <span data-i18n="pmf3">LINE Bot 雙向 AI 對話</span>
+        </li>
+        <li class="feature-item included">
+          <span class="feature-icon fi-check">✓</span>
+          <span data-i18n="pmf3b">即時 LINE 重大新聞提醒</span>
         </li>
         <li class="feature-item included">
           <span class="feature-icon fi-check">✓</span>
           <span data-i18n="pmf4">月度投資組合健檢報告</span>
-        </li>
-        <li class="feature-item included">
-          <span class="feature-icon fi-check">✓</span>
-          <span data-i18n="pmf5">客製化觀察清單（最多 5 主題）</span>
         </li>
         <li class="feature-item included">
           <span class="feature-icon fi-check">✓</span>
@@ -1044,9 +1007,8 @@ const i18n = {
     pf6: "Portfolio P&L tracking",
     pf7: "Priority customer support",
     tier_prem_desc: "For serious investors. Unlimited tracking, real-time alerts, monthly portfolio health checks.",
-    pmf1: "Everything in Premium trial",
-    tier_pro_renew: "Then NT$499/mo · cancel anytime",
-    tier_pro_prefix: "First month",
+    pmf1: "Everything in Free",
+    premium_trial_note: "First month NT$299 · then NT$499/mo · cancel anytime",
     pmf2: "Unlimited stock tracking",
     pmf3: "Real-time LINE breaking-news alerts",
     pmf4: "Monthly portfolio health report",
@@ -1124,9 +1086,8 @@ const i18n = {
     pf6: "持倉損益追蹤",
     pf7: "優先客服回覆",
     tier_prem_desc: "給高度投入的投資人。無限追蹤、即時警報、月度健檢，全方位掌控投資組合。",
-    pmf1: "試讀方案所有功能",
-    tier_pro_renew: "次月起 NT$499/月 · 隨時取消",
-    tier_pro_prefix: "首月",
+    pmf1: "免費版所有功能",
+    premium_trial_note: "首月 NT$299 · 之後 NT$499/月 · 隨時取消",
     pmf2: "無限股票追蹤",
     pmf3: "即時 LINE 重大新聞提醒",
     pmf4: "月度投資組合健檢報告",
@@ -1211,8 +1172,8 @@ const PRICES = {
   annual:  { pro: 239, premium: 399 }
 };
 const STRIPE_LINKS = {
-  monthly: { pro: 'https://buy.stripe.com/aFafZg4WxcMca5senC4Ja06?prefilled_promo_code=TRIAL', premium: 'https://buy.stripe.com/fZu5kC88Jh2selI3IY4Ja02' },
-  annual:  { pro: 'https://buy.stripe.com/6oUaEW88JdQg3H4frG4Ja04', premium: 'https://buy.stripe.com/eVqeVc4Wx5jKb9wfrG4Ja05' }
+  monthly: { premium: 'https://buy.stripe.com/aFafZg4WxcMca5senC4Ja06?prefilled_promo_code=TRIAL' },
+  annual:  { premium: 'https://buy.stripe.com/eVqeVc4Wx5jKb9wfrG4Ja05' }
 };
 
 let currentBilling = 'monthly';
@@ -1229,22 +1190,22 @@ function setBilling(mode) {
   const lang = localStorage.getItem('md-lang-v2') || 'zh';
   const t = i18n[lang] || i18n.zh;
 
-  const proNum = document.getElementById('pro-price-num');
-  const proNote = document.getElementById('pro-price-note');
-  const proCta = document.getElementById('pro-cta');
-  animatePrice(proNum, p.pro);
-  // 試讀卡:monthly 模式顯示「次月起 NT$499/月」trial reminder;annual 顯示年付一次扣款
-  proNote.textContent = mode === 'annual' ? t.annual_pro_note : (t.tier_pro_renew || '次月起 NT$499/月 · 隨時取消');
-  // 「首月」prefix 只在 monthly 顯示(年付沒有 trial 折扣概念)
-  const proPrefix = document.querySelector('.tier-card.pro .price-prefix');
-  if (proPrefix) proPrefix.style.display = mode === 'monthly' ? '' : 'none';
-  proCta.href = STRIPE_LINKS[mode].pro;
-
+  // 只剩 Premium 一個付費方案;monthly 顯示 trial 首月 299,annual 顯示年付一次扣款
   const premiumNum = document.getElementById('premium-price-num');
   const premiumNote = document.getElementById('premium-price-note');
   const premiumCta = document.getElementById('premium-cta');
-  animatePrice(premiumNum, p.premium);
-  premiumNote.textContent = mode === 'annual' ? t.annual_prem_note : '';
+  const premiumStrike = document.querySelector('.tier-card.premium .price-strike');
+  if (mode === 'monthly') {
+    animatePrice(premiumNum, 299);
+    if (premiumStrike) premiumStrike.style.display = '';
+    premiumNote.textContent = t.premium_trial_note || '首月 NT$299 · 之後 NT$499/月 · 隨時取消';
+    premiumNote.style.color = '#fde68a';
+  } else {
+    animatePrice(premiumNum, p.premium);  // annual price
+    if (premiumStrike) premiumStrike.style.display = 'none';
+    premiumNote.textContent = t.annual_prem_note;
+    premiumNote.style.color = 'rgba(255,255,255,0.45)';
+  }
   premiumCta.href = STRIPE_LINKS[mode].premium;
 }
 

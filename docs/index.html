@@ -275,7 +275,7 @@ nav {
   transition: color 0.2s; font-family: inherit;
 }
 .back-link:hover { color: var(--text-muted); }
-.plan-mini-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; max-width: 740px; margin: 0 auto; }
+.plan-mini-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; max-width: 580px; margin: 0 auto; }
 .plan-mini-card {
   background: rgba(255,255,255,0.04); border: 1px solid var(--border);
   border-radius: var(--radius-md); padding: 24px; text-align: left; transition: border-color 0.2s;
@@ -963,29 +963,22 @@ footer {
             <div id="free-error" style="display:none;margin-top:8px;font-size:12px;color:#fca5a5;"></div>
             <div id="free-success" style="display:none;margin-top:8px;font-size:12px;color:#6ee7b7;"></div>
           </div>
-          <!-- Pro = Premium 試讀首月 -->
+          <!-- Premium with first-month trial price -->
           <div class="plan-mini-card featured">
-            <div class="plan-mini-badge" style="background:rgba(99,102,241,0.22);color:#a5b4fc;border:1px solid rgba(99,102,241,0.35);" data-i18n="price_pro_badge">⭐ Premium 試讀 · 4 折</div>
-            <div class="plan-mini-price" style="font-size:18px;"><span style="font-size:22px;font-weight:900;">首月 NT$299</span><div style="font-size:11px;color:rgba(255,255,255,0.45);margin-top:3px;font-weight:500;" data-i18n="price_pro_renew">次月起 NT$499/月 · 隨時取消</div></div>
+            <div class="plan-mini-badge" style="background:rgba(168,85,247,0.2);color:#d8b4fe;border:1px solid rgba(168,85,247,0.4);" data-i18n="price_pro_badge">⭐ Premium · 試讀首月 4 折</div>
+            <div class="plan-mini-price" style="display:flex;align-items:baseline;gap:8px;">
+              <span style="font-size:16px;font-weight:700;color:rgba(255,255,255,0.4);text-decoration:line-through;text-decoration-thickness:2px;">NT$499</span>
+              <span style="font-size:26px;font-weight:900;">NT$299</span>
+              <span style="font-size:13px;color:rgba(255,255,255,0.55);" data-i18n="price_mo2">/月</span>
+            </div>
+            <div style="font-size:11px;color:#fde68a;margin:6px 0 12px;font-weight:600;" data-i18n="price_pro_renew">首月 NT$299 · 之後 NT$499/月 · 隨時取消</div>
             <ul style="list-style:none;margin:10px 0 16px;">
-              <li style="font-size:12px;color:rgba(255,255,255,0.72);padding:4px 0 4px 16px;position:relative;"><span style="position:absolute;left:0;color:#818cf8;font-weight:800;">✓</span><span data-i18n="pp1">立即解鎖全部 Premium 功能</span></li>
-              <li style="font-size:12px;color:rgba(255,255,255,0.72);padding:4px 0 4px 16px;position:relative;"><span style="position:absolute;left:0;color:#818cf8;font-weight:800;">✓</span><span data-i18n="pp2">個人化日報 + 個股深度分析</span></li>
-              <li style="font-size:12px;color:rgba(255,255,255,0.72);padding:4px 0 4px 16px;position:relative;"><span style="position:absolute;left:0;color:#818cf8;font-weight:800;">✓</span><span data-i18n="pp3">LINE Bot 雙向 AI 對話</span></li>
-              <li style="font-size:12px;color:rgba(255,255,255,0.72);padding:4px 0 4px 16px;position:relative;"><span style="position:absolute;left:0;color:#818cf8;font-weight:800;">✓</span><span data-i18n="pp4">重大新聞 LINE 即時推播</span></li>
+              <li style="font-size:12px;color:rgba(255,255,255,0.72);padding:4px 0 4px 16px;position:relative;"><span style="position:absolute;left:0;color:#d8b4fe;font-weight:800;">✓</span><span data-i18n="pp1">個人化日報 + 個股深度分析</span></li>
+              <li style="font-size:12px;color:rgba(255,255,255,0.72);padding:4px 0 4px 16px;position:relative;"><span style="position:absolute;left:0;color:#d8b4fe;font-weight:800;">✓</span><span data-i18n="pp2">LINE Bot 雙向 AI 對話</span></li>
+              <li style="font-size:12px;color:rgba(255,255,255,0.72);padding:4px 0 4px 16px;position:relative;"><span style="position:absolute;left:0;color:#d8b4fe;font-weight:800;">✓</span><span data-i18n="pp3">重大新聞 LINE 即時推播</span></li>
+              <li style="font-size:12px;color:rgba(255,255,255,0.72);padding:4px 0 4px 16px;position:relative;"><span style="position:absolute;left:0;color:#d8b4fe;font-weight:800;">✓</span><span data-i18n="pp4">月度投資組合健檢</span></li>
             </ul>
             <a id="stripe-plan-btn" href="https://buy.stripe.com/aFafZg4WxcMca5senC4Ja06?prefilled_promo_code=TRIAL" target="_blank" rel="noopener noreferrer" class="plan-mini-btn paid" style="width:100%;display:block;text-align:center;" data-i18n="price_pro_btn">7 折試讀 →</a>
-          </div>
-          <!-- Premium 完整版(直接訂閱者)-->
-          <div class="plan-mini-card">
-            <div class="plan-mini-badge" style="background:rgba(168,85,247,0.15);color:#d8b4fe;border:1px solid rgba(168,85,247,0.3);" data-i18n="price_premium_badge">Premium 完整版</div>
-            <div class="plan-mini-price">NT$499 <span data-i18n="price_mo2">/月</span></div>
-            <ul style="list-style:none;margin-bottom:16px;">
-              <li style="font-size:12px;color:rgba(255,255,255,0.55);padding:4px 0 4px 16px;position:relative;"><span style="position:absolute;left:0;color:#d8b4fe;font-weight:800;">✓</span><span data-i18n="pe1">所有日報內容 + 個人化分析</span></li>
-              <li style="font-size:12px;color:rgba(255,255,255,0.55);padding:4px 0 4px 16px;position:relative;"><span style="position:absolute;left:0;color:#d8b4fe;font-weight:800;">✓</span><span data-i18n="pe2">深度市場分析報告</span></li>
-              <li style="font-size:12px;color:rgba(255,255,255,0.55);padding:4px 0 4px 16px;position:relative;"><span style="position:absolute;left:0;color:#d8b4fe;font-weight:800;">✓</span><span data-i18n="pe3">月度投資組合健檢</span></li>
-              <li style="font-size:12px;color:rgba(255,255,255,0.55);padding:4px 0 4px 16px;position:relative;"><span style="position:absolute;left:0;color:#d8b4fe;font-weight:800;">✓</span><span data-i18n="pe4">重大新聞即時推播</span></li>
-            </ul>
-            <a href="https://buy.stripe.com/fZu5kC88Jh2selI3IY4Ja02" target="_blank" rel="noopener noreferrer" class="plan-mini-btn premium" style="width:100%;display:block;text-align:center;text-decoration:none;" data-i18n="price_pro_btn">立即訂閱 →</a>
           </div>
         </div>
         <!-- Invite code collapsible -->
@@ -1489,7 +1482,7 @@ footer {
     <h2 data-i18n="price_title">Simple, transparent pricing</h2>
     <p data-i18n="price_sub">Start free. Upgrade anytime.</p>
   </div>
-  <div class="pricing-grid" style="grid-template-columns:repeat(3,1fr);max-width:840px;margin:0 auto;">
+  <div class="pricing-grid" style="grid-template-columns:repeat(2,1fr);max-width:680px;margin:0 auto;">
     <!-- Free -->
     <div class="pricing-card scene-from-left">
       <div class="pricing-badge free-badge" data-i18n="price_free_badge">親友方案</div>
@@ -1504,33 +1497,24 @@ footer {
       </ul>
       <button class="pricing-btn btn-free" onclick="window.scrollTo({top:0,behavior:'smooth'})" data-i18n="price_free_btn">使用邀請碼 ↑</button>
     </div>
-    <!-- Premium 試讀首月 -->
+    <!-- Premium with first-month trial price -->
     <div class="pricing-card featured scene-zoom-in">
-      <div class="pricing-badge pro-badge" data-i18n="price_pro_badge">⭐ Premium 試讀 · 4 折</div>
-      <div class="pricing-price" style="font-size:24px;">首月 NT$299 <span style="font-size:13px;color:rgba(255,255,255,0.45);font-weight:500;display:block;margin-top:6px;" data-i18n="price_pro_renew">次月起 NT$499/月 · 隨時取消</span></div>
-      <p class="pricing-desc" data-i18n="price_pro_desc">用 4 折體驗整整一個月 Premium 全功能。覺得不適合,30 天內無理由全額退費。</p>
+      <div class="pricing-badge" style="background:rgba(168,85,247,0.2);color:#d8b4fe;border:1px solid rgba(168,85,247,0.4);" data-i18n="price_pro_badge">⭐ Premium · 試讀首月 4 折</div>
+      <div class="pricing-price" style="display:flex;align-items:baseline;gap:10px;justify-content:center;">
+        <span style="font-size:20px;font-weight:700;color:rgba(255,255,255,0.4);text-decoration:line-through;text-decoration-thickness:2px;">NT$499</span>
+        <span style="font-size:36px;font-weight:900;">NT$299</span>
+        <span style="font-size:14px;color:rgba(255,255,255,0.55);" data-i18n="price_mo2">/月</span>
+      </div>
+      <div style="text-align:center;font-size:13px;color:#fde68a;font-weight:600;margin-top:4px;margin-bottom:10px;" data-i18n="price_pro_renew">首月 NT$299 · 之後 NT$499/月 · 隨時取消</div>
+      <p class="pricing-desc" data-i18n="price_pro_desc">給高度投入的投資人。無限追蹤、即時警報、月度健檢,全方位掌控投資組合。</p>
       <div class="pricing-divider"></div>
       <ul class="pricing-features">
-        <li data-i18n="pp1">立即解鎖全部 Premium 功能</li>
-        <li data-i18n="pp2">個人化日報 + 個股深度分析</li>
-        <li data-i18n="pp3">LINE Bot 雙向 AI 對話</li>
-        <li data-i18n="pp4">重大新聞 LINE 即時推播</li>
+        <li data-i18n="pp1">個人化日報 + 個股深度分析</li>
+        <li data-i18n="pp2">LINE Bot 雙向 AI 對話</li>
+        <li data-i18n="pp3">重大新聞 LINE 即時推播</li>
+        <li data-i18n="pp4">月度投資組合健檢</li>
       </ul>
       <a class="pricing-btn btn-pro" href="https://buy.stripe.com/aFafZg4WxcMca5senC4Ja06?prefilled_promo_code=TRIAL" target="_blank" rel="noopener noreferrer" data-i18n="price_pro_btn">7 折試讀 →</a>
-    </div>
-    <!-- Premium -->
-    <div class="pricing-card scene-from-right">
-      <div class="pricing-badge" style="background:rgba(168,85,247,0.15);color:#d8b4fe;border:1px solid rgba(168,85,247,0.3);" data-i18n="price_premium_badge">Premium</div>
-      <div class="pricing-price">NT$499 <span data-i18n="price_mo2">/ mo</span></div>
-      <p class="pricing-desc" data-i18n="price_premium_desc">全功能解鎖，進階投資者首選。</p>
-      <div class="pricing-divider"></div>
-      <ul class="pricing-features">
-        <li data-i18n="pe1">所有日報內容 + 個人化分析</li>
-        <li data-i18n="pe2">更深度市場分析報告</li>
-        <li data-i18n="pe3">月度投資組合健檢</li>
-        <li data-i18n="pe4">重大新聞即時推播</li>
-      </ul>
-      <a class="pricing-btn" href="pricing.html" style="background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;border:none;box-shadow:0 4px 18px rgba(168,85,247,0.35);" data-i18n="price_premium_btn">了解更多 →</a>
     </div>
   </div>
   <p style="text-align:center;margin-top:20px;font-size:13px;color:var(--text-dim);"><a href="pricing.html" style="color:#a5b4fc;text-decoration:none;" data-i18n="price_compare_link">查看完整方案比較 →</a></p>
