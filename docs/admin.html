@@ -402,6 +402,22 @@ body {
 .sub-av { width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(135deg, #6366f1, #38bdf8); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; flex-shrink: 0; }
 .sub-email { font-size: 13px; color: var(--text); flex: 1; }
 .sub-joined { font-size: 11.5px; color: var(--text3); }
+.plan-select {
+  padding: 5px 9px; background: var(--surface2); border: 1px solid var(--border2);
+  border-radius: 8px; color: var(--text); font-size: 12px; font-weight: 700;
+  outline: none; cursor: pointer; transition: border-color 0.2s, background 0.2s;
+}
+.plan-select.ok  { border-color: var(--green); background: rgba(16,185,129,0.14); }
+.plan-select.bad { border-color: var(--red);   background: rgba(239,68,68,0.14); }
+.plan-select:disabled { opacity: 0.5; }
+.plan-apply {
+  padding: 6px 14px; border-radius: 8px; font-size: 12px; font-weight: 700;
+  font-family: inherit; border: 1px solid var(--border2); background: var(--surface2);
+  color: var(--text3); cursor: pointer; transition: all 0.18s; flex-shrink: 0;
+}
+.plan-apply:disabled { opacity: 0.38; cursor: default; }
+.plan-apply.ready { background: var(--banana); color: #1a1a1a; border-color: var(--banana); }
+.plan-apply.ready:hover { filter: brightness(1.12); }
 
 /* ── Inline field ── */
 .inline-add {
@@ -513,10 +529,6 @@ body {
 
     <div class="sb-section">
       <div class="sb-section-label">設定</div>
-      <button class="sb-item" onclick="nav('stocks',this)">
-        <span class="sb-icon">◉</span> 股票池
-        <span class="sb-badge" id="sb-stock-count">0</span>
-      </button>
       <button class="sb-item" onclick="nav('news',this)">
         <span class="sb-icon">◎</span> 新聞源
       </button>
@@ -529,9 +541,6 @@ body {
       <div class="sb-section-label">操作</div>
       <button class="sb-item" onclick="nav('subscribers',this)">
         <span class="sb-icon">◻</span> 訂閱者
-      </button>
-      <button class="sb-item" onclick="nav('deploy',this)">
-        <span class="sb-icon">▶</span> 發送報告
       </button>
     </div>
 
@@ -558,7 +567,6 @@ body {
       </div>
       <div class="topbar-actions">
         <button class="btn btn-ghost btn-sm" onclick="saveAll()">💾 儲存設定</button>
-        <button class="btn btn-banana btn-sm" onclick="nav('deploy',null)">▶ 立即發送</button>
       </div>
     </div>
 
@@ -571,168 +579,20 @@ body {
           <div class="section-desc">今天是 <span id="ov-date">-</span>，報告狀態一目瞭然</div>
         </div>
 
-        <!-- Pipeline -->
-        <div class="pipeline">
-          <div class="pipe-step active">
-            <div class="pipe-icon">📡</div>
-            <div class="pipe-label">數據抓取</div>
-            <div class="pipe-sub">Yahoo · TWSE · RSS</div>
-          </div>
-          <div class="pipe-step active">
-            <div class="pipe-icon">🔍</div>
-            <div class="pipe-label">假訊息過濾</div>
-            <div class="pipe-sub">AI 篩選</div>
-          </div>
-          <div class="pipe-step active">
-            <div class="pipe-icon">🤖</div>
-            <div class="pipe-label">AI 生成</div>
-            <div class="pipe-sub">Groq Llama 3.3</div>
-          </div>
-          <div class="pipe-step active">
-            <div class="pipe-icon">📧</div>
-            <div class="pipe-label">Email 發送</div>
-            <div class="pipe-sub">Brevo SMTP</div>
-          </div>
-          <div class="pipe-step">
-            <div class="pipe-icon">✅</div>
-            <div class="pipe-label">完成</div>
-            <div class="pipe-sub" id="ov-last-sent">-</div>
-          </div>
-        </div>
-
         <!-- Stats -->
-        <div class="grid-4" style="margin-bottom:16px">
-          <div class="stat-tile banana reveal reveal-d1">
-            <div class="stat-value" id="ov-us-count">17</div>
-            <div class="stat-label">美股追蹤</div>
-            <div class="stat-sub" id="ov-us-list">NVDA · AAPL · TSLA ...</div>
-          </div>
-          <div class="stat-tile indigo reveal reveal-d2">
-            <div class="stat-value" id="ov-tw-count">4</div>
-            <div class="stat-label">台股追蹤</div>
-            <div class="stat-sub" id="ov-tw-list">台積電 · 聯發科 ...</div>
-          </div>
-          <div class="stat-tile green reveal reveal-d3">
+        <div class="grid-2" style="margin-bottom:16px">
+          <div class="stat-tile green reveal reveal-d1">
             <div class="stat-value" id="ov-feeds">16</div>
             <div class="stat-label">新聞來源</div>
             <div class="stat-sub">RSS + NewsAPI + Ticker</div>
           </div>
-          <div class="stat-tile blue reveal" style="transition-delay:0.32s">
+          <div class="stat-tile blue reveal reveal-d2">
             <div class="stat-value" id="ov-subs">—</div>
             <div class="stat-label">訂閱人數</div>
             <div class="stat-sub">Brevo 列表</div>
           </div>
         </div>
 
-        <!-- Recent reports -->
-        <div class="grid-2">
-          <div class="card scene-reveal">
-            <div class="card-title"><span class="dot"></span>最近發送記錄</div>
-            <div id="ov-recent">
-              <div class="toggle-row">
-                <div class="toggle-info">
-                  <div class="toggle-label">2026-05-20 <span class="badge badge-green">已送出</span></div>
-                  <div class="toggle-sub">NVDA · AAPL · TSLA · 2330 · 2454</div>
-                </div>
-              </div>
-              <div class="toggle-row">
-                <div class="toggle-info">
-                  <div class="toggle-label">2026-05-19 <span class="badge badge-indigo">已存檔</span></div>
-                  <div class="toggle-sub">一般訂閱者版本</div>
-                </div>
-              </div>
-              <div class="toggle-row">
-                <div class="toggle-info">
-                  <div class="toggle-label">2026-05-18 <span class="badge badge-indigo">已存檔</span></div>
-                  <div class="toggle-sub">一般訂閱者版本</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="card scene-reveal reveal-d1">
-            <div class="card-title"><span class="dot"></span>數據源狀態</div>
-            <div class="toggle-row">
-              <div class="toggle-info">
-                <div class="toggle-label">Yahoo Finance (yahooquery)</div>
-                <div class="toggle-sub">美股 · 指數 · 商品 · 加密</div>
-              </div>
-              <span class="badge badge-green">● 正常</span>
-            </div>
-            <div class="toggle-row">
-              <div class="toggle-info">
-                <div class="toggle-label">TWSE OpenAPI</div>
-                <div class="toggle-sub">台灣證交所官方 · 1234+ 股</div>
-              </div>
-              <span class="badge badge-green">● 正常</span>
-            </div>
-            <div class="toggle-row">
-              <div class="toggle-info">
-                <div class="toggle-label">NewsAPI</div>
-                <div class="toggle-sub">英文財經新聞</div>
-              </div>
-              <span class="badge badge-banana">● 配額制</span>
-            </div>
-            <div class="toggle-row">
-              <div class="toggle-info">
-                <div class="toggle-label">RSS Feeds</div>
-                <div class="toggle-sub">Reuters · CNBC · MarketWatch...</div>
-              </div>
-              <span class="badge badge-green">● 正常</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ── Stocks ── -->
-      <div id="sec-stocks" class="section">
-        <div class="section-header">
-          <div class="section-title">股票池管理</div>
-          <div class="section-desc">設定全域追蹤清單，所有訂閱者共用此基礎池</div>
-        </div>
-
-        <div class="tabs">
-          <button class="tab active" onclick="switchStockTab('us',this)">🇺🇸 美股</button>
-          <button class="tab" onclick="switchStockTab('tw',this)">🇹🇼 台股</button>
-        </div>
-
-        <!-- US Tab -->
-        <div id="stock-tab-us">
-          <div class="card" style="margin-bottom:16px">
-            <div class="card-title"><span class="dot"></span>美股追蹤清單 (<span id="us-tag-count">0</span> 支)</div>
-            <div class="tags-wrap" id="us-tags"><span class="tags-empty">載入中...</span></div>
-            <div class="divider"></div>
-            <div class="card-title"><span class="dot"></span>搜尋並新增</div>
-            <div class="search-wrap" style="position:relative">
-              <span class="search-icon">⌕</span>
-              <input class="search-input" id="us-search" placeholder="輸入股票代號或公司名稱..." autocomplete="off" aria-label="搜尋美股">
-              <span class="search-clear" id="us-clear" onclick="clearSearch('us')">×</span>
-              <div class="dropdown" id="us-dropdown"></div>
-            </div>
-          </div>
-        </div>
-
-        <!-- TW Tab -->
-        <div id="stock-tab-tw" style="display:none">
-          <div class="card" style="margin-bottom:16px">
-            <div class="card-title"><span class="dot"></span>台股追蹤清單 (<span id="tw-tag-count">0</span> 支)</div>
-            <div class="tags-wrap" id="tw-tags"><span class="tags-empty">載入中...</span></div>
-            <div class="divider"></div>
-            <div class="card-title"><span class="dot"></span>搜尋並新增</div>
-            <div class="search-wrap" style="position:relative">
-              <span class="search-icon">⌕</span>
-              <input class="search-input" id="tw-search" placeholder="輸入股票代號或公司名稱..." autocomplete="off" aria-label="搜尋台股">
-              <span class="search-clear" id="tw-clear" onclick="clearSearch('tw')">×</span>
-              <div class="dropdown" id="tw-dropdown"></div>
-            </div>
-          </div>
-        </div>
-
-        <div style="display:flex;gap:10px;flex-wrap:wrap">
-          <button class="btn btn-primary" onclick="saveAll()">💾 儲存股票設定</button>
-          <button class="btn btn-ghost" onclick="exportConfig()">⤓ 匯出 config.py 片段</button>
-          <button class="btn btn-danger btn-sm" onclick="resetStocks()">↺ 還原預設</button>
-        </div>
       </div>
 
       <!-- ── News ── -->
@@ -785,112 +645,37 @@ body {
       <div id="sec-settings" class="section">
         <div class="section-header">
           <div class="section-title">系統設定</div>
-          <div class="section-desc">報告排程、語言、API 狀態</div>
+          <div class="section-desc">API 金鑰與服務狀態</div>
         </div>
-        <div class="grid-2">
-          <div class="card">
-            <div class="card-title"><span class="dot"></span>報告設定</div>
-            <div class="settings-row">
-              <div>
-                <div class="settings-label">預設語言</div>
-                <div class="settings-desc">AI 生成報告的主要語言</div>
-              </div>
-              <select class="settings-select settings-control" id="cfg-lang">
-                <option value="zh-TW">繁體中文</option>
-                <option value="en">English</option>
-              </select>
-            </div>
-            <div class="settings-row">
-              <div>
-                <div class="settings-label">新聞回溯時間</div>
-                <div class="settings-desc">RSS 抓取幾小時內的新聞</div>
-              </div>
-              <select class="settings-select settings-control" id="cfg-hours">
-                <option value="24">24 小時</option>
-                <option value="36" selected>36 小時</option>
-                <option value="48">48 小時</option>
-              </select>
-            </div>
-            <div class="settings-row">
-              <div>
-                <div class="settings-label">每支股最多新聞數</div>
-                <div class="settings-desc">Ticker news 每股抓取上限</div>
-              </div>
-              <select class="settings-select settings-control" id="cfg-ticker-news">
-                <option value="3">3 則</option>
-                <option value="5" selected>5 則</option>
-                <option value="8">8 則</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="card">
-            <div class="card-title"><span class="dot"></span>API 金鑰狀態</div>
-            <div class="toggle-row">
-              <div class="toggle-info">
-                <div class="toggle-label">Groq API</div>
-                <div class="toggle-sub">AI 報告生成</div>
-              </div>
-              <span class="badge badge-green">● 已設定</span>
-            </div>
-            <div class="toggle-row">
-              <div class="toggle-info">
-                <div class="toggle-label">Brevo API</div>
-                <div class="toggle-sub">Email 發送服務</div>
-              </div>
-              <span class="badge badge-green">● 已設定</span>
-            </div>
-            <div class="toggle-row">
-              <div class="toggle-info">
-                <div class="toggle-label">NewsAPI</div>
-                <div class="toggle-sub">英文新聞 API</div>
-              </div>
-              <span class="badge badge-green">● 已設定</span>
-            </div>
-            <div class="toggle-row">
-              <div class="toggle-info">
-                <div class="toggle-label">TWSE OpenAPI</div>
-                <div class="toggle-sub">台灣證交所（免費，無需 Key）</div>
-              </div>
-              <span class="badge badge-green">● 公開 API</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="card" style="margin-top:16px">
-          <div class="card-title"><span class="dot"></span>Workflow 架構</div>
+        <div class="card">
+          <div class="card-title"><span class="dot"></span>API 金鑰狀態</div>
           <div class="toggle-row">
             <div class="toggle-info">
-              <div class="toggle-label">假訊息過濾</div>
-              <div class="settings-desc">使用關鍵字過濾可疑新聞標題</div>
+              <div class="toggle-label">Groq API</div>
+              <div class="toggle-sub">AI 報告生成</div>
             </div>
-            <label class="toggle">
-              <input type="checkbox" id="cfg-filter" checked>
-              <div class="toggle-track"></div>
-              <div class="toggle-thumb"></div>
-            </label>
+            <span class="badge badge-green">● 已設定</span>
           </div>
           <div class="toggle-row">
             <div class="toggle-info">
-              <div class="toggle-label">個人化主旨行</div>
-              <div class="settings-desc">AI 生成含持倉資訊的個人化 Email 主旨</div>
+              <div class="toggle-label">Brevo API</div>
+              <div class="toggle-sub">Email 發送服務</div>
             </div>
-            <label class="toggle">
-              <input type="checkbox" id="cfg-personal-subj" checked>
-              <div class="toggle-track"></div>
-              <div class="toggle-thumb"></div>
-            </label>
+            <span class="badge badge-green">● 已設定</span>
           </div>
           <div class="toggle-row">
             <div class="toggle-info">
-              <div class="toggle-label">CSS Inline 化</div>
-              <div class="settings-desc">用 premailer 將 CSS inline，確保 Gmail 正常渲染</div>
+              <div class="toggle-label">NewsAPI</div>
+              <div class="toggle-sub">英文新聞 API</div>
             </div>
-            <label class="toggle">
-              <input type="checkbox" id="cfg-premailer" checked>
-              <div class="toggle-track"></div>
-              <div class="toggle-thumb"></div>
-            </label>
+            <span class="badge badge-green">● 已設定</span>
+          </div>
+          <div class="toggle-row">
+            <div class="toggle-info">
+              <div class="toggle-label">TWSE OpenAPI</div>
+              <div class="toggle-sub">台灣證交所（免費，無需 Key）</div>
+            </div>
+            <span class="badge badge-green">● 公開 API</span>
           </div>
         </div>
       </div>
@@ -899,7 +684,7 @@ body {
       <div id="sec-subscribers" class="section">
         <div class="section-header">
           <div class="section-title">訂閱者管理</div>
-          <div class="section-desc">透過 Cloudflare Worker 查詢 Brevo 訂閱列表</div>
+          <div class="section-desc">調整方案:先選好下拉(免費 / Pro / Premium),再按「套用」才會生效</div>
         </div>
         <div class="card">
           <div id="subs-content">
@@ -907,66 +692,6 @@ body {
               <div class="emoji">📋</div>
               載入訂閱者資料中...
             </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ── Deploy ── -->
-      <div id="sec-deploy" class="section">
-        <div class="section-header">
-          <div class="section-title">發送報告</div>
-          <div class="section-desc">手動觸發報告生成與 Email 發送</div>
-        </div>
-
-        <div class="grid-2" style="margin-bottom:16px">
-          <div class="card">
-            <div class="card-title"><span class="dot"></span>發送目標</div>
-            <div class="settings-row">
-              <div>
-                <div class="settings-label">報告日期</div>
-              </div>
-              <input type="date" class="settings-select settings-control" id="deploy-date" aria-label="報告日期">
-            </div>
-            <div class="settings-row">
-              <div>
-                <div class="settings-label">發送模式</div>
-              </div>
-              <select class="settings-select settings-control" id="deploy-mode">
-                <option value="test">測試（只寄給 Admin）</option>
-                <option value="all">全體訂閱者</option>
-              </select>
-            </div>
-            <div style="margin-top:16px;display:flex;gap:10px">
-              <button class="btn btn-banana" onclick="triggerDeploy()">▶ 立即執行</button>
-              <button class="btn btn-ghost" onclick="openPreview()">👁 預覽報告</button>
-            </div>
-          </div>
-
-          <div class="card">
-            <div class="card-title"><span class="dot"></span>快速操作</div>
-            <div class="toggle-row">
-              <div class="toggle-label">只抓數據（不發送）</div>
-              <button class="btn btn-ghost btn-sm" onclick="logAction('fetch-only')">執行</button>
-            </div>
-            <div class="toggle-row">
-              <div class="toggle-label">清除數據快取</div>
-              <button class="btn btn-danger btn-sm" onclick="clearCache()">清除</button>
-            </div>
-            <div class="toggle-row">
-              <div class="toggle-label">測試 API 連線</div>
-              <button class="btn btn-ghost btn-sm" onclick="testAPIs()">測試</button>
-            </div>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="card-title" style="justify-content:space-between">
-            <span><span class="dot"></span>執行 Log</span>
-            <button class="btn btn-ghost btn-sm" onclick="clearLog()">清除</button>
-          </div>
-          <div class="terminal" id="log-terminal">
-            <div class="log-line"><span class="log-ts">[--:--:--]</span><span class="log-info">系統就緒，等待指令...</span></div>
-            <span class="log-cursor"></span>
           </div>
         </div>
       </div>
@@ -983,7 +708,6 @@ const WORKER_URL = "https://marketdaily-webhook.delvin-12345678.workers.dev";
 const ADMIN_EMAIL = "delvin.12345678@gmail.com";
 
 // ── State ──
-let US_DB = [], TW_DB = [];
 let cfg = {
   us_stocks: ["AAPL","MSFT","GOOGL","AMZN","META","NVDA","TSLA","AMD","TSM","ARM","JPM","GS","BRK-B"],
   tw_stocks: [
@@ -1015,8 +739,6 @@ let cfg = {
     "businessinsider.com","forbes.com","barrons.com","thestreet.com","benzinga.com"
   ]
 };
-
-let hiIdx = {us:-1, tw:-1};
 
 // ── Auth ──
 async function doLogin() {
@@ -1054,10 +776,8 @@ function bootAdmin(email) {
   document.getElementById("sb-email").textContent = email;
   document.getElementById("sb-avatar").textContent = email[0].toUpperCase();
   document.getElementById("ov-date").textContent = new Date().toLocaleDateString("zh-TW");
-  document.getElementById("deploy-date").valueAsDate = new Date();
 
   loadSavedCfg();
-  loadStocksDB();
   renderOverview();
   renderFeedLists();
   renderDomains();
@@ -1073,11 +793,9 @@ function logout() {
 // ── Navigation ──
 const SECTION_TITLES = {
   overview: ["總覽","系統狀態監控"],
-  stocks:   ["股票池管理","設定全域追蹤清單"],
   news:     ["新聞源管理","RSS Feeds 與域名白名單"],
   settings: ["系統設定","報告排程與 API 狀態"],
   subscribers:["訂閱者","Brevo 訂閱列表"],
-  deploy:   ["發送報告","手動觸發 Email 發送"],
 };
 
 function nav(id, btn) {
@@ -1112,8 +830,7 @@ async function loadFromWorker() {
     if (d.config) {
       Object.assign(cfg, d.config);
       localStorage.setItem("md-admin-cfg", JSON.stringify(cfg));
-      renderTags("us"); renderTags("tw");
-      renderFeedLists(); renderDomains(); renderOverview(); updateSbBadge();
+      renderFeedLists(); renderDomains(); renderOverview();
       toast("已從 Cloudflare KV 同步設定 ✓");
     }
   } catch {}
@@ -1122,8 +839,6 @@ async function loadFromWorker() {
 async function saveAll() {
   localStorage.setItem("md-admin-cfg", JSON.stringify(cfg));
   renderOverview();
-  renderTags("us"); renderTags("tw");
-  updateSbBadge();
   try {
     const res = await fetch(WORKER_URL + "/admin/save-config", {
       method: "POST", headers: {"Content-Type":"application/json"},
@@ -1137,140 +852,7 @@ async function saveAll() {
   }
 }
 
-function resetStocks() {
-  if (!confirm("確定要還原預設股票清單？")) return;
-  cfg.us_stocks = ["AAPL","MSFT","GOOGL","AMZN","META","NVDA","TSLA","AMD","TSM","ARM","JPM","GS","BRK-B"];
-  cfg.tw_stocks = [{symbol:"2330",name:"台積電"},{symbol:"2454",name:"聯發科"},{symbol:"2317",name:"鴻海"}];
-  renderTags("us"); renderTags("tw"); updateSbBadge();
-  toast("已還原預設清單");
-}
-
-// ── Load stocks DB ──
-async function loadStocksDB() {
-  try {
-    const r = await fetch("stocks.json");
-    const d = await r.json();
-    US_DB = d.us || [];
-    TW_DB = d.tw || [];
-  } catch {
-    US_DB = []; TW_DB = [];
-  }
-  renderTags("us"); renderTags("tw"); updateSbBadge();
-  setupSearch("us"); setupSearch("tw");
-}
-
-// ── Tags ──
-function renderTags(market) {
-  const el = document.getElementById(market + "-tags");
-  const countEl = document.getElementById(market + "-tag-count");
-  const list = market === "us" ? cfg.us_stocks : cfg.tw_stocks.map(s => s.symbol || s);
-  countEl.textContent = list.length;
-  if (!list.length) {
-    el.innerHTML = `<span class="tags-empty">尚未選擇任何${market==="us"?"美股":"台股"}</span>`;
-    return;
-  }
-  el.innerHTML = list.map(sym => {
-    const name = market === "us"
-      ? (US_DB.find(([s]) => s === sym)?.[1] || "")
-      : (cfg.tw_stocks.find(s => (s.symbol||s) === sym)?.name || TW_DB.find(([s]) => s === sym)?.[1] || "");
-    const label = name ? `${sym} · ${name}` : sym;
-    return `<div class="tag">${label} <span class="tag-x" onclick="removeStock('${market}','${sym}')">×</span></div>`;
-  }).join("");
-}
-
-function removeStock(market, sym) {
-  if (market === "us") {
-    cfg.us_stocks = cfg.us_stocks.filter(s => s !== sym);
-  } else {
-    cfg.tw_stocks = cfg.tw_stocks.filter(s => (s.symbol||s) !== sym);
-  }
-  renderTags(market); updateSbBadge();
-}
-
-function addStock(market, sym, name) {
-  if (market === "us") {
-    if (cfg.us_stocks.includes(sym)) return;
-    cfg.us_stocks.push(sym);
-  } else {
-    if (cfg.tw_stocks.find(s => (s.symbol||s) === sym)) return;
-    cfg.tw_stocks.push({symbol: sym, name});
-  }
-  renderTags(market); updateSbBadge();
-  document.getElementById(market + "-search").value = "";
-  document.getElementById(market + "-dropdown").classList.remove("open");
-  document.getElementById(market + "-clear").classList.remove("show");
-}
-
-function updateSbBadge() {
-  document.getElementById("sb-stock-count").textContent = cfg.us_stocks.length + cfg.tw_stocks.length;
-}
-
-// ── Search ──
-function setupSearch(market) {
-  const input = document.getElementById(market + "-search");
-  const dd = document.getElementById(market + "-dropdown");
-  const clear = document.getElementById(market + "-clear");
-  const db = market === "us" ? US_DB : TW_DB;
-
-  input.addEventListener("input", () => {
-    const q = input.value.trim();
-    clear.classList.toggle("show", q.length > 0);
-    if (!q) { dd.classList.remove("open"); return; }
-    const results = db.filter(([s,n]) =>
-      s.toLowerCase().includes(q.toLowerCase()) || n.toLowerCase().includes(q.toLowerCase())
-    ).slice(0, 10);
-    renderDropdown(market, results, q);
-    hiIdx[market] = -1;
-  });
-
-  input.addEventListener("keydown", e => {
-    const items = dd.querySelectorAll(".dd-item");
-    if (e.key === "ArrowDown") { e.preventDefault(); hiIdx[market] = Math.min(hiIdx[market]+1, items.length-1); items.forEach((el,i) => el.classList.toggle("hi", i===hiIdx[market])); }
-    else if (e.key === "ArrowUp") { e.preventDefault(); hiIdx[market] = Math.max(hiIdx[market]-1, 0); items.forEach((el,i) => el.classList.toggle("hi", i===hiIdx[market])); }
-    else if (e.key === "Enter") {
-      e.preventDefault();
-      const hi = hiIdx[market];
-      if (hi >= 0 && items[hi]) { items[hi].click(); return; }
-      const q = input.value.trim().toUpperCase();
-      if (q) addStock(market, q, q);
-    } else if (e.key === "Escape") { dd.classList.remove("open"); }
-  });
-
-  document.addEventListener("click", e => {
-    if (!input.contains(e.target) && !dd.contains(e.target)) dd.classList.remove("open");
-  });
-}
-
-function renderDropdown(market, results, q) {
-  const dd = document.getElementById(market + "-dropdown");
-  if (!results.length) {
-    dd.innerHTML = `<div class="dd-empty">找不到「${q}」，按 Enter 直接加入</div>`;
-  } else {
-    dd.innerHTML = results.map(([sym, name]) =>
-      `<div class="dd-item" onclick="addStock('${market}','${sym.replace(/'/g,"&#39;")}','${name.replace(/'/g,"&#39;")}')">
-        <span class="dd-sym">${sym}</span>
-        <span class="dd-name">${name}</span>
-        <span class="dd-add">＋</span>
-      </div>`
-    ).join("");
-  }
-  dd.classList.add("open");
-}
-
-function clearSearch(market) {
-  document.getElementById(market + "-search").value = "";
-  document.getElementById(market + "-dropdown").classList.remove("open");
-  document.getElementById(market + "-clear").classList.remove("show");
-}
-
 // ── Tab Switch ──
-function switchStockTab(tab, btn) {
-  document.getElementById("stock-tab-us").style.display = tab === "us" ? "block" : "none";
-  document.getElementById("stock-tab-tw").style.display = tab === "tw" ? "block" : "none";
-  document.querySelectorAll("#sec-stocks .tab").forEach(b => b.classList.remove("active"));
-  btn.classList.add("active");
-}
-
 function switchNewsTab(tab, btn) {
   ["us","tw","domains"].forEach(t => {
     document.getElementById("news-tab-" + t).style.display = t === tab ? "block" : "none";
@@ -1352,12 +934,7 @@ function removeDomain(d) {
 
 // ── Overview ──
 function renderOverview() {
-  document.getElementById("ov-us-count").textContent = cfg.us_stocks.length;
-  document.getElementById("ov-tw-count").textContent = cfg.tw_stocks.length;
   document.getElementById("ov-feeds").textContent = cfg.us_feeds.filter(f=>f.on).length + cfg.tw_feeds.filter(f=>f.on).length;
-  document.getElementById("ov-us-list").textContent = cfg.us_stocks.slice(0,4).join(" · ") + (cfg.us_stocks.length > 4 ? " ..." : "");
-  document.getElementById("ov-tw-list").textContent = cfg.tw_stocks.slice(0,3).map(s=>s.name||s.symbol||s).join(" · ");
-  document.getElementById("ov-last-sent").textContent = new Date().toLocaleDateString("zh-TW");
 }
 
 // ── Admin Stats via Worker ──
@@ -1386,104 +963,73 @@ async function loadSubscribers() {
       el.innerHTML = `<div class="empty-state"><div class="emoji">📭</div>尚無訂閱者資料</div>`;
       return;
     }
-    el.innerHTML = subs.map(s => `
+    el.innerHTML = subs.map(s => {
+      const plan = s.plan || "free";
+      const email = (s.email || "").replace(/"/g, "&quot;");
+      const opt = (v, label) => `<option value="${v}"${plan === v ? " selected" : ""}>${label}</option>`;
+      return `
       <div class="sub-row">
         <div class="sub-av">${(s.email||"?")[0].toUpperCase()}</div>
         <div class="sub-email">${s.email||"-"}</div>
-        <span class="badge ${s.plan==="paid"?"badge-banana":"badge-indigo"}">${s.plan||"free"}</span>
         <div class="sub-joined">${s.since ? new Date(s.since).toLocaleDateString("zh-TW") : "-"}</div>
-      </div>
-    `).join("");
+        <select class="plan-select" data-email="${email}" data-prev="${plan}" onchange="stagePlan(this)" aria-label="方案">
+          ${opt("free","免費")}${opt("pro","Pro")}${opt("premium","Premium")}
+        </select>
+        <button class="plan-apply" onclick="applyPlan(this)" disabled>套用</button>
+      </div>`;
+    }).join("");
   } catch {
     el.innerHTML = `<div class="empty-state"><div class="emoji">⚠️</div>無法連線至 Cloudflare Worker</div>`;
   }
 }
 
-// ── Export Config ──
-function exportConfig() {
-  const us = cfg.us_stocks.map(s => JSON.stringify(s)).join(", ");
-  const tw = cfg.tw_stocks.map(s => `{"symbol": "${s.symbol||s}", "name": "${s.name||s.symbol||s}"}`).join(",\n    ");
-  const feeds = cfg.us_feeds.filter(f=>f.on).map(f => `    ("${f.domain}", "${f.url}")`).join(",\n");
-  const twFeeds = cfg.tw_feeds.filter(f=>f.on).map(f => `    ("${f.domain}", "${f.url}")`).join(",\n");
-  const domains = cfg.domains.map(d => JSON.stringify(d)).join(", ");
-
-  const text = `# ─── config.py (Admin export ${new Date().toISOString().slice(0,10)}) ───
-US_STOCKS = [${us}]
-
-TW_STOCKS = [
-    ${tw}
-]
-
-# ─── data_fetcher.py RSS_FEEDS ───
-RSS_FEEDS = [
-${feeds}
-]
-
-TW_RSS_FEEDS = [
-${twFeeds}
-]
-
-# ─── config.py NEWS_WHITELIST_DOMAINS ───
-NEWS_WHITELIST_DOMAINS = [${domains}]
-`;
-  const blob = new Blob([text], {type:"text/plain"});
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = `admin_config_${new Date().toISOString().slice(0,10)}.txt`;
-  a.click();
-  toast("Config 已匯出");
+// 改下拉只是「選好」,要按「套用」才真的寫入 —— 避免誤觸
+function stagePlan(sel) {
+  const btn = sel.nextElementSibling;
+  if (!btn) return;
+  const changed = sel.value !== sel.dataset.prev;
+  btn.disabled = !changed;
+  btn.classList.toggle("ready", changed);
+  sel.classList.remove("ok", "bad");
 }
 
-// ── Deploy / Log ──
-function addLog(type, msg) {
-  const el = document.getElementById("log-terminal");
-  const cursor = el.querySelector(".log-cursor");
-  const ts = new Date().toTimeString().slice(0,8);
-  const line = document.createElement("div");
-  line.className = "log-line";
-  line.innerHTML = `<span class="log-ts">[${ts}]</span><span class="log-${type}">${msg}</span>`;
-  el.insertBefore(line, cursor);
-  el.scrollTop = el.scrollHeight;
-}
-
-function clearLog() {
-  const el = document.getElementById("log-terminal");
-  el.innerHTML = `<div class="log-line"><span class="log-ts">[--:--:--]</span><span class="log-info">Log 已清除</span></div><span class="log-cursor"></span>`;
-}
-
-async function triggerDeploy() {
-  const date = document.getElementById("deploy-date").value;
-  const mode = document.getElementById("deploy-mode").value;
-  nav("deploy", null);
-  addLog("info", `開始執行報告發送... (date=${date}, mode=${mode})`);
-  addLog("ok",   "此功能需在本機執行 Python 腳本，請在 Terminal 執行:");
-  addLog("warn", `python3 send_test_report.py  (測試模式)`);
-  addLog("info", "或修改 main.py 後執行 python3 main.py");
-  addLog("info", "報告將自動發送至 Brevo 訂閱列表");
-}
-
-function logAction(action) {
-  nav("deploy", null);
-  addLog("info", `動作: ${action}`);
-  addLog("warn", "請在 Terminal 執行對應 Python 指令");
-}
-
-function clearCache() {
-  nav("deploy", null);
-  addLog("warn", "快取清除: 請刪除 output/test_data_cache.json");
-  addLog("ok",   "rm output/test_data_cache.json");
-}
-
-function testAPIs() {
-  nav("deploy", null);
-  addLog("info", "測試 API 連線...");
-  addLog("ok",   "TWSE OpenAPI: ✓ 可連線");
-  addLog("ok",   "yahooquery: ✓ 可連線");
-  addLog("info", "Brevo / NewsAPI / Groq: 需在 Python 環境測試");
-}
-
-function openPreview() {
-  window.open("../output/digest_" + document.getElementById("deploy-date").value + ".html", "_blank");
+// 按下「套用」才呼叫 worker 寫入 KV plan:${email}
+async function applyPlan(btn) {
+  const sel = btn.previousElementSibling;
+  if (!sel) return;
+  const target = sel.dataset.email;
+  const plan = sel.value;
+  const prev = sel.dataset.prev || plan;
+  if (!target || plan === prev) return;
+  btn.disabled = true; sel.disabled = true;
+  btn.textContent = "…";
+  sel.classList.remove("ok", "bad");
+  try {
+    const res = await fetch(WORKER_URL + "/admin/set-plan", {
+      method: "POST", headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({ email: localStorage.getItem("md-admin-email"), target, plan })
+    });
+    const d = await res.json();
+    if (d.ok) {
+      sel.dataset.prev = plan;
+      sel.classList.add("ok");
+      btn.classList.remove("ready");
+      btn.textContent = "已套用";
+      setTimeout(() => { btn.textContent = "套用"; }, 1600);
+    } else {
+      sel.classList.add("bad");
+      btn.textContent = "失敗";
+      btn.disabled = false;
+      setTimeout(() => { btn.textContent = "套用"; }, 1600);
+    }
+  } catch {
+    sel.classList.add("bad");
+    btn.textContent = "失敗";
+    btn.disabled = false;
+    setTimeout(() => { btn.textContent = "套用"; }, 1600);
+  }
+  sel.disabled = false;
+  setTimeout(() => sel.classList.remove("ok", "bad"), 1600);
 }
 
 // ── Toast ──

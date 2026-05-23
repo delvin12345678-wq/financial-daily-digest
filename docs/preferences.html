@@ -446,7 +446,7 @@ const TW_STOCKS = TW_STOCKS_FULL;
 const selected = { us: [], tw: [] };
 let activeDropdown = null;
 let highlightIndex = { us: -1, tw: -1 };
-let userCap = Infinity;
+let userCap = 3;
 let userPlan = "free";
 
 function totalSelected() { return selected.us.length + selected.tw.length; }
@@ -658,7 +658,13 @@ async function doAutoSave() {
     const data = await res.json();
     if (data.ok) {
       _lastSaved = payload;
-      setSaveStatus("saved", t("save_autosaved"));
+      if (data.dropped > 0) {
+        setSaveStatus("error", curLang() === 'zh'
+          ? `⚠️ 免費方案上限 ${data.cap} 檔,超過的 ${data.dropped} 檔未儲存`
+          : `⚠️ Free plan allows ${data.cap} stocks — ${data.dropped} not saved`);
+      } else {
+        setSaveStatus("saved", t("save_autosaved"));
+      }
     } else {
       setSaveStatus("error", t("save_fail"));
     }
@@ -668,6 +674,15 @@ async function doAutoSave() {
 }
 
 applyLang(localStorage.getItem('md-lang-v2') || 'zh');
+
+// 載入時若已知用戶 Email(來自 dashboard 登入),自動帶入並抓方案上限,避免免費用戶超選後被靜默截斷
+(function () {
+  const savedEmail = localStorage.getItem("md-email");
+  if (savedEmail) {
+    const inp = document.getElementById("email-input");
+    if (inp) { inp.value = savedEmail; inp.dispatchEvent(new Event("blur")); }
+  }
+})();
 </script>
 <script src="ui-pro.js"></script>
 <script src="onboarding-tour.js"></script>

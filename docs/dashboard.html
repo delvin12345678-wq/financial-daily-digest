@@ -586,7 +586,7 @@ nav {
 
     <!-- Admin Panel -->
     <div class="admin-panel" id="admin-panel">
-      <div class="admin-panel-title" style="display:flex;align-items:center;justify-content:space-between;"><span data-i18n="admin_panel_title">👑 管理員面板</span><a href="admin.html" style="font-size:11px;font-weight:600;color:rgba(253,230,138,0.7);background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.25);padding:4px 12px;border-radius:20px;text-decoration:none;transition:all 0.18s;" onmouseover="this.style.background='rgba(245,158,11,0.22)';this.style.color='#fde68a'" onmouseout="this.style.background='rgba(245,158,11,0.12)';this.style.color='rgba(253,230,138,0.7)'" data-i18n="admin_enter_console">進入後台 →</a></div>
+      <div class="admin-panel-title" style="display:flex;align-items:center;justify-content:space-between;"><span data-i18n="admin_panel_title">👑 管理員面板</span><a href="admin.html" target="_blank" rel="noopener" style="font-size:11px;font-weight:600;color:rgba(253,230,138,0.7);background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.25);padding:4px 12px;border-radius:20px;text-decoration:none;transition:all 0.18s;" onmouseover="this.style.background='rgba(245,158,11,0.22)';this.style.color='#fde68a'" onmouseout="this.style.background='rgba(245,158,11,0.12)';this.style.color='rgba(253,230,138,0.7)'" data-i18n="admin_enter_console">進入後台 →</a></div>
       <div class="admin-stats">
         <div class="admin-stat">
           <div class="admin-stat-value" id="admin-total">—</div>
@@ -1098,14 +1098,14 @@ function refreshDynamicLang() {
     const heroName = document.getElementById("hero-name");
     if (heroName) heroName.textContent = T('hero_name_greeting')(name);
     const badge = document.getElementById("plan-badge");
-    if (badge) badge.textContent = plan === "admin" ? T('hdr_plan_admin') : plan === "paid" ? T('hdr_plan_paid') : T('hdr_plan_free');
+    if (badge) badge.textContent = plan === "admin" ? T('hdr_plan_admin') : plan === "free" ? T('hdr_plan_free') : T('hdr_plan_paid');
     renderTags("us"); renderTags("tw"); updateStats();
   }
 }
 
 let US_STOCKS = [], TW_STOCKS = [];
 const selected = { us: [], tw: [] };
-let userCap = Infinity;
+let userCap = 3;
 let userPlan = "free";
 const hiIdx = { us: -1, tw: -1 };
 
@@ -1304,7 +1304,7 @@ async function showDashboard(email, plan) {
   document.getElementById("nav-email").textContent = email;
   const planBadge = document.getElementById("plan-badge");
   if (planBadge) {
-    planBadge.textContent = plan === "admin" ? T('hdr_plan_admin') : plan === "paid" ? T('hdr_plan_paid') : T('hdr_plan_free');
+    planBadge.textContent = plan === "admin" ? T('hdr_plan_admin') : plan === "free" ? T('hdr_plan_free') : T('hdr_plan_paid');
     planBadge.classList.toggle("admin", plan === "admin");
     planBadge.style.display = "inline-flex";
   }
@@ -1324,7 +1324,7 @@ async function showDashboard(email, plan) {
 async function setupLineCard(email, plan) {
   const card = document.getElementById("line-alert-card");
   if (!card) return;
-  if (plan !== "paid" && plan !== "admin") { card.style.display = "none"; return; }
+  if (plan !== "premium" && plan !== "admin") { card.style.display = "none"; return; }
   card.style.display = "block";
   let bound = false;
   try {
@@ -1341,7 +1341,7 @@ let _chatHistory = [], _chatRemaining = 30, _chatBusy = false, _chatErr = "";
 async function setupChatCard(email, plan) {
   const card = document.getElementById("chat-card");
   if (!card) return;
-  if (plan !== "paid" && plan !== "admin") { card.style.display = "none"; return; }
+  if (plan !== "premium" && plan !== "admin") { card.style.display = "none"; return; }
   card.style.display = "block";
   let premium = false, remaining = 30;
   try {
@@ -2122,7 +2122,13 @@ async function doAutoSave() {
     const data = await res.json();
     if (data.ok) {
       _lastSaved = payload;
-      setSaveStatus("saved", T('save_saved_long'));
+      if (data.dropped > 0) {
+        setSaveStatus("error", currentLang === 'zh'
+          ? `⚠️ 免費方案上限 ${data.cap} 檔,超過的 ${data.dropped} 檔未儲存`
+          : `⚠️ Free plan allows ${data.cap} stocks — ${data.dropped} not saved`);
+      } else {
+        setSaveStatus("saved", T('save_saved_long'));
+      }
     } else {
       setSaveStatus("error", T('save_failed'));
     }

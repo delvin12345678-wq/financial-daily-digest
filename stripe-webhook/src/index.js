@@ -102,7 +102,8 @@ export default {
       if (!listIds.includes(targetList)) return json({ subscribed: false });
 
       const isPaid = (contact.attributes?.PAID === true || contact.attributes?.PLAN === "paid");
-      const plan = isPaid ? "paid" : "free";
+      // KV plan:${email} 是方案唯一真實來源(premium/pro/free);Brevo PAID 僅作 KV 未設時的後援
+      const plan = (await env.USER_PREFS.get(`plan:${email}`)) || (isPaid ? "premium" : "free");
       const since = contact.createdAt || null;
 
       const storedHash = await env.USER_PREFS.get(`pwd:${email}`);
@@ -141,7 +142,8 @@ export default {
       await env.USER_PREFS.put(`pwd:${email}`, hash);
 
       const isPaid = (contact.attributes?.PAID === true || contact.attributes?.PLAN === "paid");
-      return json({ ok: true, plan: isPaid ? "paid" : "free", since: contact.createdAt || null });
+      const plan = (await env.USER_PREFS.get(`plan:${email}`)) || (isPaid ? "premium" : "free");
+      return json({ ok: true, plan, since: contact.createdAt || null });
     }
 
     // Change password (authenticated users)
@@ -350,10 +352,14 @@ export default {
         const data = await res.json();
         const contacts = data.contacts || [];
         const total = data.count || contacts.length;
-        const subscribers = contacts.slice(0, 50).map(c => ({
-          email: c.email,
-          plan: c.attributes?.PAID ? "paid" : "free",
-          since: c.createdAt,
+        const subscribers = await Promise.all(contacts.slice(0, 50).map(async c => {
+          const em = (c.email || "").toLowerCase();
+          const kvPlan = await env.USER_PREFS.get(`plan:${em}`);
+          return {
+            email: c.email,
+            plan: kvPlan || (c.attributes?.PAID ? "premium" : "free"),
+            since: c.createdAt,
+          };
         }));
         return json({ totalSubscribers: total, subscribers });
       } catch { return json({ totalSubscribers: 0, subscribers: [] }); }
@@ -382,6 +388,20 @@ export default {
       return json({ ok: true, updated_at: config.updated_at });
     }
 
+    // Admin:設定單一用戶方案(free / pro / premium)
+    if (url.pathname === "/admin/set-plan" && request.method === "POST") {
+      let body;
+      try { body = await request.json(); } catch { return json({ error: "Invalid" }, 400); }
+      const email = (body.email || "").trim().toLowerCase();
+      if (!ADMIN_EMAILS.includes(email)) return json({ error: "Forbidden" }, 403);
+      const target = (body.target || "").trim().toLowerCase();
+      const plan = (body.plan || "").trim().toLowerCase();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(target)) return json({ error: "invalid_target" }, 400);
+      if (!["free", "pro", "premium"].includes(plan)) return json({ error: "invalid_plan" }, 400);
+      await env.USER_PREFS.put(`plan:${target}`, plan);
+      return json({ ok: true, target, plan });
+    }
+
     // Save user preferences
     if (url.pathname === "/save-preferences" && request.method === "POST") {
       let body;
@@ -396,14 +416,22 @@ export default {
       const cap = planCap(plan);
       let us = Array.isArray(body.us_stocks) ? body.us_stocks : [];
       let tw = Array.isArray(body.tw_stocks) ? body.tw_stocks : [];
+      const submitted = us.length + tw.length;
       [us, tw] = applyCap(us, tw, cap);
+      const saved = us.length + tw.length;
       const prefs = {
         us_stocks: us,
         tw_stocks: tw,
         updated_at: new Date().toISOString(),
       };
       await env.USER_PREFS.put(email, JSON.stringify(prefs));
-      return json({ ok: true, plan, cap: cap === Infinity ? null : cap, count: us.length + tw.length });
+      // dropped > 0 表示超過方案上限被截斷 —— 前端必須明確告知,不可靜默
+      return json({
+        ok: true, plan,
+        cap: cap === Infinity ? null : cap,
+        count: saved,
+        dropped: submitted - saved,
+      });
     }
 
     // Get user preferences
@@ -476,27 +504,13 @@ export default {
       }
 
       const listId = parseInt(env.BREVO_LIST_ID) || 2;
-      const ok = await addToBrevo(email, env.BREVO_API_KEY, listId);
-      if (!ok) return json({ error: "brevo_error" }, 500);
+      const added = await addToBrevo(email, env.BREVO_API_KEY, listId);
+      if (!added) return json({ error: "brevo_error" }, 502);
 
-      // Track referral conversion if ref code provided
-      const refCode = (body.ref || "").trim().toUpperCase();
-      if (refCode) {
-        const ownerEmail = await env.USER_PREFS.get(`referral:code:${refCode}`);
-        if (ownerEmail && ownerEmail !== email) {
-          const raw = await env.USER_PREFS.get(`referral:user:${ownerEmail}`);
-          if (raw) {
-            const data = JSON.parse(raw);
-            data.conversions = (data.conversions || 0) + 1;
-            await env.USER_PREFS.put(`referral:user:${ownerEmail}`, JSON.stringify(data));
-          }
-        }
-      }
-
-      // 優惠碼註冊者 = Premium
-      await env.USER_PREFS.put(`plan:${email}`, "premium");
-      await sendWelcomeEmail(email, env.BREVO_API_KEY, false);
-      ctx.waitUntil(sendTodayDigestToOne(email, env.BREVO_API_KEY, env.USER_PREFS));
+      // 邀請碼註冊者 = 免費方案(3 檔上限);Premium 需付費升級或管理員手動開通
+      await env.USER_PREFS.put(`plan:${email}`, "free");
+      // 歡迎信、補寄日報、推薦轉換全部背景化 —— 任一失敗都不影響「註冊成功」的回應
+      ctx.waitUntil(postSignupTasks(email, body.ref, env));
       return json({ ok: true });
     }
 
@@ -619,22 +633,9 @@ export default {
       const email = (body.email || "").trim().toLowerCase();
       if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json({ error: "invalid_email" }, 400);
       const listId = parseInt(env.BREVO_LIST_ID) || 2;
-      const ok = await addToBrevo(email, env.BREVO_API_KEY, listId);
-      if (!ok) return json({ error: "brevo_error" }, 500);
-      const refCode = (body.ref || "").trim().toUpperCase();
-      if (refCode) {
-        const ownerEmail = await env.USER_PREFS.get(`referral:code:${refCode}`);
-        if (ownerEmail && ownerEmail !== email) {
-          const raw = await env.USER_PREFS.get(`referral:user:${ownerEmail}`);
-          if (raw) {
-            const data = JSON.parse(raw);
-            data.conversions = (data.conversions || 0) + 1;
-            await env.USER_PREFS.put(`referral:user:${ownerEmail}`, JSON.stringify(data));
-          }
-        }
-      }
-      await sendWelcomeEmail(email, env.BREVO_API_KEY, false);
-      ctx.waitUntil(sendTodayDigestToOne(email, env.BREVO_API_KEY, env.USER_PREFS));
+      const added = await addToBrevo(email, env.BREVO_API_KEY, listId);
+      if (!added) return json({ error: "brevo_error" }, 502);
+      ctx.waitUntil(postSignupTasks(email, body.ref, env));
       return json({ ok: true });
     }
 
@@ -724,8 +725,13 @@ export default {
         await addToBrevo(email, env.BREVO_API_KEY, listId, { PAID: true, PLAN: "paid", PLAN_TIER: tier });
         await env.USER_PREFS.put(`plan:${email}`, tier === "Premium" ? "premium" : "pro");
         if (session.customer) await env.USER_PREFS.put(`stripe-cust:${session.customer}`, email);
-        await sendWelcomeEmail(email, env.BREVO_API_KEY, true, tier);
-        ctx.waitUntil(sendTodayDigestToOne(email, env.BREVO_API_KEY, env.USER_PREFS));
+        // 歡迎信與補寄日報背景化 —— webhook 快速回 200,避免 Stripe 因逾時重送
+        ctx.waitUntil((async () => {
+          try { await sendWelcomeEmail(email, env.BREVO_API_KEY, true, tier); }
+          catch (e) { console.log("stripe welcome error:", String(e)); }
+          try { await sendTodayDigestToOne(email, env.BREVO_API_KEY, env.USER_PREFS); }
+          catch (e) { console.log("stripe digest error:", String(e)); }
+        })());
       }
     }
 
@@ -833,12 +839,50 @@ async function sendTodayDigestToOne(email, apiKey, kv) {
 async function addToBrevo(email, apiKey, listId, attributes) {
   const body = { email, listIds: [listId], updateEnabled: true };
   if (attributes) body.attributes = attributes;
-  const res = await fetch("https://api.brevo.com/v3/contacts", {
-    method: "POST",
-    headers: { "api-key": apiKey, "Content-Type": "application/json" },
-    body: JSON.stringify(body)
-  });
-  return res.ok || res.status === 400; // 400 = contact already exists, still OK
+  // 限流(429)與伺服器錯誤(5xx)、網路錯誤都重試 —— 暫時性 Brevo 抖動不該害註冊失敗
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const res = await fetch("https://api.brevo.com/v3/contacts", {
+        method: "POST",
+        headers: { "api-key": apiKey, "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      });
+      if (res.ok || res.status === 400) return true; // 400 = 聯絡人已存在,仍視為成功
+      if (res.status === 429 || res.status >= 500) {
+        await new Promise(r => setTimeout(r, 600 * (attempt + 1)));
+        continue;
+      }
+      return false; // 401 等其他錯誤 → 不重試
+    } catch {
+      await new Promise(r => setTimeout(r, 600 * (attempt + 1)));
+    }
+  }
+  return false;
+}
+
+// 註冊成功後的背景工作:推薦轉換 + 歡迎信 + 補寄今日日報。
+// 每項各自 try/catch —— 任一失敗都不影響「註冊已成功」這個結果。
+async function postSignupTasks(email, refCode, env, isPaid = false, tier = "") {
+  try {
+    refCode = (refCode || "").trim().toUpperCase();
+    if (refCode) {
+      const ownerEmail = await env.USER_PREFS.get(`referral:code:${refCode}`);
+      if (ownerEmail && ownerEmail !== email) {
+        const raw = await env.USER_PREFS.get(`referral:user:${ownerEmail}`);
+        if (raw) {
+          const data = JSON.parse(raw);
+          data.conversions = (data.conversions || 0) + 1;
+          await env.USER_PREFS.put(`referral:user:${ownerEmail}`, JSON.stringify(data));
+        }
+      }
+    }
+  } catch (e) { console.log("postSignup referral error:", String(e)); }
+  try {
+    await sendWelcomeEmail(email, env.BREVO_API_KEY, isPaid, tier);
+  } catch (e) { console.log("postSignup welcome error:", String(e)); }
+  try {
+    await sendTodayDigestToOne(email, env.BREVO_API_KEY, env.USER_PREFS);
+  } catch (e) { console.log("postSignup digest error:", String(e)); }
 }
 
 async function generateSupportResponse(name, topic, message, apiKey) {
