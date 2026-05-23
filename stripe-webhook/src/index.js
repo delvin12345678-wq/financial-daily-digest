@@ -2263,7 +2263,7 @@ async function processLineEvents(events, env) {
         await lineReply(env, ev.replyToken,
           "嗨!👋 歡迎加入 MarketDaily 官方 LINE。\n\n" +
           "✅ 已訂閱者:登入 marketdaily.ai/dashboard 綁定 LINE,Premium 戶可在這裡直接問 AI 投資助手。\n\n" +
-          "✨ 還沒訂閱:7 天免費試讀 → marketdaily.ai");
+          "✨ 還沒訂閱:免費版直接加入(週一到週六早上 7 點寄)→ marketdaily.ai");
         continue;
       }
       if (ev.type !== "message") continue;
