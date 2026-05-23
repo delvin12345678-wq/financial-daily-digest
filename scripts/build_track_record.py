@@ -21,11 +21,14 @@ import urllib.request
 import urllib.error
 from bs4 import BeautifulSoup
 
-ROOT = Path("/Users/delvin/Downloads/Delvin agent")
+ROOT = Path(__file__).resolve().parent.parent
 DIGEST_DIR = ROOT / "docs" / "output"
 OUT_DIR = ROOT / "docs" / "data"
 OUT_FILE = OUT_DIR / "track-record.json"
 CACHE_FILE = ROOT / "scripts" / ".price_cache.json"
+
+# When local digest files are missing (e.g., on CI runners), pull from CDN.
+CDN_BASE = "https://marketdaily.ai/output"
 
 
 # ── Keyword maps ──────────────────────────────────────────────────
@@ -52,12 +55,7 @@ def _extract_name_ticker(span) -> tuple[str, str]:
     return "", txt
 
 
-def parse_digest(path: Path) -> list[dict]:
-    date_match = re.search(r"digest_(\d{4}-\d{2}-\d{2})", path.name)
-    if not date_match:
-        return []
-    date_str = date_match.group(1)
-    html = path.read_text(encoding="utf-8", errors="ignore")
+def parse_digest_html(date_str: str, html: str) -> list[dict]:
     soup = BeautifulSoup(html, "html.parser")
     by_ticker: dict[str, dict] = {}  # ticker → record (latest priority wins)
     # Priority: action-board > signal-card > stock-card (higher value = keep)
@@ -269,18 +267,55 @@ def judge(rec: dict, prices: dict) -> str | None:
     return None
 
 
+def fetch_digest_html(date_str: str) -> str | None:
+    """Try local file first; fall back to CDN."""
+    local = DIGEST_DIR / f"digest_{date_str}.html"
+    if local.exists():
+        return local.read_text(encoding="utf-8", errors="ignore")
+    url = f"{CDN_BASE}/digest_{date_str}.html"
+    req = urllib.request.Request(url, headers={"User-Agent": UA, "Accept": "text/html"})
+    try:
+        with urllib.request.urlopen(req, timeout=20) as resp:
+            return resp.read().decode("utf-8", errors="ignore")
+    except (urllib.error.URLError, urllib.error.HTTPError) as exc:
+        print(f"[warn] cdn {date_str}: {exc}", file=sys.stderr)
+        return None
+
+
+def discover_dates() -> list[str]:
+    """Get list of digest dates: local manifest first, then CDN manifest."""
+    manifest_local = DIGEST_DIR / "manifest.json"
+    if manifest_local.exists():
+        try:
+            return json.loads(manifest_local.read_text())["dates"]
+        except Exception:
+            pass
+    url = f"{CDN_BASE}/manifest.json"
+    req = urllib.request.Request(url, headers={"User-Agent": UA, "Accept": "application/json"})
+    try:
+        with urllib.request.urlopen(req, timeout=20) as resp:
+            return json.loads(resp.read().decode("utf-8"))["dates"]
+    except Exception as exc:
+        print(f"[warn] cdn manifest: {exc}", file=sys.stderr)
+        return []
+
+
 def main() -> int:
-    files = sorted(DIGEST_DIR.glob("digest_*.html"))
-    files = [f for f in files if "personal" not in f.name]
-    if not files:
-        print("no digests found", file=sys.stderr)
+    dates = discover_dates()
+    if not dates:
+        print("no digest dates discoverable from local or CDN", file=sys.stderr)
         return 1
+    print(f"[discover] {len(dates)} dates to process")
 
     all_records: list[dict] = []
-    for f in files:
-        recs = parse_digest(f)
+    for date_str in dates:
+        html = fetch_digest_html(date_str)
+        if not html:
+            print(f"[skip] digest_{date_str}.html: unreachable")
+            continue
+        recs = parse_digest_html(date_str, html)
         all_records.extend(recs)
-        print(f"[parse] {f.name}: {len(recs)} records")
+        print(f"[parse] digest_{date_str}.html: {len(recs)} records")
 
     keys = {(r["ticker"], r["date"]) for r in all_records}
     print(f"[fetch] {len(keys)} (ticker,date) pairs via yfinance (cached where possible)...")
