@@ -291,6 +291,22 @@ export default {
       return json({ bound: !!email && !!(await env.USER_PREFS.get(`line:${email}`)) });
     }
 
+    // LINE Bot Messaging API webhook:接收訊息 → AI Q&A → reply
+    if (url.pathname === "/line/webhook" && request.method === "POST") {
+      const bodyText = await request.text();
+      const sig = request.headers.get("x-line-signature");
+      const channelSecret = env.LINE_MESSAGING_CHANNEL_SECRET || env.LINE_CHANNEL_SECRET;
+      if (!await verifyLineSignature(bodyText, sig, channelSecret)) {
+        return new Response("Bad signature", { status: 401 });
+      }
+      let payload;
+      try { payload = JSON.parse(bodyText); } catch { return new Response("OK", { status: 200 }); }
+      const events = payload.events || [];
+      // 非同步處理,Webhook 必須 200 OK 否則 LINE 重試
+      ctx.waitUntil(processLineEvents(events, env));
+      return new Response("OK", { status: 200 });
+    }
+
     // AI 投資助手:聊天(Premium 專屬)
     if (url.pathname === "/chat" && request.method === "POST") {
       let body;
@@ -454,7 +470,37 @@ export default {
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(target)) return json({ error: "invalid_target" }, 400);
       if (!["free", "pro", "premium"].includes(plan)) return json({ error: "invalid_plan" }, 400);
       await env.USER_PREFS.put(`plan:${target}`, plan);
+      // Brevo 屬性同步:KV 才是真實來源,但 Brevo 屬性影響 mass mail segmentation 必須跟著改
+      const listId = parseInt(env.BREVO_LIST_ID) || 2;
+      const isPaid = plan !== "free";
+      ctx.waitUntil(addToBrevo(target, env.BREVO_API_KEY, listId,
+        { PAID: isPaid, PLAN: isPaid ? "paid" : "free", PLAN_TIER: plan }));
       return json({ ok: true, target, plan });
+    }
+
+    // 一次性把所有 KV plan 的真實狀態推到 Brevo 屬性(修補手動改 KV 後 Brevo 沒跟上的情況)
+    if (url.pathname === "/admin/sync-brevo-plans" && request.method === "POST") {
+      let body;
+      try { body = await request.json(); } catch { return json({ error: "Invalid" }, 400); }
+      const email = (body.email || "").trim().toLowerCase();
+      if (!ADMIN_EMAILS.includes(email)) return json({ error: "Forbidden" }, 403);
+      const listId = parseInt(env.BREVO_LIST_ID) || 2;
+      const results = { ok: 0, fail: 0, by_plan: {} };
+      let cursor = undefined;
+      do {
+        const page = await env.USER_PREFS.list({ prefix: "plan:", cursor, limit: 1000 });
+        for (const k of page.keys) {
+          const target = k.name.slice(5);
+          const plan = (await env.USER_PREFS.get(k.name)) || "free";
+          const isPaid = plan !== "free";
+          const ok = await addToBrevo(target, env.BREVO_API_KEY, listId,
+            { PAID: isPaid, PLAN: isPaid ? "paid" : "free", PLAN_TIER: plan });
+          if (ok) results.ok++; else results.fail++;
+          results.by_plan[plan] = (results.by_plan[plan] || 0) + 1;
+        }
+        cursor = page.list_complete ? undefined : page.cursor;
+      } while (cursor);
+      return json(results);
     }
 
     // Admin:lifecycle email 手動測試(不檢查 days_since_signup、不寫防呆 flag)
@@ -2037,4 +2083,169 @@ async function sendThreadsPost(env, message, live) {
     body: JSON.stringify({ creation_id: containerId, access_token: token }),
   });
   return { ok: pubRes.ok, step: "publish", status: pubRes.status, container_id: containerId };
+}
+
+// ─── LINE Bot 雙向 Q&A ──────────────────────────────────────────────
+
+async function verifyLineSignature(bodyText, sigHeader, secret) {
+  if (!sigHeader || !secret) return false;
+  const key = await crypto.subtle.importKey(
+    "raw", new TextEncoder().encode(secret),
+    { name: "HMAC", hash: "SHA-256" }, false, ["sign"]
+  );
+  const mac = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(bodyText));
+  let expected = "";
+  for (const b of new Uint8Array(mac)) expected += String.fromCharCode(b);
+  return btoa(expected) === sigHeader;
+}
+
+async function lineReply(env, replyToken, text) {
+  const msg = (text || "").slice(0, 4900);
+  if (!msg) return;
+  return fetch("https://api.line.me/v2/bot/message/reply", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${env.LINE_CHANNEL_ACCESS_TOKEN}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      replyToken,
+      messages: [{ type: "text", text: msg }],
+    }),
+  });
+}
+
+async function processLineEvents(events, env) {
+  for (const ev of events) {
+    try {
+      if (ev.type === "follow") {
+        await lineReply(env, ev.replyToken,
+          "嗨!👋 歡迎加入 MarketDaily 官方 LINE。\n\n" +
+          "✅ 已訂閱者:登入 marketdaily.ai/dashboard 綁定 LINE,Premium 戶可在這裡直接問 AI 投資助手。\n\n" +
+          "✨ 還沒訂閱:7 天免費試讀 → marketdaily.ai");
+        continue;
+      }
+      if (ev.type !== "message") continue;
+      const userId = ev.source?.userId;
+      const replyToken = ev.replyToken;
+      if (!userId || !replyToken) continue;
+      if (ev.message?.type !== "text") {
+        await lineReply(env, replyToken,
+          "我只能讀文字訊息。直接打你想問的吧 👇\n例如:「NVDA 現在能追嗎?」「我手上 TSM 該停損嗎?」");
+        continue;
+      }
+      const text = (ev.message.text || "").trim();
+      if (!text) continue;
+      await handleLineQuery(env, userId, text, replyToken);
+    } catch (e) {
+      console.log("line webhook error:", String(e));
+    }
+  }
+}
+
+async function handleLineQuery(env, userId, text, replyToken) {
+  const email = await env.USER_PREFS.get(`linemap:${userId}`);
+  if (!email) {
+    return lineReply(env, replyToken,
+      "👋 還沒看到你的 MarketDaily 帳號跟這個 LINE 綁定。\n\n" +
+      "請到 marketdaily.ai/dashboard 登入,在「⚡ 即時 LINE 提醒」綁定後,就能在這裡用 AI 投資助手。\n\n" +
+      "(綁定是 Premium 專屬功能)");
+  }
+
+  const isAdmin = ADMIN_EMAILS.includes(email);
+  const plan = await env.USER_PREFS.get(`plan:${email}`);
+  if (!isAdmin && plan !== "premium") {
+    return lineReply(env, replyToken,
+      "嗨!AI 投資助手是 Premium 專屬功能。\n\n" +
+      "升級 Premium 解鎖:\n" +
+      "• 即時個股 AI 對話(就在這 LINE 對話框)\n" +
+      "• 重大新聞 LINE 即時推播\n" +
+      "• 個人化深度分析\n\n" +
+      "升級 → marketdaily.ai/pricing");
+  }
+
+  const day = new Date(Date.now() + 8 * 3600 * 1000).toISOString().slice(0, 10);
+  const countKey = `chatcount:${email}:${day}`;
+  const used = parseInt((await env.USER_PREFS.get(countKey)) || "0", 10);
+  if (used >= 30) {
+    return lineReply(env, replyToken,
+      "今天的 AI 對話額度已用完(30 次/天),明天早上 7 點重置。\n\n" +
+      "若需要更高額度,可寄信給主編 marketdailyhq@gmail.com");
+  }
+
+  // Holdings context
+  let holdings = "";
+  const prefRaw = await env.USER_PREFS.get(email);
+  if (prefRaw) {
+    try {
+      const p = JSON.parse(prefRaw);
+      const us = (p.us_stocks || []).join("、");
+      const tw = (p.tw_stocks || []).join("、");
+      const parts = [us && `美股:${us}`, tw && `台股:${tw}`].filter(Boolean);
+      if (parts.length) holdings = parts.join(";");
+    } catch {}
+  }
+  if (!holdings) holdings = "(尚未設定持股)";
+
+  // Session history(LINE 沒 conversation context,我們自己維護)
+  const sessKey = `linechat:${userId}`;
+  let history = [];
+  const sessRaw = await env.USER_PREFS.get(sessKey);
+  if (sessRaw) {
+    try { history = JSON.parse(sessRaw); } catch {}
+  }
+  history.push({ role: "user", content: text.slice(0, 1000) });
+  // 只保留最近 10 輪,避免 token 暴漲
+  if (history.length > 20) history = history.slice(-20);
+
+  const system = `你是 MarketDaily 的 AI 投資助手,透過 LINE 跟用戶對話。MarketDaily 是給台灣投資人的每日財經 AI 日報平台。
+
+LINE 對話規則:
+- **回應要短**,LINE 是手機介面,2-4 段最舒服。盡量 200 字以內,絕對不超過 500 字。
+- 一律繁體中文。
+- 不用 markdown(LINE 不支援);要分隔用空行或 emoji 開頭。
+- 涉及買賣判斷時結尾加「⚠️ 僅供參考,非投資建議」。
+- 沒有即時報價時誠實說「我不知道現在的盤中價」,建議用戶看券商 App 確認價位。
+- 提到台股一律用公司名稱(可附代號,如「台積電 2330」),不要只報代號。
+- 與投資、財經、用戶持股無關的閒聊,簡短禮貌帶過,引導回投資主題。
+
+這位用戶目前在 MarketDaily 追蹤的持股:${holdings}`;
+
+  let aiRes;
+  try {
+    aiRes = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "x-api-key": env.ANTHROPIC_API_KEY,
+        "anthropic-version": "2023-06-01",
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "claude-haiku-4-5-20251001",
+        max_tokens: 700,
+        system,
+        messages: history,
+      }),
+    });
+  } catch {
+    return lineReply(env, replyToken, "⚠️ AI 暫時連不上,稍等 1 分鐘再試。");
+  }
+  if (!aiRes.ok) {
+    return lineReply(env, replyToken, "⚠️ AI 回應失敗,稍等 1 分鐘再試。");
+  }
+  const data = await aiRes.json();
+  const reply = (data.content || []).map(c => c.text || "").join("").trim();
+  if (!reply) {
+    return lineReply(env, replyToken, "⚠️ AI 沒給回應,換個方式問問看?");
+  }
+
+  // 留 session 給下次對話用
+  history.push({ role: "assistant", content: reply });
+  await env.USER_PREFS.put(sessKey, JSON.stringify(history.slice(-20)),
+    { expirationTtl: 24 * 3600 });
+  // 計數共用 web /chat 配額(同一用戶 LINE / web 加總 30 次/天)
+  await env.USER_PREFS.put(countKey, String(used + 1),
+    { expirationTtl: 26 * 3600 });
+
+  return lineReply(env, replyToken, reply);
 }
