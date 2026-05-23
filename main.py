@@ -8,10 +8,21 @@ import cssutils
 
 cssutils.log.setLevel(logging.CRITICAL)
 
+from datetime import datetime, timezone, timedelta
 from data_fetcher import fetch_all
 from fake_news_filter import filter_us_news, filter_tw_news
-from analyzer import generate_report, DIGEST_EMAIL_MAX_HOLDINGS
+from analyzer import generate_report, generate_weekend_report, DIGEST_EMAIL_MAX_HOLDINGS
 from publisher import publish_to_brevo
+
+
+# 週六晨間(TWT)走 weekend recap 版本 — digest-cron 已把週日跳過,週六照寄但內容轉本週回顧
+def _is_saturday_tw() -> bool:
+    tw_now = datetime.now(timezone.utc) + timedelta(hours=8)
+    return tw_now.weekday() == 5  # Monday=0, Saturday=5
+
+
+def _report_fn():
+    return generate_weekend_report if _is_saturday_tw() else generate_report
 
 
 CSS = """
@@ -423,8 +434,8 @@ def run():
         print("② 過濾假訊息...")
         data["us_news"] = filter_us_news(data["us_news"])
         data["tw_news"] = filter_tw_news(data["tw_news"])
-        print("③ AI 生成報告（預設版）...")
-        inner = generate_report(data)
+        print(f"③ AI 生成報告（{'週末回顧' if _is_saturday_tw() else '預設'}版）...")
+        inner = _report_fn()(data)
         print("④ 生成 AI 市場情緒 Banner...")
         inner = _inject_ai_banner(inner, data["date"])
         print("⑤ 儲存本地預覽...")
@@ -459,8 +470,9 @@ def run():
     print(f"   美股新聞：{len(data['us_news'])} 則通過過濾")
     print(f"   台股新聞：{len(data['tw_news'])} 則通過過濾")
 
-    print("④ 生成 AI 市場情緒 Banner...")
-    default_report = generate_report(data)
+    is_sat = _is_saturday_tw()
+    print(f"④ 生成 AI 市場情緒 Banner（{'週末回顧' if is_sat else '預設'}版）...")
+    default_report = _report_fn()(data)
     default_report = _inject_ai_banner(default_report, data["date"])
     print("⑤ 儲存本地預覽（預設版）...")
     save_local(data["date"], default_report)
@@ -490,7 +502,7 @@ def run():
             try:
                 if ai_calls > 0:
                     time.sleep(5)  # 輕度間隔，避免觸發 Gemini 免費層每分鐘上限
-                full_inner = generate_report(data, us_stocks or None, tw_stocks or None)
+                full_inner = _report_fn()(data, us_stocks or None, tw_stocks or None)
                 ai_calls += 1
                 full_inner = _inject_ai_banner(full_inner, data["date"])
                 # 完整版（含全部持倉）上傳網頁
@@ -498,7 +510,7 @@ def run():
                 # email 版：持倉超過上限時縮減，避免被 Gmail 截斷
                 if total > DIGEST_EMAIL_MAX_HOLDINGS:
                     time.sleep(5)
-                    inner = generate_report(data, us_stocks or None, tw_stocks or None, email_safe=True)
+                    inner = _report_fn()(data, us_stocks or None, tw_stocks or None, email_safe=True)
                     ai_calls += 1
                     inner = _inject_ai_banner(inner, data["date"])
                     shown = DIGEST_EMAIL_MAX_HOLDINGS

@@ -10,8 +10,18 @@ const REPO = "marketdaily/financial-daily-digest";
 const WORKFLOW = "daily_digest.yml";
 const BRANCH = "main";
 
+// 台灣時間週日跳過(weekend 模式:週六改用 weekend recap、週日完全不寄)
+function isSundayTW(now = new Date()) {
+  const twDay = new Date(now.getTime() + 8 * 3600 * 1000).getUTCDay();
+  return twDay === 0;
+}
+
 export default {
   async scheduled(event, env, ctx) {
+    if (isSundayTW()) {
+      console.log("skip dispatch: Sunday TWT (weekend mode)");
+      return;
+    }
     ctx.waitUntil(dispatch(env));
   },
 

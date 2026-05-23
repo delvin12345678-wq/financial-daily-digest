@@ -55,6 +55,10 @@ def _llm_generate(prompt: str) -> str:
 
 
 def get_personalized_subject(data: dict, us_stocks: list, tw_stocks: list, date: str) -> str:
+    # 週六走 weekend recap → 主旨改成「本週回顧 + 下週重點」
+    from datetime import datetime, timezone, timedelta
+    if (datetime.now(timezone.utc) + timedelta(hours=8)).weekday() == 5:
+        return f"📅 本週回顧 + 下週重點｜MarketDaily {date}"
     us_market = data.get("us_market", {})
     tw_market = data.get("tw_market", {})
     biggest_sym, biggest_pct = None, 0
@@ -695,6 +699,91 @@ rookie-name span 內只放純代號，系統會自動補公司名。最多 2 張
 - FGCLASS 換成 fear（分數<45）、neutral（45-55）、greed（>55）
 - BTCDIR/ETHDIR 換成 up（漲）或 down（跌）
 - signal-ticker、ticker、stock-news-ticker、earnings-ticker、impact-stock 這些 span 內一律只放純股票代號，系統會自動補上公司中英文名稱
+"""
+
+    raw = _llm_generate(prompt)
+    if raw.startswith("```"):
+        raw = re.sub(r'^```[a-zA-Z]*\n?', '', raw)
+        raw = re.sub(r'\n?```$', '', raw)
+    result = _postprocess_html(raw, data)
+    if is_beginner:
+        result += ROOKIE_GUIDE_HTML
+    return result
+
+
+# ─── Weekend Recap(週六專用:本週回顧 + 下週預告)──────────────
+def generate_weekend_report(data: dict, user_us_stocks: list = None, user_tw_stocks: list = None,
+                            email_safe: bool = False) -> str:
+    """週六晨間日報:不講當日大盤(已收),改聚焦『本週回顧 + 下週重點』。"""
+    if email_safe:
+        us0 = list(user_us_stocks or [])
+        tw0 = list(user_tw_stocks or [])
+        if len(us0) + len(tw0) > DIGEST_EMAIL_MAX_HOLDINGS:
+            um = data.get("us_market", {})
+            tm = data.get("tw_market", {})
+            def _mv(sym, mkt):
+                return abs((mkt.get(sym) or {}).get("change_pct", 0) or 0)
+            ranked = sorted(
+                [(s, "us") for s in us0] + [(s, "tw") for s in tw0],
+                key=lambda x: _mv(x[0], um if x[1] == "us" else tm),
+                reverse=True,
+            )[:DIGEST_EMAIL_MAX_HOLDINGS]
+            user_us_stocks = [s for s, k in ranked if k == "us"]
+            user_tw_stocks = [s for s, k in ranked if k == "tw"]
+
+    market_text = _format_market_data(data, user_us_stocks, user_tw_stocks)
+    us_news_text = _format_news(data.get("us_news", []), max_items=10)
+    tw_news_text = _format_news(data.get("tw_news", []), max_items=8)
+    date = data.get("date", "")
+
+    holdings = (user_us_stocks or []) + (user_tw_stocks or [])
+    has_holdings = bool(holdings)
+    is_beginner = len(holdings) <= 4
+
+    prompt = f"""你是這位用戶的專屬財經顧問。今天是**週六晨間**,美股週五已收盤、台股週五已收盤,週末兩天都不開盤。所以這份報告不講「今天大盤」,而是聚焦「本週發生了什麼 + 下週要看什麼」。
+
+【無幻覺原則 — 違反就廢稿】
+- 所有內容只能基於下方提供的真實市場數據和新聞,不得憑空補充或臆測
+- 新聞 URL 必須一字不差原樣複製,嚴禁編造
+- 找不到對應真實新聞就不要硬寫
+- 如資訊不足,寫「本週資料不足」不要捏造
+
+【個人化原則】
+- 用戶持倉:{', '.join(holdings) if has_holdings else '尚未設定持股,以大盤龍頭股為例'}
+- 內容要圍繞他的持股做本週復盤 + 下週展望
+- 台股一律用公司名稱(可附代號),不要只報數字
+
+【本週回顧(週一到週五已收盤)】
+- 寫 3-4 段 highlights:本週最大事件、本週贏家/輸家、用戶持股本週表現
+- 引用本週實際發生的新聞,連結原文
+
+【下週看什麼(catalysts)】
+- 從新聞中找出下週會發生的事件:財報日、Fed/央行講話、CPI/PPI 等經濟數據、地緣政治
+- 條列 5-8 個 catalysts,標明日期與影響
+- 如新聞中沒提到具體下週事件,寫「本週新聞中未明示下週重大事件,留意週一開盤反應」即可,不要捏造
+
+【週末投資思考(1 段)】
+- 給用戶一個本週末值得思考的問題或觀點(風險、配置、心態),簡短有力
+
+【日期】{date}(週六)
+
+【本週市場數據(以週五收盤為基準)】
+{market_text}
+
+【本週美股新聞】
+{us_news_text}
+
+【本週台股新聞】
+{tw_news_text}
+
+【輸出格式】嚴格回傳純 HTML,沿用平日日報 CSS class(.tldr, .news-card, .stock-card, .verdict.neutral, .watch-list 等),但內容主軸換成:
+1. .tldr 區改成「📅 本週快訊」(3-4 條本週重點)
+2. .section-label「本週回顧」+ 數張 .news-card 寫本週實際發生的大事
+3. .section-label「下週 catalysts」+ .watch-list 列下週要看的事件 + 日期
+4. .section-label「持股本週表現」+ .stock-card 寫用戶 holdings 的本週走勢
+5. .verdict.neutral 結尾的「週末思考」
+
+不要 markdown ```、不要在 .stock-card 內塞當日資料(改成本週區間)、不要寫「今日」「盤中」這類週六不該出現的字眼。
 """
 
     raw = _llm_generate(prompt)
