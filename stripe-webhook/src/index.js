@@ -18,9 +18,73 @@ function applyCap(us, tw, cap) {
   return [us, tw.slice(0, cap - us.length)];
 }
 
+// Legacy SHA-256(無 salt)— 僅供驗證舊密碼 + 自動升級用
 async function hashPassword(password) {
   const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(password));
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join("");
+}
+
+// PBKDF2 + salt(新格式)
+async function hashPbkdf2(password, salt) {
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey("raw", enc.encode(password), "PBKDF2", false, ["deriveBits"]);
+  const bits = await crypto.subtle.deriveBits(
+    { name: "PBKDF2", salt: enc.encode(salt), iterations: 100000, hash: "SHA-256" },
+    key, 256
+  );
+  return Array.from(new Uint8Array(bits)).map(b => b.toString(16).padStart(2, "0")).join("");
+}
+
+async function makePwdHash(password) {
+  const salt = (crypto.randomUUID && crypto.randomUUID()) ||
+    (Date.now().toString(36) + Math.random().toString(36).slice(2));
+  const hash = await hashPbkdf2(password, salt);
+  return `pbkdf2$${salt}$${hash}`;
+}
+
+async function verifyPwd(password, stored) {
+  if (!stored) return false;
+  if (stored.startsWith("pbkdf2$")) {
+    const parts = stored.split("$");
+    if (parts.length !== 3) return false;
+    return (await hashPbkdf2(password, parts[1])) === parts[2];
+  }
+  return (await hashPassword(password)) === stored;
+}
+
+async function maybeUpgradeHash(env, email, password, stored) {
+  if (!stored || stored.startsWith("pbkdf2$")) return;
+  try {
+    const fresh = await makePwdHash(password);
+    await env.USER_PREFS.put(`pwd:${email}`, fresh);
+  } catch {}
+}
+
+// Gmail alias 正規化:bob+a@gmail.com → bob@gmail.com,b.o.b@gmail.com → bob@gmail.com
+function normalizeEmail(email) {
+  const e = (email || "").toLowerCase().trim();
+  const at = e.indexOf("@");
+  if (at < 0) return e;
+  const domain = e.slice(at + 1);
+  let local = e.slice(0, at).split("+")[0];
+  if (domain === "gmail.com" || domain === "googlemail.com") {
+    local = local.replace(/\./g, "");
+    return `${local}@gmail.com`;
+  }
+  return `${local}@${domain}`;
+}
+
+// 統一 admin 端點驗證:email 必須在 ADMIN_EMAILS,且 password 必須正確
+async function requireAdmin(env, body) {
+  const email = ((body && (body.email || body.admin_email || body.auth_email)) || "").trim().toLowerCase();
+  if (!ADMIN_EMAILS.includes(email)) return null;
+  const password = (body && body.password) || "";
+  const stored = await env.USER_PREFS.get(`pwd:${email}`);
+  if (!stored) return null;
+  const ok = await verifyPwd(password, stored);
+  if (!ok) return null;
+  await maybeUpgradeHash(env, email, password, stored);
+  return email;
 }
 
 function generateRefCode(email) {
@@ -158,21 +222,23 @@ export default {
 
       const isPaid = (contact.attributes?.PAID === true || contact.attributes?.PLAN === "paid");
       // KV plan:${email} 是方案唯一真實來源(premium/pro/free);Brevo PAID 僅作 KV 未設時的後援
-      const plan = (await env.USER_PREFS.get(`plan:${email}`)) || (isPaid ? "premium" : "free");
+      const explicitPlan = await env.USER_PREFS.get(`plan:${email}`);
+      const plan = explicitPlan || (isPaid ? "premium" : "free");
+      const hasKvPlan = !!explicitPlan || isPaid;
       const since = contact.createdAt || null;
 
       const storedHash = await env.USER_PREFS.get(`pwd:${email}`);
       if (!storedHash) {
-        return json({ subscribed: true, plan, since, needsPasswordSetup: true });
+        return json({ subscribed: true, plan, since, needsPasswordSetup: true, hasKvPlan });
       }
       if (!password) {
-        return json({ subscribed: true, needsPasswordEntry: true });
+        return json({ subscribed: true, needsPasswordEntry: true, hasKvPlan });
       }
-      const inputHash = await hashPassword(password);
-      if (inputHash !== storedHash) {
+      if (!(await verifyPwd(password, storedHash))) {
         return json({ subscribed: true, error: "wrong_password" });
       }
-      return json({ subscribed: true, plan, since });
+      await maybeUpgradeHash(env, email, password, storedHash);
+      return json({ subscribed: true, plan, since, hasKvPlan });
     }
 
     // Set subscriber password (first-time setup)
@@ -193,7 +259,7 @@ export default {
       const targetList = parseInt(env.BREVO_LIST_ID) || 2;
       if (!listIds.includes(targetList)) return json({ error: "not_subscriber" }, 403);
 
-      const hash = await hashPassword(password);
+      const hash = await makePwdHash(password);
       await env.USER_PREFS.put(`pwd:${email}`, hash);
 
       const isPaid = (contact.attributes?.PAID === true || contact.attributes?.PLAN === "paid");
@@ -214,10 +280,9 @@ export default {
       const storedHash = await env.USER_PREFS.get(`pwd:${email}`);
       if (!storedHash) return json({ error: "not_found" }, 404);
 
-      const oldHash = await hashPassword(oldPassword);
-      if (oldHash !== storedHash) return json({ error: "wrong_password" }, 403);
+      if (!(await verifyPwd(oldPassword, storedHash))) return json({ error: "wrong_password" }, 403);
 
-      const newHash = await hashPassword(newPassword);
+      const newHash = await makePwdHash(newPassword);
       await env.USER_PREFS.put(`pwd:${email}`, newHash);
       return json({ ok: true });
     }
@@ -230,9 +295,10 @@ export default {
       const password = body.password || "";
       if (!email) return json({ error: "invalid_email" }, 400);
       const storedHash = await env.USER_PREFS.get(`pwd:${email}`);
-      if (!storedHash || (await hashPassword(password)) !== storedHash) {
+      if (!storedHash || !(await verifyPwd(password, storedHash))) {
         return json({ error: "auth" }, 403);
       }
+      await maybeUpgradeHash(env, email, password, storedHash);
       const state = await signState({ email, exp: Date.now() + 600000 }, env.LINE_LOGIN_CHANNEL_SECRET);
       const authUrl = "https://access.line.me/oauth2/v2.1/authorize?response_type=code"
         + "&client_id=" + LINE_LOGIN_CHANNEL_ID
@@ -276,9 +342,10 @@ export default {
       try { body = await request.json(); } catch { return json({ error: "Invalid request" }, 400); }
       const email = (body.email || "").trim().toLowerCase();
       const storedHash = await env.USER_PREFS.get(`pwd:${email}`);
-      if (!storedHash || (await hashPassword(body.password || "")) !== storedHash) {
+      if (!storedHash || !(await verifyPwd(body.password || "", storedHash))) {
         return json({ error: "auth" }, 403);
       }
+      await maybeUpgradeHash(env, email, body.password || "", storedHash);
       const userId = await env.USER_PREFS.get(`line:${email}`);
       if (userId) await env.USER_PREFS.delete(`linemap:${userId}`);
       await env.USER_PREFS.delete(`line:${email}`);
@@ -320,11 +387,12 @@ export default {
       if (!email) return json({ error: "invalid_email" }, 400);
 
       const isAdmin = ADMIN_EMAILS.includes(email);
-      if (!isAdmin) {
+      {
         const storedHash = await env.USER_PREFS.get(`pwd:${email}`);
-        if (!storedHash || (await hashPassword(password)) !== storedHash) {
+        if (!storedHash || !(await verifyPwd(password, storedHash))) {
           return json({ error: "auth" }, 403);
         }
+        await maybeUpgradeHash(env, email, password, storedHash);
       }
       const plan = await env.USER_PREFS.get(`plan:${email}`);
       if (!isAdmin && plan !== "premium") return json({ error: "not_premium" }, 403);
@@ -416,8 +484,7 @@ export default {
     if (url.pathname === "/admin-stats" && request.method === "POST") {
       let body;
       try { body = await request.json(); } catch { return json({ error: "Invalid" }, 400); }
-      const email = (body.email || "").trim().toLowerCase();
-      if (!ADMIN_EMAILS.includes(email)) return json({ error: "Forbidden" }, 403);
+      if (!await requireAdmin(env, body)) return json({ error: "Forbidden" }, 403);
       try {
         const listId = parseInt(env.BREVO_LIST_ID) || 2;
         const res = await fetch(`https://api.brevo.com/v3/contacts/lists/${listId}/contacts`, {
@@ -443,8 +510,7 @@ export default {
     if (url.pathname === "/admin/get-config" && request.method === "POST") {
       let body;
       try { body = await request.json(); } catch { return json({ error: "Invalid" }, 400); }
-      const email = (body.email || "").trim().toLowerCase();
-      if (!ADMIN_EMAILS.includes(email)) return json({ error: "Forbidden" }, 403);
+      if (!await requireAdmin(env, body)) return json({ error: "Forbidden" }, 403);
       const raw = await env.USER_PREFS.get("admin:global-config");
       return json({ config: raw ? JSON.parse(raw) : null });
     }
@@ -453,8 +519,7 @@ export default {
     if (url.pathname === "/admin/save-config" && request.method === "POST") {
       let body;
       try { body = await request.json(); } catch { return json({ error: "Invalid" }, 400); }
-      const email = (body.email || "").trim().toLowerCase();
-      if (!ADMIN_EMAILS.includes(email)) return json({ error: "Forbidden" }, 403);
+      if (!await requireAdmin(env, body)) return json({ error: "Forbidden" }, 403);
       const config = body.config;
       if (!config || typeof config !== "object") return json({ error: "no config" }, 400);
       config.updated_at = new Date().toISOString();
@@ -466,8 +531,7 @@ export default {
     if (url.pathname === "/admin/set-plan" && request.method === "POST") {
       let body;
       try { body = await request.json(); } catch { return json({ error: "Invalid" }, 400); }
-      const email = (body.email || "").trim().toLowerCase();
-      if (!ADMIN_EMAILS.includes(email)) return json({ error: "Forbidden" }, 403);
+      if (!await requireAdmin(env, body)) return json({ error: "Forbidden" }, 403);
       const target = (body.target || "").trim().toLowerCase();
       const plan = (body.plan || "").trim().toLowerCase();
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(target)) return json({ error: "invalid_target" }, 400);
@@ -485,8 +549,7 @@ export default {
     if (url.pathname === "/admin/sync-brevo-plans" && request.method === "POST") {
       let body;
       try { body = await request.json(); } catch { return json({ error: "Invalid" }, 400); }
-      const email = (body.email || "").trim().toLowerCase();
-      if (!ADMIN_EMAILS.includes(email)) return json({ error: "Forbidden" }, 403);
+      if (!await requireAdmin(env, body)) return json({ error: "Forbidden" }, 403);
       const listId = parseInt(env.BREVO_LIST_ID) || 2;
       const results = { ok: 0, fail: 0, by_plan: {} };
       let cursor = undefined;
@@ -510,8 +573,7 @@ export default {
     if (url.pathname === "/admin/lifecycle-test" && request.method === "POST") {
       let body;
       try { body = await request.json(); } catch { return json({ error: "Invalid" }, 400); }
-      const adminEmail = (body.admin_email || body.auth_email || body.email || "").trim().toLowerCase();
-      if (!ADMIN_EMAILS.includes(adminEmail)) return json({ error: "Forbidden" }, 403);
+      if (!await requireAdmin(env, body)) return json({ error: "Forbidden" }, 403);
       const target = (body.target || body.to || "").trim().toLowerCase();
       const type = (body.type || "").trim().toLowerCase();
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(target)) return json({ error: "invalid_target" }, 400);
@@ -571,8 +633,7 @@ export default {
     if (url.pathname === "/admin/analytics-summary" && request.method === "POST") {
       let body;
       try { body = await request.json(); } catch { return json({ error: "Invalid" }, 400); }
-      const email = (body.email || "").trim().toLowerCase();
-      if (!ADMIN_EMAILS.includes(email)) return json({ error: "Forbidden" }, 403);
+      if (!await requireAdmin(env, body)) return json({ error: "Forbidden" }, 403);
 
       const days = [];
       const totals = { by_source: {}, by_event: {}, total: 0 };
@@ -614,8 +675,7 @@ export default {
     if (url.pathname === "/admin/reactive-list" && request.method === "POST") {
       let body;
       try { body = await request.json(); } catch { return json({ error: "Invalid" }, 400); }
-      const email = (body.email || "").trim().toLowerCase();
-      if (!ADMIN_EMAILS.includes(email)) return json({ error: "Forbidden" }, 403);
+      if (!await requireAdmin(env, body)) return json({ error: "Forbidden" }, 403);
       const list = await env.USER_PREFS.list({ prefix: "reactive:pending:", limit: 200 });
       const items = [];
       for (const k of list.keys) {
@@ -631,8 +691,8 @@ export default {
     if (url.pathname === "/admin/reactive-approve" && request.method === "POST") {
       let body;
       try { body = await request.json(); } catch { return json({ error: "Invalid" }, 400); }
-      const email = (body.email || "").trim().toLowerCase();
-      if (!ADMIN_EMAILS.includes(email)) return json({ error: "Forbidden" }, 403);
+      const email = await requireAdmin(env, body);
+      if (!email) return json({ error: "Forbidden" }, 403);
       const id = (body.id || "").toString();
       if (!/^[a-z0-9]{6,32}$/.test(id)) return json({ error: "invalid_id" }, 400);
       const raw = await env.USER_PREFS.get(`reactive:pending:${id}`);
@@ -687,8 +747,7 @@ export default {
     if (url.pathname === "/admin/reactive-reject" && request.method === "POST") {
       let body;
       try { body = await request.json(); } catch { return json({ error: "Invalid" }, 400); }
-      const email = (body.email || "").trim().toLowerCase();
-      if (!ADMIN_EMAILS.includes(email)) return json({ error: "Forbidden" }, 403);
+      if (!await requireAdmin(env, body)) return json({ error: "Forbidden" }, 403);
       const id = (body.id || "").toString();
       if (!/^[a-z0-9]{6,32}$/.test(id)) return json({ error: "invalid_id" }, 400);
       const raw = await env.USER_PREFS.get(`reactive:pending:${id}`);
@@ -799,11 +858,21 @@ export default {
       if (!INVITE_CODES.includes(code)) {
         return json({ error: "invalid_code" }, 400);
       }
+      // 邀請碼 single-use:同一碼只能被兌一次
+      const usedKey = `invite:used:${code}`;
+      const usedBy = await env.USER_PREFS.get(usedKey);
+      if (usedBy && usedBy !== email) {
+        return json({ error: "code_already_used" }, 400);
+      }
 
       const listId = parseInt(env.BREVO_LIST_ID) || 2;
       const added = await addToBrevo(email, env.BREVO_API_KEY, listId);
       if (!added) return json({ error: "brevo_error" }, 502);
 
+      // 標記碼已用(允許同 email 重複嘗試但不能轉給別人)
+      if (!usedBy) {
+        await env.USER_PREFS.put(usedKey, email);
+      }
       // 邀請碼註冊者 = 免費方案(3 檔上限);Premium 需付費升級或管理員手動開通
       await env.USER_PREFS.put(`plan:${email}`, "free");
       // 歡迎信、補寄日報、推薦轉換全部背景化 —— 任一失敗都不影響「註冊成功」的回應
@@ -937,6 +1006,9 @@ export default {
       const listId = parseInt(env.BREVO_LIST_ID) || 2;
       const added = await addToBrevo(email, env.BREVO_API_KEY, listId);
       if (!added) return json({ error: "brevo_error" }, 502);
+      // 必寫 KV plan:${email} —— 不然 check-subscriber 會視為「未完成註冊」陷入循環
+      const existing = await env.USER_PREFS.get(`plan:${email}`);
+      if (!existing) await env.USER_PREFS.put(`plan:${email}`, "free");
       ctx.waitUntil(postSignupTasks(email, body.ref, env));
       ctx.waitUntil(recordConvert(env, {
         email, event: "subscribe_free",
@@ -944,6 +1016,51 @@ export default {
         utm_medium: body.utm_medium, utm_campaign: body.utm_campaign,
       }));
       return json({ ok: true });
+    }
+
+    // Stripe Checkout Session for Premium 試讀 (coupon baked in,客戶不需輸碼)
+    if (url.pathname === "/stripe/checkout-trial" && request.method === "POST") {
+      let body = {};
+      try { body = await request.json(); } catch {}
+      const email = (body.email || "").trim().toLowerCase();
+      const refCode = (body.ref || "").trim();
+      const utm = {
+        utm_source: body.utm_source || "",
+        utm_medium: body.utm_medium || "",
+        utm_campaign: body.utm_campaign || "",
+      };
+      if (!env.STRIPE_SECRET_KEY) return json({ error: "missing_stripe_key" }, 500);
+      const params = new URLSearchParams();
+      params.set("mode", "subscription");
+      params.set("line_items[0][price]", "price_1TZAUyBdHwgNDiM7rpsa0HDB");
+      params.set("line_items[0][quantity]", "1");
+      params.set("discounts[0][coupon]", "premium_trial_v2");
+      params.set("success_url", "https://marketdaily.ai/dashboard.html?welcome=premium&sid={CHECKOUT_SESSION_ID}");
+      params.set("cancel_url", "https://marketdaily.ai/pricing.html?cancel=1");
+      params.set("billing_address_collection", "auto");
+      if (email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) params.set("customer_email", email);
+      if (refCode) params.set("metadata[ref]", refCode);
+      if (utm.utm_source) params.set("metadata[utm_source]", utm.utm_source);
+      if (utm.utm_medium) params.set("metadata[utm_medium]", utm.utm_medium);
+      if (utm.utm_campaign) params.set("metadata[utm_campaign]", utm.utm_campaign);
+      try {
+        const r = await fetch("https://api.stripe.com/v1/checkout/sessions", {
+          method: "POST",
+          headers: {
+            "Authorization": "Bearer " + env.STRIPE_SECRET_KEY,
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+          body: params.toString(),
+        });
+        const data = await r.json();
+        if (!r.ok || !data.url) {
+          console.log("stripe session error:", JSON.stringify(data));
+          return json({ error: "stripe_error", detail: data.error?.message || "unknown" }, 502);
+        }
+        return json({ url: data.url });
+      } catch (e) {
+        return json({ error: "network", detail: String(e) }, 502);
+      }
     }
 
     // AI Customer Support endpoint
@@ -1322,20 +1439,31 @@ async function postSignupTasks(email, refCode, env, isPaid = false, tier = "") {
   } catch (e) { console.log("postSignup digest error:", String(e)); }
 }
 
-// 推薦獎勵兌現:雙方各得 30 天 Premium。防自推、防重複。
+// 推薦獎勵兌現:雙方各得 30 天 Premium。防自推(含 Gmail alias)、防重複、月上限。
 async function grantReferralReward(env, refCode, newEmail) {
   refCode = (refCode || "").trim().toUpperCase();
   newEmail = (newEmail || "").trim().toLowerCase();
   if (!refCode || !newEmail) return false;
 
   const referrer = await env.USER_PREFS.get(`referral:code:${refCode}`);
-  if (!referrer || referrer === newEmail) return false;
+  if (!referrer) return false;
 
+  // 防自推:用 normalizeEmail 比對,bob+a@gmail / bo.b@gmail / bob@gmail 都算同人
+  if (normalizeEmail(referrer) === normalizeEmail(newEmail)) return false;
+
+  // 防同一個被推薦人被多次兌現
   const dupKey = `referral:fulfilled:${newEmail}`;
   if (await env.USER_PREFS.get(dupKey)) return false;
 
+  // 防同一個推薦人狂 stack 信用:每月上限 10 人
+  const month = new Date(Date.now() + 8 * 3600 * 1000).toISOString().slice(0, 7);
+  const monthKey = `referral:month:${referrer}:${month}`;
+  const monthCount = parseInt((await env.USER_PREFS.get(monthKey)) || "0", 10);
+  if (monthCount >= 10) return false;
+
   const ts = new Date().toISOString();
   await env.USER_PREFS.put(dupKey, JSON.stringify({ referrer, code: refCode, ts }));
+  await env.USER_PREFS.put(monthKey, String(monthCount + 1), { expirationTtl: 60 * 86400 });
 
   const raw = await env.USER_PREFS.get(`referral:user:${referrer}`);
   if (raw) {
@@ -1387,12 +1515,12 @@ async function generateSupportResponse(name, topic, message, apiKey) {
         system: `你是 MarketDaily（財經日報）的 AI 客服助理，服務態度親切專業。
 
 【服務說明】
-- 每天早上 7:00 AM（台灣時間）寄送 AI 財經日報
+- 週一到週六早上 7:00 AM（台灣時間）寄送 AI 財經日報;週六是「本週回顧 + 下週重點」特別版,週日不寄信（美股、台股都沒開盤）
 - 內容：美股 + 台股新聞、假訊息過濾、30 秒摘要、板塊分析、BTC/ETH
 - 來源：Reuters、CNBC、Bloomberg、FT 等可信媒體
 
 【方案】
-- 免費方案：需邀請碼（親友邀請制）
+- 免費方案：留 Email 即可訂閱,完全免費（不需邀請碼）
 - Premium 方案：NT$500/月，隨時可取消
 
 【常見問題處理】
@@ -1522,7 +1650,8 @@ async function sendWelcomeEmail(email, apiKey, isPaid = false, tier = "") {
     <p style="font-size:18px;font-weight:800;color:#1a1a1a;margin:0 0 12px;">嗨！歡迎加入 👋</p>
     <p style="font-size:15px;color:#444;line-height:1.8;margin:0 0 22px;">
       ${planLine}<br>
-      從明天起，每天早上 <strong>7:00 AM（台灣時間）</strong>，你會收到一封財經日報，30 秒看完今天的市場重點。
+      從明天起，<strong>週一到週六早上 7:00 AM（台灣時間）</strong>，你會收到一封財經日報，30 秒看完市場重點。<br>
+      <span style="color:#666;font-size:14px;">📅 <strong>週六</strong>是「本週回顧 + 下週重點」特別版,<strong>週日不寄信</strong>(美股、台股都沒開盤,休息一天)。</span>
     </p>
 
     <!-- 3 步驟開始 -->

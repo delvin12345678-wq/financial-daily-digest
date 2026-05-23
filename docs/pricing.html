@@ -659,8 +659,14 @@ footer {
         <div class="price-free">NT$0</div>
       </div>
       <div class="price-annual-note">&nbsp;</div>
-      <p class="tier-desc" data-i18n="tier_free_desc">每天早上 7 點，基礎版市場快訊直送信箱。適合剛入門的投資人。</p>
-      <a class="tier-btn btn-starter" href="index.html#hero-email" data-i18n="tier_free_btn">免費開始</a>
+      <p class="tier-desc" data-i18n="tier_free_desc">週一到週六早上 7 點,基礎版市場快訊直送信箱(週日休息一天)。適合剛入門的投資人。</p>
+      <button type="button" class="tier-btn btn-starter" id="free-btn" onclick="openFreeForm()" data-i18n="tier_free_btn">免費開始</button>
+      <div id="free-form" style="display:none;margin-top:14px;">
+        <input type="email" id="free-email" placeholder="your@email.com" data-i18n-placeholder="placeholder_email"
+          style="width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);border-radius:10px;padding:11px 13px;color:#fff;font-size:14px;outline:none;margin-bottom:8px;font-family:inherit;">
+        <button type="button" class="tier-btn btn-starter" id="free-submit" onclick="submitFree()" data-i18n="free_submit_btn">送出 →</button>
+        <div id="free-msg" style="display:none;margin-top:8px;font-size:12px;line-height:1.5;text-align:center;"></div>
+      </div>
       <div class="tier-divider"></div>
       <ul class="feature-list">
         <li class="feature-item included">
@@ -687,10 +693,6 @@ footer {
           <span class="feature-icon fi-cross">—</span>
           <span data-i18n="sf6">即將公布財報提醒</span>
         </li>
-        <li class="feature-item" style="color:var(--text-dim);font-size:12px;">
-          <span class="feature-icon" style="background:rgba(245,158,11,0.12);color:#fbbf24;font-size:10px;">!</span>
-          <span data-i18n="sf7">需邀請碼</span>
-        </li>
       </ul>
     </div>
 
@@ -705,7 +707,7 @@ footer {
       </div>
       <div class="price-annual-note" id="premium-price-note" data-i18n="premium_trial_note" style="color:#fde68a;font-size:13px;font-weight:600;">首月 NT$299 · 之後 NT$499/月 · 隨時取消</div>
       <p class="tier-desc" data-i18n="tier_prem_desc">給高度投入的投資人。無限追蹤、即時警報、月度健檢、LINE Bot 雙向 AI 對話,全方位掌控投資組合。</p>
-      <a class="tier-btn btn-premium" href="https://buy.stripe.com/aFafZg4WxcMca5senC4Ja06?prefilled_promo_code=TRIAL" target="_blank" rel="noopener noreferrer" id="premium-cta" data-i18n="tier_cta_btn">7 折試讀首月 →</a>
+      <a class="tier-btn btn-premium" href="#" onclick="goPremiumTrial(event)" id="premium-cta" data-i18n="tier_cta_btn">7 折試讀首月 →</a>
       <div class="tier-divider"></div>
       <ul class="feature-list">
         <li class="feature-item included" style="font-weight:600;">
@@ -986,7 +988,7 @@ const i18n = {
     price_sub: "Start free, upgrade anytime. Cancel anytime, no hidden fees.",
     bill_monthly: "Monthly", bill_annual: "Annual", bill_save: "Save 20%",
     tier_free_name: "Free · Starter",
-    tier_free_desc: "Daily market briefing to your inbox every morning at 7AM. Perfect for new investors.",
+    tier_free_desc: "Market briefing to your inbox Mon–Sat at 7AM TWT (Sun off). Perfect for new investors.",
     tier_free_btn: "Start Free",
     sf1: "Daily market summary (US + TW)",
     sf2: "Top 5 news picks (fake news filtered)",
@@ -1010,7 +1012,10 @@ const i18n = {
     pmf1: "Everything in Free",
     premium_trial_note: "First month NT$299 · then NT$499/mo · cancel anytime",
     pmf2: "Unlimited stock tracking",
-    pmf3: "Real-time LINE breaking-news alerts",
+    pmf3: "LINE Bot two-way AI chat",
+    pmf3b: "Real-time LINE breaking-news alerts",
+    free_submit_btn: "Submit →",
+    placeholder_email: "your@email.com",
     pmf4: "Monthly portfolio health report",
     pmf5: "Custom watchlists (up to 5 themes)",
     pmf6: "Priority 1-on-1 support on LINE",
@@ -1065,7 +1070,7 @@ const i18n = {
     price_sub: "從免費開始，隨時升級。取消隨時生效，沒有隱藏費用。",
     bill_monthly: "月付", bill_annual: "年付", bill_save: "省 20%",
     tier_free_name: "免費版 · Starter",
-    tier_free_desc: "每天早上 7 點，基礎版市場快訊直送信箱。適合剛入門的投資人。",
+    tier_free_desc: "週一到週六早上 7 點,基礎版市場快訊直送信箱(週日休息一天)。適合剛入門的投資人。",
     tier_free_btn: "免費開始",
     sf1: "每日大盤摘要（美股 + 台股）",
     sf2: "5 大新聞精選（假訊息過濾）",
@@ -1089,7 +1094,10 @@ const i18n = {
     pmf1: "免費版所有功能",
     premium_trial_note: "首月 NT$299 · 之後 NT$499/月 · 隨時取消",
     pmf2: "無限股票追蹤",
-    pmf3: "即時 LINE 重大新聞提醒",
+    pmf3: "LINE Bot 雙向 AI 對話",
+    pmf3b: "即時 LINE 重大新聞提醒",
+    free_submit_btn: "送出 →",
+    placeholder_email: "your@email.com",
     pmf4: "月度投資組合健檢報告",
     pmf5: "客製化觀察清單（最多 5 主題）",
     pmf6: "LINE 優先 1-1 專人客服",
@@ -1171,8 +1179,9 @@ const PRICES = {
   monthly: { pro: 299, premium: 499 },
   annual:  { pro: 239, premium: 399 }
 };
+// 月付 Premium 走後端動態 Checkout(goPremiumTrial 自動套 coupon);年付仍用靜態 link
 const STRIPE_LINKS = {
-  monthly: { premium: 'https://buy.stripe.com/aFafZg4WxcMca5senC4Ja06?prefilled_promo_code=TRIAL' },
+  monthly: { premium: null },  // 月付走 onclick=goPremiumTrial
   annual:  { premium: 'https://buy.stripe.com/eVqeVc4Wx5jKb9wfrG4Ja05' }
 };
 
@@ -1206,7 +1215,18 @@ function setBilling(mode) {
     premiumNote.textContent = t.annual_prem_note;
     premiumNote.style.color = 'rgba(255,255,255,0.45)';
   }
-  premiumCta.href = STRIPE_LINKS[mode].premium;
+  // 月付走 onclick(coupon baked in),年付走靜態 link
+  if (mode === 'monthly') {
+    premiumCta.setAttribute('href', '#');
+    premiumCta.setAttribute('onclick', 'goPremiumTrial(event)');
+    premiumCta.removeAttribute('target');
+    premiumCta.removeAttribute('rel');
+  } else {
+    premiumCta.setAttribute('href', STRIPE_LINKS.annual.premium);
+    premiumCta.removeAttribute('onclick');
+    premiumCta.setAttribute('target', '_blank');
+    premiumCta.setAttribute('rel', 'noopener noreferrer');
+  }
 }
 
 function animatePrice(el, target) {
@@ -1261,6 +1281,80 @@ style.textContent = `
   }
 `;
 document.head.appendChild(style);
+
+/* ── Free signup (inline, no invite code) ── */
+const WORKER_URL = 'https://marketdaily-webhook.delvin-12345678.workers.dev';
+
+/* ── Premium 試讀:後端動態 Stripe Checkout(coupon baked in,不需手動輸碼)── */
+async function goPremiumTrial(e) {
+  if (e) e.preventDefault();
+  const btn = e && e.currentTarget;
+  const orig = btn && btn.textContent;
+  if (btn) { btn.textContent = '...'; btn.style.pointerEvents = 'none'; }
+  try {
+    const res = await fetch(WORKER_URL + '/stripe/checkout-trial', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ref: localStorage.getItem('md-ref') || '' }),
+    });
+    const data = await res.json();
+    if (data.url) { window.location.href = data.url; return; }
+    alert('結帳建立失敗,請稍後再試。');
+  } catch {
+    alert('網路錯誤,請稍後再試。');
+  } finally {
+    if (btn) { btn.textContent = orig; btn.style.pointerEvents = ''; }
+  }
+}
+
+function openFreeForm() {
+  document.getElementById('free-btn').style.display = 'none';
+  const form = document.getElementById('free-form');
+  form.style.display = 'block';
+  document.getElementById('free-email').focus();
+  document.getElementById('free-email').addEventListener('keydown', e => {
+    if (e.key === 'Enter') submitFree();
+  }, { once: true });
+}
+
+async function submitFree() {
+  const email = document.getElementById('free-email').value.trim().toLowerCase();
+  const msg = document.getElementById('free-msg');
+  const btn = document.getElementById('free-submit');
+  const zh = (localStorage.getItem('md-lang-v2') || 'zh') === 'zh';
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    msg.style.color = '#fca5a5';
+    msg.textContent = zh ? '請輸入有效的 Email' : 'Please enter a valid email.';
+    msg.style.display = 'block';
+    return;
+  }
+  btn.disabled = true; btn.textContent = '...';
+  try {
+    const ref = localStorage.getItem('md-ref') || '';
+    const res = await fetch(WORKER_URL + '/subscribe-free-direct', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, ref, utm_source: 'pricing', utm_medium: 'free_card' }),
+    });
+    const data = await res.json();
+    if (data.ok) {
+      msg.style.color = '#6ee7b7';
+      msg.innerHTML = zh
+        ? '✅ 訂閱成功！週一到週六早上 7 點寄到信箱(週日休息)。<br><a href="dashboard.html" style="color:#a5b4fc;">前往我的專區 →</a>'
+        : '✅ Subscribed! Daily digest Mon–Sat 7AM TWT (Sun off).<br><a href="dashboard.html" style="color:#a5b4fc;">Go to My Account →</a>';
+      msg.style.display = 'block';
+      btn.textContent = zh ? '已加入 ✓' : 'Joined ✓';
+    } else {
+      msg.style.color = '#fca5a5';
+      msg.textContent = zh ? '出了點問題，請稍後再試。' : 'Something went wrong. Try again later.';
+      msg.style.display = 'block';
+      btn.disabled = false; btn.textContent = zh ? '送出 →' : 'Submit →';
+    }
+  } catch {
+    msg.style.color = '#fca5a5';
+    msg.textContent = zh ? '網路錯誤，請稍後再試。' : 'Network error. Try again later.';
+    msg.style.display = 'block';
+    btn.disabled = false; btn.textContent = zh ? '送出 →' : 'Submit →';
+  }
+}
 
 /* ── Init lang ── */
 applyLang(localStorage.getItem('md-lang-v2') || 'zh');
