@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>即時 Hot Take 審稿 — MarketDaily Admin</title>
+<meta name="robots" content="noindex,nofollow">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#6366f1">
+<link rel="apple-touch-icon" href="/logo-icon.svg">
+<link rel="icon" type="image/svg+xml" href="/logo-icon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:focus-visible { outline: 2px solid #818cf8; outline-offset: 2px; border-radius: 4px; }
+body {
+  background: #060611; color: #e2e8f0;
+  font-family: 'Inter', sans-serif;
+  min-height: 100vh; -webkit-font-smoothing: antialiased;
+}
+body::before {
+  content: ''; position: fixed; inset: 0; z-index: 0;
+  background-image:
+    linear-gradient(rgba(99,102,241,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(99,102,241,0.04) 1px, transparent 1px);
+  background-size: 72px 72px; pointer-events: none;
+}
+nav {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 0 40px; height: 62px;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  background: rgba(6,6,17,0.8);
+  backdrop-filter: blur(28px) saturate(1.8);
+  position: sticky; top: 0; z-index: 100;
+}
+.nav-logo { display: flex; align-items: center; gap: 10px; font-size: 17px; font-weight: 800; letter-spacing: -0.5px; color: #f1f5f9; text-decoration: none; }
+.nav-logo-icon { width: 30px; height: 30px; background: linear-gradient(135deg, #6366f1, #8b5cf6); border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.nav-logo em { color: #818cf8; font-style: normal; }
+.nav-back { font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.5); text-decoration: none; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08); padding: 7px 16px; border-radius: 20px; }
+.nav-right { display: flex; align-items: center; gap: 8px; }
+
+.page-wrap { position: relative; z-index: 1; max-width: 1080px; margin: 0 auto; padding: 48px 24px 80px; }
+
+.page-badge {
+  display: inline-flex; align-items: center; gap: 7px;
+  background: rgba(251,191,36,0.12); border: 1px solid rgba(251,191,36,0.28);
+  border-radius: 20px; padding: 6px 14px;
+  font-size: 11px; font-weight: 700; color: #fbbf24; letter-spacing: 1px; text-transform: uppercase;
+  margin-bottom: 18px;
+}
+.page-badge::before { content: "●"; color: #fbbf24; font-size: 8px; }
+
+h1 {
+  font-size: clamp(30px, 5vw, 40px); font-weight: 900; line-height: 1.1; letter-spacing: -1.5px;
+  margin-bottom: 12px;
+  background: linear-gradient(135deg, #fff 0%, #fde68a 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.sub { font-size: 15px; color: rgba(226,232,240,0.55); line-height: 1.7; margin-bottom: 32px; max-width: 720px; }
+
+/* Auth */
+.auth-card {
+  max-width: 360px; margin: 80px auto;
+  background: rgba(255,255,255,0.025); border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 20px; padding: 32px;
+}
+.auth-card h2 { font-size: 18px; font-weight: 800; margin-bottom: 6px; color: #fff; }
+.auth-card p { font-size: 13px; color: rgba(255,255,255,0.55); margin-bottom: 20px; line-height: 1.6; }
+.auth-input { width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 12px 14px; color: #e2e8f0; font-size: 14px; outline: none; margin-bottom: 12px; font-family: 'Inter', sans-serif; }
+.auth-input:focus { border-color: rgba(99,102,241,0.5); }
+.auth-btn { width: 100%; background: linear-gradient(135deg, #6366f1, #818cf8); border: none; color: #fff; padding: 14px; font-size: 14px; font-weight: 700; border-radius: 10px; cursor: pointer; font-family: 'Inter', sans-serif; }
+.auth-err { display: none; margin-top: 10px; font-size: 12px; color: #fca5a5; }
+
+.refresh-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; font-size: 12px; color: rgba(255,255,255,0.5); }
+.refresh-btn { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: #a5b4fc; padding: 6px 14px; border-radius: 16px; cursor: pointer; font-size: 12px; font-weight: 700; font-family: 'Inter', sans-serif; }
+
+.card {
+  background: rgba(255,255,255,0.025); border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 18px; padding: 22px 24px; margin-bottom: 16px;
+}
+.card.bullish { border-left: 4px solid #10b981; }
+.card.bearish { border-left: 4px solid #ef4444; }
+.card.neutral { border-left: 4px solid #94a3b8; }
+
+.src-row { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; font-size: 12px; color: rgba(255,255,255,0.55); }
+.src-title { font-weight: 600; flex: 1; min-width: 200px; }
+.src-title a { color: rgba(165,180,252,0.85); text-decoration: none; }
+.src-title a:hover { text-decoration: underline; }
+.src-meta { display: flex; gap: 8px; align-items: center; font-size: 11px; }
+
+.bias-badge { padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 800; letter-spacing: 0.4px; text-transform: uppercase; }
+.bias-badge.bullish { background: rgba(16,185,129,0.18); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.35); }
+.bias-badge.bearish { background: rgba(239,68,68,0.18); color: #fca5a5; border: 1px solid rgba(239,68,68,0.35); }
+.bias-badge.neutral { background: rgba(148,163,184,0.18); color: #cbd5e1; border: 1px solid rgba(148,163,184,0.35); }
+.tag-chip { padding: 3px 8px; border-radius: 10px; background: rgba(99,102,241,0.15); color: #a5b4fc; font-size: 10px; font-weight: 700; }
+
+.headline {
+  font-size: 19px; font-weight: 800; line-height: 1.4; color: #fff; margin-bottom: 10px; letter-spacing: -0.3px;
+}
+.body-text { font-size: 14px; line-height: 1.7; color: rgba(226,232,240,0.85); margin-bottom: 12px; white-space: pre-wrap; }
+
+.edit-input, .edit-textarea {
+  width: 100%; background: rgba(0,0,0,0.3); border: 1px solid rgba(99,102,241,0.4);
+  border-radius: 8px; padding: 10px 12px; color: #f1f5f9; font-family: 'Inter', sans-serif;
+  font-size: 14px; outline: none; margin-bottom: 10px; resize: vertical;
+}
+.edit-input { font-size: 17px; font-weight: 700; }
+.edit-textarea { min-height: 100px; }
+.edit-select { background: rgba(0,0,0,0.3); border: 1px solid rgba(99,102,241,0.4); border-radius: 8px; padding: 6px 10px; color: #f1f5f9; font-size: 12px; font-family: 'Inter', sans-serif; margin-right: 8px; }
+
+.tickers { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+.ticker-chip { padding: 4px 10px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; font-size: 11.5px; color: #fbbf24; font-family: 'SF Mono', monospace; font-weight: 700; }
+
+.btn-row { display: flex; gap: 8px; flex-wrap: wrap; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.06); }
+.btn { padding: 9px 16px; border: none; border-radius: 10px; font-size: 13px; font-weight: 700; cursor: pointer; font-family: 'Inter', sans-serif; transition: opacity 0.15s; }
+.btn:hover { opacity: 0.85; }
+.btn:disabled { opacity: 0.4; cursor: wait; }
+.btn-approve { background: linear-gradient(135deg, #10b981, #059669); color: #fff; }
+.btn-edit { background: rgba(99,102,241,0.18); color: #a5b4fc; border: 1px solid rgba(99,102,241,0.35); }
+.btn-reject { background: rgba(239,68,68,0.15); color: #fca5a5; border: 1px solid rgba(239,68,68,0.3); }
+.btn-save { background: linear-gradient(135deg, #6366f1, #818cf8); color: #fff; }
+.btn-cancel { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.6); border: 1px solid rgba(255,255,255,0.08); }
+
+.empty { text-align: center; padding: 60px 24px; color: rgba(255,255,255,0.4); font-size: 13px; background: rgba(255,255,255,0.02); border-radius: 16px; border: 1px dashed rgba(255,255,255,0.08); }
+
+.status-msg { margin-top: 10px; font-size: 12px; padding: 8px 12px; border-radius: 8px; display: none; }
+.status-msg.ok { background: rgba(16,185,129,0.1); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.2); display: block; }
+.status-msg.err { background: rgba(239,68,68,0.1); color: #fca5a5; border: 1px solid rgba(239,68,68,0.2); display: block; }
+
+footer { text-align: center; padding: 36px 24px; border-top: 1px solid rgba(255,255,255,0.06); font-size: 12px; color: rgba(255,255,255,0.35); position: relative; z-index: 1; }
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="nav-logo">
+    <div class="nav-logo-icon">
+      <svg width="16" height="16" viewBox="0 0 22 22"><rect x="1" y="14" width="4" height="7" rx="1.5" fill="white" fill-opacity="0.55"/><rect x="7" y="9" width="4" height="12" rx="1.5" fill="white" fill-opacity="0.78"/><rect x="13" y="4" width="4" height="17" rx="1.5" fill="white"/><circle cx="20" cy="3" r="2" fill="#fde68a"/></svg>
+    </div>
+    Market<em>Daily</em>
+  </a>
+  <div class="nav-right">
+    <a href="admin.html" class="nav-back">← Admin</a>
+  </div>
+</nav>
+
+<div class="page-wrap">
+  <div id="auth-view" class="auth-card">
+    <h2>Hot Take 審稿後台</h2>
+    <p>輸入 admin email 進入待審佇列。</p>
+    <input id="auth-email" class="auth-input" type="email" placeholder="admin@example.com" autocomplete="email">
+    <button class="auth-btn" id="auth-btn">進入 →</button>
+    <div class="auth-err" id="auth-err">沒權限或 email 不對。</div>
+  </div>
+
+  <div id="dash-view" style="display:none;">
+    <div class="page-badge">Reactive Hot Take</div>
+    <h1>即時市場反應審稿</h1>
+    <p class="sub">每 15 分鐘掃 Yahoo / MarketWatch 新聞 → 命中 Fed / 關稅 / 大型股財報 / 通膨 / VIX 等關鍵字 → Gemini Flash 寫 80 字 hot take。通過後立刻發 LINE + Threads(開發階段預設只 log 不真寄)。</p>
+
+    <div class="refresh-row">
+      <span id="last-update">載入中...</span>
+      <button class="refresh-btn" onclick="loadData()">🔄 重新整理</button>
+    </div>
+
+    <div id="list"></div>
+  </div>
+</div>
+
+<footer>Reactive Content MVP · Cloudflare Workers KV · Gemini Flash</footer>
+
+<script>
+const WORKER_URL = "https://marketdaily-webhook.delvin-12345678.workers.dev";
+function adminEmail() { return localStorage.getItem("md-admin-email"); }
+function show(view) {
+  document.getElementById("auth-view").style.display = view === "auth" ? "block" : "none";
+  document.getElementById("dash-view").style.display = view === "dash" ? "block" : "none";
+}
+function escapeHtml(s) {
+  return (s || "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"})[c]);
+}
+
+document.getElementById("auth-btn").onclick = async () => {
+  const email = document.getElementById("auth-email").value.trim();
+  const err = document.getElementById("auth-err");
+  err.style.display = "none";
+  if (!email) { err.style.display = "block"; return; }
+  try {
+    const res = await fetch(WORKER_URL + "/admin/reactive-list", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+    if (!res.ok) { err.style.display = "block"; return; }
+    localStorage.setItem("md-admin-email", email);
+    show("dash");
+    loadData();
+  } catch { err.style.display = "block"; }
+};
+
+const saved = localStorage.getItem("md-admin-email-saved") || adminEmail();
+if (saved) document.getElementById("auth-email").value = saved;
+if (adminEmail()) { show("dash"); loadData(); }
+
+let currentItems = [];
+let editingId = null;
+
+async function loadData() {
+  try {
+    const res = await fetch(WORKER_URL + "/admin/reactive-list", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: adminEmail() }),
+    });
+    if (!res.ok) { show("auth"); return; }
+    const data = await res.json();
+    currentItems = data.items || [];
+    document.getElementById("last-update").textContent =
+      "資料更新:" + new Date().toISOString().replace("T", " ").slice(0, 16) + " · " + currentItems.length + " 筆 pending";
+    render();
+  } catch (e) { console.error(e); }
+}
+
+function render() {
+  const list = document.getElementById("list");
+  if (currentItems.length === 0) {
+    list.innerHTML = '<div class="empty">目前沒有待審 hot take — 等下一輪 cron(每 15 分)掃到新事件就會出現。</div>';
+    return;
+  }
+  list.innerHTML = currentItems.map(renderCard).join("");
+}
+
+function renderCard(item) {
+  const bias = item.ai?.bias || "neutral";
+  const biasLabel = { bullish: "利多 ▲", bearish: "利空 ▼", neutral: "中性 ─" }[bias];
+  const ts = new Date(item.ts || 0).toISOString().replace("T", " ").slice(0, 16);
+  const tickersHtml = (item.ai?.tickers || []).map(t => `<span class="ticker-chip">${escapeHtml(t)}</span>`).join("");
+  const isEditing = editingId === item.id;
+
+  const headlineBlock = isEditing
+    ? `<input class="edit-input" id="edit-headline-${item.id}" value="${escapeHtml(item.ai?.headline || "")}" maxlength="60">`
+    : `<div class="headline">${escapeHtml(item.ai?.headline || "(無標題)")}</div>`;
+
+  const bodyBlock = isEditing
+    ? `<textarea class="edit-textarea" id="edit-body-${item.id}" maxlength="200">${escapeHtml(item.ai?.body || "")}</textarea>`
+    : `<div class="body-text">${escapeHtml(item.ai?.body || "")}</div>`;
+
+  const biasBlock = isEditing
+    ? `<select class="edit-select" id="edit-bias-${item.id}">
+         <option value="bullish" ${bias==="bullish"?"selected":""}>利多</option>
+         <option value="bearish" ${bias==="bearish"?"selected":""}>利空</option>
+         <option value="neutral" ${bias==="neutral"?"selected":""}>中性</option>
+       </select>`
+    : `<span class="bias-badge ${bias}">${biasLabel}</span>`;
+
+  const btnRow = isEditing
+    ? `<button class="btn btn-save" onclick="saveEdit('${item.id}')">💾 儲存並通過發布</button>
+       <button class="btn btn-cancel" onclick="cancelEdit('${item.id}')">取消</button>`
+    : `<button class="btn btn-approve" onclick="approve('${item.id}')">✓ 通過發布</button>
+       <button class="btn btn-edit" onclick="startEdit('${item.id}')">✏️ 編輯</button>
+       <button class="btn btn-reject" onclick="reject('${item.id}')">✗ 拒絕</button>`;
+
+  return `<div class="card ${bias}" id="card-${item.id}">
+    <div class="src-row">
+      <div class="src-title">來源:<a href="${escapeHtml(item.source_url)}" target="_blank" rel="noopener">${escapeHtml(item.source_title || item.source_url)}</a></div>
+      <div class="src-meta">
+        ${biasBlock}
+        <span class="tag-chip">${escapeHtml(item.ai?.tag || "")}</span>
+        <span>${item.source || ""} · ${ts}</span>
+      </div>
+    </div>
+    ${headlineBlock}
+    ${bodyBlock}
+    <div class="tickers">${tickersHtml || '<span style="font-size:11px;color:rgba(255,255,255,0.3);">無相關股票</span>'}</div>
+    <div class="btn-row">${btnRow}</div>
+    <div class="status-msg" id="status-${item.id}"></div>
+  </div>`;
+}
+
+function startEdit(id) { editingId = id; render(); }
+function cancelEdit(id) { editingId = null; render(); }
+
+async function approve(id, payload) {
+  setBtnDisabled(id, true);
+  showStatus(id, "發布中...", "ok");
+  try {
+    const body = Object.assign({ email: adminEmail(), id }, payload || {});
+    const res = await fetch(WORKER_URL + "/admin/reactive-approve", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json();
+    if (!res.ok) { showStatus(id, "失敗:" + (data.error || res.status), "err"); setBtnDisabled(id, false); return; }
+    const live = data.live ? "已真寄" : "已記錄(mock 模式,未真寄)";
+    showStatus(id, `✓ 通過 · ${live} · LINE: ${JSON.stringify(data.results?.line)} · Threads: ${JSON.stringify(data.results?.threads)}`, "ok");
+    setTimeout(loadData, 1200);
+  } catch (e) {
+    showStatus(id, "錯誤:" + String(e), "err");
+    setBtnDisabled(id, false);
+  }
+}
+
+function saveEdit(id) {
+  const headline = document.getElementById("edit-headline-" + id).value.trim();
+  const body = document.getElementById("edit-body-" + id).value.trim();
+  const bias = document.getElementById("edit-bias-" + id).value;
+  editingId = null;
+  approve(id, { headline, body, bias });
+}
+
+async function reject(id) {
+  if (!confirm("確定拒絕並刪除這則 hot take?")) return;
+  setBtnDisabled(id, true);
+  try {
+    const res = await fetch(WORKER_URL + "/admin/reactive-reject", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: adminEmail(), id }),
+    });
+    const data = await res.json();
+    if (!res.ok) { showStatus(id, "失敗:" + (data.error || res.status), "err"); setBtnDisabled(id, false); return; }
+    showStatus(id, "已拒絕", "ok");
+    setTimeout(loadData, 800);
+  } catch (e) {
+    showStatus(id, "錯誤:" + String(e), "err");
+    setBtnDisabled(id, false);
+  }
+}
+
+function setBtnDisabled(id, disabled) {
+  document.querySelectorAll(`#card-${id} .btn`).forEach(b => b.disabled = disabled);
+}
+function showStatus(id, msg, kind) {
+  const el = document.getElementById("status-" + id);
+  if (!el) return;
+  el.className = "status-msg " + kind;
+  el.textContent = msg;
+}
+</script>
+</body>
+</html>

@@ -457,6 +457,25 @@ export default {
       return json({ ok: true, target, plan });
     }
 
+    // Admin:lifecycle email 手動測試(不檢查 days_since_signup、不寫防呆 flag)
+    if (url.pathname === "/admin/lifecycle-test" && request.method === "POST") {
+      let body;
+      try { body = await request.json(); } catch { return json({ error: "Invalid" }, 400); }
+      const adminEmail = (body.admin_email || body.auth_email || body.email || "").trim().toLowerCase();
+      if (!ADMIN_EMAILS.includes(adminEmail)) return json({ error: "Forbidden" }, 403);
+      const target = (body.target || body.to || "").trim().toLowerCase();
+      const type = (body.type || "").trim().toLowerCase();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(target)) return json({ error: "invalid_target" }, 400);
+      const handlers = { d1: sendD1Email, d7: sendD7Email, d14: sendD14Email };
+      if (!handlers[type]) return json({ error: "invalid_type" }, 400);
+      try {
+        await handlers[type](target, env.BREVO_API_KEY, env);
+        return json({ ok: true, target, type });
+      } catch (e) {
+        return json({ error: "send_failed", detail: String(e) }, 502);
+      }
+    }
+
     // Attribution: 記錄首次訪問(UTM)
     if (url.pathname === "/track/visit" && request.method === "POST") {
       let body;
@@ -538,6 +557,97 @@ export default {
         }
       }
       return json({ days, totals, recent });
+    }
+
+    // === Reactive Content MVP ===
+
+    // Admin:列出所有 pending hot take(最新在前)
+    if (url.pathname === "/admin/reactive-list" && request.method === "POST") {
+      let body;
+      try { body = await request.json(); } catch { return json({ error: "Invalid" }, 400); }
+      const email = (body.email || "").trim().toLowerCase();
+      if (!ADMIN_EMAILS.includes(email)) return json({ error: "Forbidden" }, 403);
+      const list = await env.USER_PREFS.list({ prefix: "reactive:pending:", limit: 200 });
+      const items = [];
+      for (const k of list.keys) {
+        const raw = await env.USER_PREFS.get(k.name);
+        if (!raw) continue;
+        try { items.push(JSON.parse(raw)); } catch {}
+      }
+      items.sort((a, b) => (b.ts || 0) - (a.ts || 0));
+      return json({ items });
+    }
+
+    // Admin:通過 hot take → 發 LINE broadcast + Threads
+    if (url.pathname === "/admin/reactive-approve" && request.method === "POST") {
+      let body;
+      try { body = await request.json(); } catch { return json({ error: "Invalid" }, 400); }
+      const email = (body.email || "").trim().toLowerCase();
+      if (!ADMIN_EMAILS.includes(email)) return json({ error: "Forbidden" }, 403);
+      const id = (body.id || "").toString();
+      if (!/^[a-z0-9]{6,32}$/.test(id)) return json({ error: "invalid_id" }, 400);
+      const raw = await env.USER_PREFS.get(`reactive:pending:${id}`);
+      if (!raw) return json({ error: "not_found" }, 404);
+      let item;
+      try { item = JSON.parse(raw); } catch { return json({ error: "corrupt" }, 500); }
+
+      // 允許前端編輯後傳回 — 覆蓋 AI 原稿
+      if (body.headline) item.ai.headline = String(body.headline).slice(0, 120);
+      if (body.body) item.ai.body = String(body.body).slice(0, 500);
+      if (body.bias && ["bullish", "bearish", "neutral"].includes(body.bias)) item.ai.bias = body.bias;
+      if (Array.isArray(body.tickers)) item.ai.tickers = body.tickers.slice(0, 10).map(t => String(t).toUpperCase().slice(0, 10));
+
+      item.status = "approved";
+      item.approved_at = Date.now();
+      item.approved_by = email;
+
+      const caption =
+        `⚡ Hot Take | ${item.ai.headline}\n\n${item.ai.body}\n\n` +
+        `來源:${item.source_url}\n\n#美股 #台股 #財經`;
+
+      const results = { line: null, threads: null };
+      // 開發階段:發送先 mock 成 log,避免誤推訂戶。設 env.REACTIVE_LIVE_SEND="1" 才真寄。
+      const live = env.REACTIVE_LIVE_SEND === "1";
+      try {
+        results.line = await sendLineBroadcast(env, caption, live);
+      } catch (e) { results.line = { ok: false, error: String(e) }; }
+      try {
+        results.threads = await sendThreadsPost(env, caption, live);
+      } catch (e) { results.threads = { ok: false, error: String(e) }; }
+
+      item.publish_results = results;
+      item.publish_live = live;
+
+      await env.USER_PREFS.put(`reactive:approved:${id}`, JSON.stringify(item),
+        { expirationTtl: 86400 * 30 });
+      await env.USER_PREFS.put(`reactive:queue:${id}`, JSON.stringify({
+        id, caption, ts: item.approved_at, tickers: item.ai.tickers,
+        bias: item.ai.bias, source_url: item.source_url,
+      }), { expirationTtl: 86400 * 7 });
+      await env.USER_PREFS.delete(`reactive:pending:${id}`);
+
+      const anyFail = (results.line && results.line.ok === false) || (results.threads && results.threads.ok === false);
+      if (anyFail) {
+        await env.USER_PREFS.put(`reactive:failed:${id}`, JSON.stringify(results),
+          { expirationTtl: 86400 * 14 });
+      }
+      return json({ ok: true, id, live, results });
+    }
+
+    // Admin:拒絕 hot take
+    if (url.pathname === "/admin/reactive-reject" && request.method === "POST") {
+      let body;
+      try { body = await request.json(); } catch { return json({ error: "Invalid" }, 400); }
+      const email = (body.email || "").trim().toLowerCase();
+      if (!ADMIN_EMAILS.includes(email)) return json({ error: "Forbidden" }, 403);
+      const id = (body.id || "").toString();
+      if (!/^[a-z0-9]{6,32}$/.test(id)) return json({ error: "invalid_id" }, 400);
+      const raw = await env.USER_PREFS.get(`reactive:pending:${id}`);
+      if (!raw) return json({ error: "not_found" }, 404);
+      await env.USER_PREFS.put(`reactive:rejected:${id}`, raw,
+        { expirationTtl: 86400 * 14 });
+      await env.USER_PREFS.delete(`reactive:pending:${id}`);
+      return json({ ok: true, id });
     }
 
     // Save user preferences
@@ -909,6 +1019,19 @@ export default {
         if (session.customer) await env.USER_PREFS.put(`stripe-cust:${session.customer}`, email);
         // 歡迎信與補寄日報背景化 —— webhook 快速回 200,避免 Stripe 因逾時重送
         ctx.waitUntil((async () => {
+          // 付費用戶也記 signup_ts,讓 lifecycle email 系統涵蓋他們(D7 會自動跳過 paid)
+          try {
+            const existing = await env.USER_PREFS.get(`signup:${email}`);
+            if (!existing) {
+              await env.USER_PREFS.put(`signup:${email}`, JSON.stringify({
+                ts: Date.now(),
+                iso: new Date().toISOString(),
+                is_paid: true,
+                tier: tier || "paid",
+                ref: (session.metadata || {}).ref || null,
+              }));
+            }
+          } catch (e) { console.log("stripe signup ts error:", String(e)); }
           try { await sendWelcomeEmail(email, env.BREVO_API_KEY, true, tier); }
           catch (e) { console.log("stripe welcome error:", String(e)); }
           try { await sendTodayDigestToOne(email, env.BREVO_API_KEY, env.USER_PREFS); }
@@ -938,8 +1061,72 @@ export default {
     }
 
     return new Response("OK", { status: 200 });
+  },
+
+  // 兩條 cron:lifecycle(22:30 UTC 每日)+ reactive 偵測(每 15 分鐘)
+  async scheduled(event, env, ctx) {
+    if (event.cron === "30 22 * * *") {
+      ctx.waitUntil(runLifecycleSweep(env));
+    } else if (event.cron === "*/15 * * * *") {
+      ctx.waitUntil(runReactiveDetection(env));
+    } else {
+      // 未知 cron(理論不會發生)— 兩個都跑保險
+      ctx.waitUntil(runLifecycleSweep(env));
+      ctx.waitUntil(runReactiveDetection(env));
+    }
   }
 };
+
+// 掃所有訂戶,按 daysSinceSignup 派發 D1/D7/D14。
+// 每位用戶 try/catch,單一失敗不擋下一個。每封信寫 lc_${type}_sent flag 防重複。
+async function runLifecycleSweep(env) {
+  const dayMs = 86400000;
+  let cursor = undefined;
+  let scanned = 0, sent = { d1: 0, d7: 0, d14: 0 }, errors = 0;
+  // KV list 一頁 1000 筆;用 cursor 翻頁直到 list_complete 才停 —— 別把規模上限寫死。
+  do {
+    const opts = { prefix: "signup:", limit: 1000 };
+    if (cursor) opts.cursor = cursor;
+    const page = await env.USER_PREFS.list(opts);
+    for (const key of page.keys) {
+      scanned++;
+      const email = key.name.slice("signup:".length);
+      try {
+        const raw = await env.USER_PREFS.get(key.name);
+        if (!raw) continue;
+        const meta = JSON.parse(raw);
+        if (!meta.ts) continue;
+        const days = Math.floor((Date.now() - meta.ts) / dayMs);
+        if (days === 1) {
+          if (!(await env.USER_PREFS.get(`lc_d1_sent:${email}`))) {
+            await sendD1Email(email, env.BREVO_API_KEY, env);
+            await env.USER_PREFS.put(`lc_d1_sent:${email}`, String(Date.now()));
+            sent.d1++;
+          }
+        } else if (days === 7) {
+          // 即時讀當下 plan,而不是註冊時的 tier —— 用戶 D1~D7 之間升級了就不該收 D7 折扣
+          const plan = (await env.USER_PREFS.get(`plan:${email}`)) || "free";
+          if (plan === "free" && !(await env.USER_PREFS.get(`lc_d7_sent:${email}`))) {
+            await sendD7Email(email, env.BREVO_API_KEY, env);
+            await env.USER_PREFS.put(`lc_d7_sent:${email}`, String(Date.now()));
+            sent.d7++;
+          }
+        } else if (days === 14) {
+          if (!(await env.USER_PREFS.get(`lc_d14_sent:${email}`))) {
+            await sendD14Email(email, env.BREVO_API_KEY, env);
+            await env.USER_PREFS.put(`lc_d14_sent:${email}`, String(Date.now()));
+            sent.d14++;
+          }
+        }
+      } catch (e) {
+        errors++;
+        console.log("lifecycle sweep error for", email, String(e));
+      }
+    }
+    cursor = page.list_complete ? null : page.cursor;
+  } while (cursor);
+  console.log("lifecycle sweep done:", JSON.stringify({ scanned, sent, errors }));
+}
 
 function json(data, status = 200) {
   return new Response(JSON.stringify(data), {
@@ -1054,6 +1241,19 @@ async function addToBrevo(email, apiKey, listId, attributes) {
 // 註冊成功後的背景工作:推薦轉換 + 歡迎信 + 補寄今日日報。
 // 每項各自 try/catch —— 任一失敗都不影響「註冊已成功」這個結果。
 async function postSignupTasks(email, refCode, env, isPaid = false, tier = "") {
+  // signup_ts 是 lifecycle email 系統的時間錨點;只在第一次寫入,避免重訂閱重置 D1/D7/D14。
+  try {
+    const existing = await env.USER_PREFS.get(`signup:${email}`);
+    if (!existing) {
+      await env.USER_PREFS.put(`signup:${email}`, JSON.stringify({
+        ts: Date.now(),
+        iso: new Date().toISOString(),
+        is_paid: isPaid,
+        tier: tier || "free",
+        ref: refCode || null,
+      }));
+    }
+  } catch (e) { console.log("signup ts error:", String(e)); }
   try { await grantReferralReward(env, refCode, email); }
   catch (e) { console.log("postSignup referral error:", String(e)); }
   try {
@@ -1360,4 +1560,481 @@ async function sendWelcomeEmail(email, apiKey, isPaid = false, tier = "") {
       htmlContent: html,
     }),
   });
+}
+
+// --- Lifecycle Email 共用樣式(對齊 sendWelcomeEmail 玻璃卡風格)---
+function lifecycleShell({ badge, headerTitle, headerSub, bodyHtml, footerNote }) {
+  return `<!DOCTYPE html>
+<html lang="zh-Hant">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background:#f0f2f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+<div style="max-width:560px;margin:32px auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.08);">
+  <div style="background:linear-gradient(135deg,#0f0c29,#302b63,#24243e);padding:28px 28px 22px;">
+    <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="margin-bottom:18px;">
+      <tr>
+        <td width="52" valign="middle" style="padding-right:14px;">
+          <img src="https://marketdaily.ai/logo-icon.svg" width="46" height="46" alt="MD" style="display:block;border-radius:12px;">
+        </td>
+        <td valign="middle">
+          <div style="font-size:20px;font-weight:800;color:#ffffff;letter-spacing:-0.5px;line-height:1.2;">MarketDaily</div>
+          <div style="font-size:10px;color:#a5b4fc;letter-spacing:3px;text-transform:uppercase;margin-top:3px;">${badge}</div>
+        </td>
+      </tr>
+    </table>
+    <h1 style="margin:0 0 6px;font-size:22px;font-weight:800;color:#fde68a;">${headerTitle}</h1>
+    <p style="margin:0;font-size:13px;color:#c4b5fd;font-weight:500;letter-spacing:0.5px;">${headerSub}</p>
+  </div>
+  <div style="padding:28px;">${bodyHtml}</div>
+  <div style="background:#1a1a2e;padding:16px 28px;text-align:center;font-size:11px;color:rgba(255,255,255,0.4);line-height:2;">
+    ${footerNote || "財經日報 · AI 精選 · 假訊息過濾"}<br>
+    <a href="https://marketdaily.ai" style="color:#6366f1;text-decoration:none;font-weight:700;">marketdaily.ai</a>
+    &nbsp;·&nbsp;
+    <a href="https://marketdaily.ai/dashboard.html" style="color:#a5b4fc;text-decoration:none;">我的專區</a>
+  </div>
+</div>
+</body></html>`;
+}
+
+async function sendLifecycleEmail(email, apiKey, subject, html) {
+  return fetch("https://api.brevo.com/v3/smtp/email", {
+    method: "POST",
+    headers: { "api-key": apiKey, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      sender: { name: "MarketDaily 財經日報", email: "hello@marketdaily.ai" },
+      to: [{ email }],
+      subject,
+      htmlContent: html,
+    }),
+  });
+}
+
+// D1:設股票偏好 —— 沒設就會收到通用版日報,失去個人化價值
+async function sendD1Email(email, apiKey, env) {
+  const subject = "✋ 把你的持股告訴 MarketDaily,日報才會真的個人化";
+  const cta = `https://marketdaily.ai/preferences.html?utm_source=lifecycle&utm_campaign=d1_preferences&email=${encodeURIComponent(email)}`;
+  const body = `
+    <p style="font-size:17px;font-weight:800;color:#1a1a1a;margin:0 0 14px;">嗨!歡迎來到第二天 👋</p>
+    <p style="font-size:15px;color:#444;line-height:1.8;margin:0 0 18px;">
+      MarketDaily 的日報是<strong>個人化</strong>的 —— 我們只挑跟「你關心的股票」相關的新聞、財報、技術訊號。<br>
+      如果你還沒設定持股,你昨天收到的會是<strong>通用版</strong>,跟你自己的部位無關。
+    </p>
+    <div style="background:#f6f7fb;border:1px solid #e2e8f0;border-radius:14px;padding:18px 22px;margin-bottom:22px;">
+      <p style="margin:0 0 12px;font-size:14px;font-weight:800;color:#1a1a1a;">三種人都適用</p>
+      <ul style="margin:0;padding-left:20px;font-size:14px;color:#444;line-height:2;">
+        <li>🇺🇸 <strong>美股玩家</strong> — 加 NVDA、TSLA、AAPL 之類,只看你持有的</li>
+        <li>🇹🇼 <strong>台股投資人</strong> — 加 2330 台積電、2454 聯發科,自動含中英文名</li>
+        <li>🌏 <strong>美台混合</strong> — 同一份日報同時涵蓋,不必分兩個帳號</li>
+      </ul>
+    </div>
+    <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="margin-bottom:18px;">
+      <tr>
+        <td align="center">
+          <a href="${cta}" style="display:block;padding:17px 24px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;font-size:17px;font-weight:800;text-decoration:none;border-radius:12px;">設定我的股票偏好 →</a>
+        </td>
+      </tr>
+    </table>
+    <p style="font-size:13px;color:#888;line-height:1.7;margin:0;text-align:center;">
+      30 秒設定,從明天起每封日報只給你關心的股票。
+    </p>`;
+  const html = lifecycleShell({
+    badge: "Day 1 · 個人化設定",
+    headerTitle: "✋ 還沒設股票?日報會跟你沒關係",
+    headerSub: "30 秒搞定,從明天起完全個人化",
+    bodyHtml: body,
+  });
+  return sendLifecycleEmail(email, apiKey, subject, html);
+}
+
+// D7:Premium 7 折(只給 free 用戶,由 sweep 控制) —— 一週讀者最容易升級的時機
+async function sendD7Email(email, apiKey, env) {
+  const subject = "📊 你已讀了 7 封日報 — 解鎖 Premium 三大功能,首月 7 折";
+  const cta = `https://buy.stripe.com/cNi3cu74FbI80uSfrG4Ja03?utm_source=lifecycle&utm_campaign=d7_premium&prefilled_email=${encodeURIComponent(email)}`;
+  const body = `
+    <p style="font-size:17px;font-weight:800;color:#1a1a1a;margin:0 0 12px;">過去 7 天,你省下大概 35 分鐘掃新聞的時間 ☕</p>
+    <p style="font-size:15px;color:#444;line-height:1.8;margin:0 0 22px;">
+      你已經習慣每天早上 7 點看 MarketDaily,接下來這三個功能會讓你<strong>從「看新聞」進化到「真的能下手」</strong>。
+    </p>
+    <div style="background:linear-gradient(135deg,rgba(99,102,241,0.08),rgba(139,92,246,0.08));border:1px solid rgba(99,102,241,0.25);border-radius:14px;padding:20px 22px;margin-bottom:22px;">
+      <p style="margin:0 0 14px;font-size:15px;font-weight:800;color:#4f46e5;">Premium 三大功能</p>
+      <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
+        <tr>
+          <td width="38" valign="top"><div style="width:30px;height:30px;border-radius:50%;background:#6366f1;color:#fff;font-size:14px;font-weight:800;text-align:center;line-height:30px;">1</div></td>
+          <td style="padding-bottom:14px;font-size:14px;color:#333;line-height:1.7;"><strong>個股深度分析</strong><br><span style="color:#666;">AI 給每支股票的進場 / 停損價位區間,不再只是「漲了 X%」。</span></td>
+        </tr>
+        <tr>
+          <td width="38" valign="top"><div style="width:30px;height:30px;border-radius:50%;background:#6366f1;color:#fff;font-size:14px;font-weight:800;text-align:center;line-height:30px;">2</div></td>
+          <td style="padding-bottom:14px;font-size:14px;color:#333;line-height:1.7;"><strong>LINE 即時推播</strong><br><span style="color:#666;">影響你持股的重大新聞,5 分鐘內推到你 LINE。</span></td>
+        </tr>
+        <tr>
+          <td width="38" valign="top"><div style="width:30px;height:30px;border-radius:50%;background:#6366f1;color:#fff;font-size:14px;font-weight:800;text-align:center;line-height:30px;">3</div></td>
+          <td style="font-size:14px;color:#333;line-height:1.7;"><strong>月度投資組合健檢</strong><br><span style="color:#666;">每月一份報告,告訴你持股的集中度、產業偏重、漏掉的對沖。</span></td>
+        </tr>
+      </table>
+    </div>
+    <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:16px 20px;margin-bottom:20px;text-align:center;">
+      <div style="font-size:12px;color:#92400e;font-weight:700;letter-spacing:1px;margin-bottom:6px;">本週限定</div>
+      <div style="font-size:15px;color:#1a1a1a;">
+        <span style="text-decoration:line-through;color:#999;">NT$299</span>
+        &nbsp;→&nbsp;
+        <strong style="font-size:22px;color:#d97706;">NT$209</strong>
+        <span style="color:#666;font-size:13px;"> / 首月(7 折)</span>
+      </div>
+    </div>
+    <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="margin-bottom:18px;">
+      <tr>
+        <td align="center">
+          <a href="${cta}" style="display:block;padding:17px 24px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;font-size:17px;font-weight:800;text-decoration:none;border-radius:12px;">立即升級 →</a>
+        </td>
+      </tr>
+    </table>
+    <p style="font-size:12px;color:#888;line-height:1.7;margin:0;text-align:center;">
+      不想升級?完全 OK,繼續用免費版享受日報。<br>這封信不會再寄第二次。
+    </p>`;
+  const html = lifecycleShell({
+    badge: "Day 7 · Premium 7 折",
+    headerTitle: "📊 你準備好下一步了嗎?",
+    headerSub: "從「看新聞」進化到「真的能下手」",
+    bodyHtml: body,
+  });
+  return sendLifecycleEmail(email, apiKey, subject, html);
+}
+
+// D14:推薦計畫 —— 兩週的讀者最有資格幫我們背書
+async function sendD14Email(email, apiKey, env) {
+  const subject = "🎁 已經發過你 14 封日報了 — 邀請朋友,雙方都得 30 天 Premium";
+
+  // 從既有 referral helper 拿 code;沒有就現場生一個(維持冪等)。
+  let refCode = null;
+  try {
+    const raw = await env.USER_PREFS.get(`referral:user:${email}`);
+    if (raw) {
+      refCode = JSON.parse(raw).code || null;
+    } else {
+      let code = generateRefCode(email);
+      const existing = await env.USER_PREFS.get(`referral:code:${code}`);
+      if (existing) code = generateRefCode(email) + Math.floor(Math.random() * 9);
+      const newData = { code, clicks: 0, conversions: 0, created_at: new Date().toISOString() };
+      await env.USER_PREFS.put(`referral:user:${email}`, JSON.stringify(newData));
+      await env.USER_PREFS.put(`referral:code:${code}`, email);
+      refCode = code;
+    }
+  } catch (e) { console.log("D14 ref code error:", String(e)); }
+
+  const refLink = refCode
+    ? `https://marketdaily.ai/?ref=${refCode}&utm_source=lifecycle&utm_campaign=d14_referral`
+    : `https://marketdaily.ai/dashboard.html#referral`;
+  const dashLink = `https://marketdaily.ai/dashboard.html?email=${encodeURIComponent(email)}#referral`;
+  const shareText = `最近發現一個東西不錯 —— marketdaily.ai 每天早上 7 點寄 AI 過濾過的財經日報。我已經用兩週,真的省很多時間。你訂閱我們雙邊都得 30 天 Premium:${refLink}`;
+
+  const body = `
+    <p style="font-size:17px;font-weight:800;color:#1a1a1a;margin:0 0 12px;">謝謝你陪 MarketDaily 兩週 🙏</p>
+    <p style="font-size:15px;color:#444;line-height:1.8;margin:0 0 22px;">
+      如果這 14 封信讓你早晨變更聰明,有件事想拜託你 ——<br>
+      <strong>把它分享給一個朋友</strong>,我們的成長 95% 靠口碑。
+    </p>
+    <div style="background:linear-gradient(135deg,rgba(99,102,241,0.08),rgba(139,92,246,0.08));border:1px solid rgba(99,102,241,0.25);border-radius:14px;padding:20px 22px;margin-bottom:22px;text-align:center;">
+      <p style="margin:0 0 8px;font-size:13px;color:#4f46e5;font-weight:800;letter-spacing:1px;">推薦計畫</p>
+      <p style="margin:0 0 14px;font-size:20px;font-weight:800;color:#1a1a1a;line-height:1.4;">
+        雙方各得 <span style="color:#6366f1;">30 天 Premium</span>
+      </p>
+      <p style="margin:0;font-size:13px;color:#666;line-height:1.7;">
+        朋友點你的連結訂閱後,你和他的帳號都自動延長 30 天 Premium —— 包含 AI 投資助手、LINE 即時推播、深度分析。
+      </p>
+    </div>
+    <div style="background:#f6f7fb;border:1px dashed #cbd5e1;border-radius:12px;padding:14px 18px;margin-bottom:18px;">
+      <div style="font-size:11px;color:#888;font-weight:700;letter-spacing:1px;margin-bottom:6px;">你的專屬推薦連結</div>
+      <div style="font-size:13px;color:#4f46e5;word-break:break-all;font-family:'SF Mono',Menlo,monospace;">${refLink}</div>
+    </div>
+    <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="margin-bottom:18px;">
+      <tr>
+        <td align="center">
+          <a href="${dashLink}" style="display:block;padding:17px 24px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;font-size:17px;font-weight:800;text-decoration:none;border-radius:12px;">複製我的推薦連結 →</a>
+        </td>
+      </tr>
+    </table>
+    <div style="background:#f8fafc;border-left:4px solid #6366f1;border-radius:0 8px 8px 0;padding:14px 18px;margin-bottom:14px;">
+      <div style="font-size:11px;color:#888;font-weight:700;margin-bottom:6px;">分享範例文案(直接複製貼上)</div>
+      <p style="margin:0;font-size:13px;color:#444;line-height:1.7;">${shareText}</p>
+    </div>
+    <p style="font-size:12px;color:#888;line-height:1.7;margin:0;text-align:center;">
+      這封信不會再寄第二次。明天早上 7 點見 💪
+    </p>`;
+  const html = lifecycleShell({
+    badge: "Day 14 · 推薦計畫",
+    headerTitle: "🎁 邀請朋友,雙方各得 30 天 Premium",
+    headerSub: "兩週的讀者,是我們最好的代言人",
+    bodyHtml: body,
+  });
+  return sendLifecycleEmail(email, apiKey, subject, html);
+}
+
+// === Reactive Content helpers ===
+
+// 命中條件:白名單關鍵字。earnings 必須同時出現大型股票名 — 避免一般 earnings 新聞炸量。
+const REACTIVE_KEYWORDS_GENERAL = [
+  "fed", "federal reserve", "rate hike", "rate cut", "利率",
+  "tariff", "關稅",
+  "recession", "inflation", "cpi", "通膨",
+  "vix", "crash", "melt-up", "melt up",
+];
+const REACTIVE_EARNINGS_TICKERS = [
+  "nvda", "aapl", "goog", "googl", "meta", "msft", "tsla",
+  "tsm", "tsmc", "台積電", "鴻海", "hon hai",
+];
+
+function matchReactiveKeywords(title) {
+  const t = (title || "").toLowerCase();
+  if (!t) return null;
+  for (const kw of REACTIVE_KEYWORDS_GENERAL) {
+    if (t.includes(kw)) return kw;
+  }
+  if (t.includes("earnings") || t.includes("財報") || t.includes("法說")) {
+    for (const tk of REACTIVE_EARNINGS_TICKERS) {
+      if (t.includes(tk)) return `earnings:${tk}`;
+    }
+  }
+  return null;
+}
+
+// 不引外部套件 — 用 regex 解 RSS item。穩定度夠 MVP,壞 feed 跳過。
+function parseRssItems(xml) {
+  if (!xml || typeof xml !== "string") return [];
+  const items = [];
+  const itemRe = /<item[\s\S]*?<\/item>/gi;
+  const matches = xml.match(itemRe) || [];
+  for (const block of matches.slice(0, 50)) {
+    const title = extractRssField(block, "title");
+    const link = extractRssField(block, "link");
+    const pub = extractRssField(block, "pubDate");
+    const desc = extractRssField(block, "description");
+    if (title && link) items.push({ title, link, pubDate: pub, description: desc });
+  }
+  return items;
+}
+function extractRssField(block, tag) {
+  const re = new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`, "i");
+  const m = block.match(re);
+  if (!m) return "";
+  let v = m[1].trim();
+  v = v.replace(/^<!\[CDATA\[/, "").replace(/\]\]>$/, "").trim();
+  v = v.replace(/<[^>]+>/g, "").trim();
+  return v;
+}
+
+// FNV-1a hash → 8 字元 base36,夠用來判重
+function hashTitle(s) {
+  let h = 0x811c9dc5;
+  const str = (s || "").toLowerCase().trim();
+  for (let i = 0; i < str.length; i++) {
+    h ^= str.charCodeAt(i);
+    h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0;
+  }
+  return h.toString(36).padStart(7, "0").slice(0, 8);
+}
+
+async function fetchRss(url, ua) {
+  try {
+    const res = await fetch(url, {
+      headers: { "User-Agent": ua, "Accept": "application/rss+xml, application/xml, text/xml, */*" },
+      cf: { cacheTtl: 60, cacheEverything: true },
+    });
+    if (!res.ok) return "";
+    return await res.text();
+  } catch { return ""; }
+}
+
+async function runReactiveDetection(env) {
+  const ua = "Mozilla/5.0 (compatible; MarketDailyBot/1.0; +https://marketdaily.ai)";
+  const sources = [
+    { name: "yahoo", url: "https://finance.yahoo.com/rss/topstories" },
+    { name: "marketwatch", url: "https://feeds.marketwatch.com/marketwatch/topstories/" },
+  ];
+  if (env.NEWSAPI_KEY) {
+    sources.push({
+      name: "newsapi",
+      url: `https://newsapi.org/v2/top-headlines?category=business&language=en&apiKey=${env.NEWSAPI_KEY}`,
+      isJson: true,
+    });
+  }
+
+  const candidates = [];
+  for (const s of sources) {
+    try {
+      if (s.isJson) {
+        const res = await fetch(s.url, { headers: { "User-Agent": ua } });
+        if (!res.ok) continue;
+        const data = await res.json();
+        for (const a of (data.articles || []).slice(0, 30)) {
+          candidates.push({
+            source: s.name, title: a.title || "",
+            link: a.url || "", pubDate: a.publishedAt || "",
+            description: a.description || "",
+          });
+        }
+      } else {
+        const xml = await fetchRss(s.url, ua);
+        for (const it of parseRssItems(xml)) {
+          candidates.push({ source: s.name, ...it });
+        }
+      }
+    } catch (e) {
+      console.log("reactive source error", s.name, String(e));
+    }
+  }
+
+  let processed = 0, hits = 0, dupes = 0, ai_ok = 0, ai_fail = 0;
+  const MAX_NEW_PER_SWEEP = 3;
+  for (const c of candidates) {
+    const kw = matchReactiveKeywords(c.title);
+    if (!kw) continue;
+    hits++;
+    const id = hashTitle(c.title);
+    const seenKey = `reactive:seen:${id}`;
+    if (await env.USER_PREFS.get(seenKey)) { dupes++; continue; }
+    await env.USER_PREFS.put(seenKey, String(Date.now()), { expirationTtl: 86400 });
+    if (processed >= MAX_NEW_PER_SWEEP) continue;
+    processed++;
+
+    let ai = null;
+    try {
+      ai = await geminiHotTake(env, c.title, c.description || "");
+    } catch (e) { console.log("gemini error", String(e)); }
+    if (!ai) { ai_fail++; continue; }
+    ai_ok++;
+
+    const item = {
+      id,
+      ts: Date.now(),
+      source: c.source,
+      source_url: c.link,
+      source_title: c.title,
+      matched_keyword: kw,
+      ai,
+      status: "pending",
+    };
+    await env.USER_PREFS.put(`reactive:pending:${id}`,
+      JSON.stringify(item), { expirationTtl: 86400 * 2 });
+
+    await sendLineAdminPush(env,
+      `⚡ Hot take pending\n${ai.headline}\n${(ai.body || "").slice(0, 60)}...\n→ marketdaily.ai/admin-reactive.html`
+    );
+  }
+  console.log("reactive sweep:", JSON.stringify({
+    candidates: candidates.length, hits, dupes, processed, ai_ok, ai_fail,
+  }));
+}
+
+// Gemini Flash:結構化 JSON。失敗回 null,不阻塞。
+async function geminiHotTake(env, title, desc) {
+  if (!env.GEMINI_API_KEY) return null;
+  const prompt =
+    `你是一位台灣財經評論員,要為散戶寫一段 80 字繁中 hot take。\n` +
+    `來源新聞:\n標題:${title}\n描述:${desc || "(無描述)"}\n\n` +
+    `請只回傳純 JSON(無 markdown code fence),格式:\n` +
+    `{"headline":"30 字以內繁中標題,有觀點不是描述",` +
+    `"body":"80 字繁中分析,告訴讀者為什麼重要與影響哪些族群",` +
+    `"bias":"bullish | bearish | neutral",` +
+    `"tickers":["相關股票代號,大寫,陣列最多 5 個"],` +
+    `"tag":"Fed/個股財報/關稅/通膨/市場情緒 擇一"}`;
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${env.GEMINI_API_KEY}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { temperature: 0.7, responseMimeType: "application/json" },
+      }),
+    }
+  );
+  if (!res.ok) {
+    console.log("gemini status", res.status, (await res.text()).slice(0, 200));
+    return null;
+  }
+  const data = await res.json();
+  const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+  if (!text) return null;
+  let parsed;
+  try { parsed = JSON.parse(text); } catch {
+    const m = text.match(/\{[\s\S]*\}/);
+    if (!m) return null;
+    try { parsed = JSON.parse(m[0]); } catch { return null; }
+  }
+  if (!parsed.headline || !parsed.body) return null;
+  return {
+    headline: String(parsed.headline).slice(0, 120),
+    body: String(parsed.body).slice(0, 500),
+    bias: ["bullish", "bearish", "neutral"].includes(parsed.bias) ? parsed.bias : "neutral",
+    tickers: Array.isArray(parsed.tickers)
+      ? parsed.tickers.slice(0, 5).map(t => String(t).toUpperCase().slice(0, 10))
+      : [],
+    tag: String(parsed.tag || "市場情緒").slice(0, 30),
+  };
+}
+
+// LINE push 給主編個人帳號 — secret 不全就跳過,不阻塞
+async function sendLineAdminPush(env, message) {
+  const token = env.LINE_CHANNEL_ACCESS_TOKEN;
+  const adminId = env.ADMIN_LINE_USER_ID;
+  if (!token || !adminId) {
+    console.log("LINE admin push skipped (missing LINE_CHANNEL_ACCESS_TOKEN or ADMIN_LINE_USER_ID)");
+    return { ok: false, skipped: true };
+  }
+  try {
+    const res = await fetch("https://api.line.me/v2/bot/message/push", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+      body: JSON.stringify({
+        to: adminId,
+        messages: [{ type: "text", text: message.slice(0, 4900) }],
+      }),
+    });
+    return { ok: res.ok, status: res.status };
+  } catch (e) { return { ok: false, error: String(e) }; }
+}
+
+// LINE broadcast(全訂戶)— live=false 預設只 log,避免開發階段誤推
+async function sendLineBroadcast(env, message, live) {
+  if (!live) {
+    console.log("[mock] LINE broadcast:", message.slice(0, 100));
+    return { ok: true, mocked: true };
+  }
+  const token = env.LINE_CHANNEL_ACCESS_TOKEN;
+  if (!token) return { ok: false, error: "missing_token" };
+  const res = await fetch("https://api.line.me/v2/bot/message/broadcast", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+    body: JSON.stringify({ messages: [{ type: "text", text: message.slice(0, 4900) }] }),
+  });
+  return { ok: res.ok, status: res.status };
+}
+
+// Threads:create container → publish。live=false 只 log。
+async function sendThreadsPost(env, message, live) {
+  if (!live) {
+    console.log("[mock] Threads post:", message.slice(0, 100));
+    return { ok: true, mocked: true };
+  }
+  const token = env.THREADS_ACCESS_TOKEN;
+  const userId = env.THREADS_USER_ID;
+  if (!token || !userId) return { ok: false, error: "missing_threads_secret" };
+  const createRes = await fetch(`https://graph.threads.net/v1.0/${userId}/threads`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      media_type: "TEXT",
+      text: message.slice(0, 480),
+      access_token: token,
+    }),
+  });
+  if (!createRes.ok) return { ok: false, step: "create", status: createRes.status };
+  const created = await createRes.json();
+  const containerId = created.id;
+  if (!containerId) return { ok: false, step: "create", error: "no_container" };
+  const pubRes = await fetch(`https://graph.threads.net/v1.0/${userId}/threads_publish`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ creation_id: containerId, access_token: token }),
+  });
+  return { ok: pubRes.ok, step: "publish", status: pubRes.status, container_id: containerId };
 }
