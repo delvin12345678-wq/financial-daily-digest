@@ -2328,6 +2328,7 @@ async function subscribeFree() {
     });
     const data = await res.json();
     if (data.ok) {
+      if (window.mdTrackLead) window.mdTrackLead({ plan: "free" });
       successEl.textContent = currentLang === "zh" ? "✅ 訂閱成功！請到信箱確認連結。" : "✅ Subscribed! Check your inbox.";
       successEl.style.display = "block";
       btn.textContent = currentLang === "zh" ? "已加入 ✓" : "Joined ✓";
@@ -2418,6 +2419,7 @@ async function submitHomeFree() {
     });
     const data = await res.json();
     if (data.ok) {
+      if (window.mdTrackLead) window.mdTrackLead({ plan: "free" });
       msg.style.color = "#6ee7b7";
       msg.innerHTML = zh
         ? '✅ 訂閱成功！週一到週六早上 7 點寄到信箱(週日休息)。<br><a href="dashboard.html" style="color:#a5b4fc;">前往我的專區 →</a>'
@@ -2738,6 +2740,9 @@ function switchAbout(panel, btn) {
 })();
 </script>
 
+<!-- Meta Pixel: 設好 META_PIXEL_ID 才會載 fbevents.js,沒設整支 noop -->
+<script>window.META_PIXEL_ID = "";  /* TODO 設 Pixel ID 後立即生效 */</script>
+<script src="meta-pixel.js"></script>
 <script src="ui-pro.js"></script>
 
 <!-- Financial 3D particle background -->

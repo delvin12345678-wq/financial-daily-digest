@@ -976,6 +976,8 @@ footer {
   <div class="footer-note" data-i18n="footer_note">每日早上 7 點 · 台灣投資人的 AI 財經日報</div>
 </footer>
 
+<script>window.META_PIXEL_ID = "";  /* TODO 設 Pixel ID 後立即生效 */</script>
+<script src="meta-pixel.js"></script>
 <script src="ui-pro.js"></script>
 <script>
 /* ── i18n ── */
@@ -1336,6 +1338,7 @@ async function submitFree() {
     });
     const data = await res.json();
     if (data.ok) {
+      if (window.mdTrackLead) window.mdTrackLead({ plan: "free" });
       msg.style.color = '#6ee7b7';
       msg.innerHTML = zh
         ? '✅ 訂閱成功！週一到週六早上 7 點寄到信箱(週日休息)。<br><a href="dashboard.html" style="color:#a5b4fc;">前往我的專區 →</a>'

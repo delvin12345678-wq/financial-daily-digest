@@ -649,6 +649,23 @@ nav {
 
     <div class="save-status" id="save-status" onclick="doAutoSave()" data-i18n="save_status_idle">你的選擇會自動儲存,不需要按任何按鈕。</div>
 
+    <!-- Password confirm modal(綁定 / 解除綁定 LINE 等敏感操作) -->
+    <div id="pwd-modal" style="display:none;position:fixed;inset:0;z-index:1000;background:rgba(6,6,17,0.78);backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:24px;">
+      <div style="width:100%;max-width:380px;background:linear-gradient(160deg,#1a1a2e,#0f0c29);border:1px solid rgba(99,102,241,0.32);border-radius:22px;padding:28px;box-shadow:0 20px 60px rgba(0,0,0,0.5);">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+          <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#6366f1,#06C755);display:flex;align-items:center;justify-content:center;font-size:18px;">🔐</div>
+          <div style="font-size:16px;font-weight:800;color:#fff;" id="pwd-modal-title">確認你的身份</div>
+        </div>
+        <div style="font-size:13px;color:rgba(255,255,255,0.55);line-height:1.6;margin-bottom:18px;" id="pwd-modal-desc">為了保護你的 LINE 不被別人綁走,需要再輸入一次密碼。</div>
+        <input type="password" id="pwd-modal-input" placeholder="你的密碼" style="width:100%;background:rgba(0,0,0,0.35);border:1px solid rgba(255,255,255,0.12);border-radius:12px;padding:13px 15px;font-size:15px;color:#fff;outline:none;margin-bottom:12px;font-family:inherit;">
+        <div id="pwd-modal-err" style="display:none;font-size:12px;color:#fca5a5;margin-bottom:12px;"></div>
+        <div style="display:flex;gap:10px;">
+          <button id="pwd-modal-cancel" style="flex:1;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.65);padding:12px;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">取消</button>
+          <button id="pwd-modal-ok" style="flex:1.4;background:linear-gradient(135deg,#06C755,#10b981);border:none;color:#fff;padding:12px;border-radius:12px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;">確認 →</button>
+        </div>
+      </div>
+    </div>
+
     <!-- LINE 即時提醒(Premium 專屬) -->
     <div class="card" id="line-alert-card" style="margin-top:8px;display:none;">
       <div class="card-title" data-i18n="line_card_title">⚡ 即時 LINE 重大新聞提醒</div>
@@ -1455,7 +1472,35 @@ async function sendChat() {
 }
 
 // 直接沿用登入時的密碼,不再請用戶重輸;只有取不到(換頁/未登入)才補問。
-async function bindLine(retryPwd) {
+// Styled password modal — replaces ugly native prompt() for sensitive ops
+function askPassword(opts = {}) {
+  return new Promise(resolve => {
+    const modal = document.getElementById("pwd-modal");
+    const input = document.getElementById("pwd-modal-input");
+    const err = document.getElementById("pwd-modal-err");
+    const title = document.getElementById("pwd-modal-title");
+    const desc = document.getElementById("pwd-modal-desc");
+    const okBtn = document.getElementById("pwd-modal-ok");
+    const cancelBtn = document.getElementById("pwd-modal-cancel");
+    title.textContent = opts.title || "確認你的身份";
+    desc.textContent = opts.desc || "為了保護你的 LINE 不被別人綁走,需要再輸入一次密碼。";
+    if (opts.errorText) { err.textContent = opts.errorText; err.style.display = "block"; }
+    else { err.style.display = "none"; }
+    input.value = "";
+    modal.style.display = "flex";
+    setTimeout(() => input.focus(), 40);
+    const done = (pwd) => {
+      modal.style.display = "none";
+      okBtn.onclick = null; cancelBtn.onclick = null; input.onkeydown = null;
+      resolve(pwd);
+    };
+    okBtn.onclick = () => done(input.value || null);
+    cancelBtn.onclick = () => done(null);
+    input.onkeydown = (e) => { if (e.key === "Enter") done(input.value || null); else if (e.key === "Escape") done(null); };
+  });
+}
+
+async function bindLine(retryPwd, retryErr) {
   const email = localStorage.getItem("md-email");
   let password = retryPwd || sessionStorage.getItem("md-pwd") || localStorage.getItem("md-saved-pwd");
   const errEl = document.getElementById("line-err");
@@ -1463,7 +1508,11 @@ async function bindLine(retryPwd) {
   if (errEl) errEl.style.display = "none";
   if (!email) { if (errEl) { errEl.textContent = T('line_relogin'); errEl.style.display = "block"; } return; }
   if (!password) {
-    password = prompt(T('line_prompt_pwd'));
+    password = await askPassword({
+      title: "綁定 LINE 帳號",
+      desc: "為了保護你的 LINE 不被別人綁走,需要再輸入一次密碼。",
+      errorText: retryErr,
+    });
     if (!password) return;
   }
   btn.disabled = true; btn.textContent = T('line_processing');
@@ -1481,7 +1530,11 @@ async function bindLine(retryPwd) {
   btn.disabled = false; btn.textContent = T('line_bind_btn');
   if (data.authUrl) { sessionStorage.setItem("md-pwd", password); window.location.href = data.authUrl; return; }
   if (data.error === "auth") {
-    const p = prompt(T('line_prompt_pwd_retry'));
+    const p = await askPassword({
+      title: "密碼錯誤,請再試一次",
+      desc: "看起來密碼不對。請再輸入一次,或點取消放棄綁定。",
+      errorText: "❌ 密碼錯誤",
+    });
     if (p) bindLine(p);
     return;
   }
@@ -1490,7 +1543,13 @@ async function bindLine(retryPwd) {
 
 async function unbindLine() {
   const email = localStorage.getItem("md-email");
-  const password = sessionStorage.getItem("md-pwd") || localStorage.getItem("md-saved-pwd") || prompt(T('line_unbind_prompt'));
+  let password = sessionStorage.getItem("md-pwd") || localStorage.getItem("md-saved-pwd");
+  if (!password) {
+    password = await askPassword({
+      title: "解除 LINE 綁定",
+      desc: "解除後將不再收到 LINE 即時提醒。確認你的身份後即可解除。",
+    });
+  }
   if (!password) return;
   try {
     const res = await fetch(WORKER_URL + "/line/unbind", {
@@ -2240,9 +2299,21 @@ async function init() {
   applyLang(localStorage.getItem('md-lang-v2') || 'zh');
   US_STOCKS = typeof US_STOCKS_FULL !== 'undefined' ? US_STOCKS_FULL : [];
   TW_STOCKS = typeof TW_STOCKS_FULL !== 'undefined' ? TW_STOCKS_FULL : [];
+
+  // 切換帳號偵測:URL ?email= 或 hero 剛輸的 email 跟舊 session 不同 → 清舊登入
+  const urlEmail = (new URLSearchParams(window.location.search).get("email") || "").trim().toLowerCase();
+  const heroEmail = (localStorage.getItem("md-hero-email") || "").trim().toLowerCase();
+  const storedEmail = (localStorage.getItem("md-email") || "").trim().toLowerCase();
+  const incoming = urlEmail || heroEmail;
+  if (incoming && storedEmail && incoming !== storedEmail) {
+    localStorage.removeItem("md-email");
+    localStorage.removeItem("md-plan");
+    localStorage.removeItem("md-saved-email");
+    localStorage.removeItem("md-saved-pwd");
+  }
+
   const savedEmail = localStorage.getItem("md-saved-email") || ""; const savedPwd = localStorage.getItem("md-saved-pwd") || "";
   if (savedEmail) { document.getElementById("login-email").value = savedEmail; document.getElementById("login-password").value = savedPwd; document.getElementById("remember-me").checked = true; }
-  const urlEmail = new URLSearchParams(window.location.search).get("email");
   if (urlEmail && !savedEmail) { document.getElementById("login-email").value = urlEmail; document.getElementById("login-password").focus(); history.replaceState(null, "", "dashboard.html"); }
   const email = localStorage.getItem("md-email"); const plan = localStorage.getItem("md-plan") || "free";
   if (email) showDashboard(email, plan);
@@ -2252,6 +2323,8 @@ async function init() {
 }
 init();
 </script>
+<script>window.META_PIXEL_ID = "";  /* TODO 設 Pixel ID 後立即生效 */</script>
+<script src="meta-pixel.js"></script>
 <script src="ui-pro.js"></script>
 
 <!-- Financial 3D particle background -->

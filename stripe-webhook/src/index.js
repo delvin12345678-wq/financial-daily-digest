@@ -1221,6 +1221,17 @@ export default {
           visit_id: md.visit_id, utm_source: md.utm_source,
           utm_medium: md.utm_medium, utm_campaign: md.utm_campaign,
         }));
+        // Meta Conversions API:server-side Purchase event(iOS14+ pixel 遮蔽必做)
+        ctx.waitUntil(sendMetaPurchase(env, {
+          email,
+          value: (session.amount_total || 0) / 100,
+          currency: (session.currency || "twd").toUpperCase(),
+          eventId: session.id,  // 用 stripe session id 當 event_id,跟 client-side dedupe
+          fbp: md.fbp || null,
+          fbc: md.fbc || null,
+          clientIp: request.headers.get("cf-connecting-ip") || null,
+          clientUA: request.headers.get("user-agent") || null,
+        }));
       }
     }
 
@@ -1437,6 +1448,47 @@ async function postSignupTasks(email, refCode, env, isPaid = false, tier = "") {
   try {
     await sendTodayDigestToOne(email, env.BREVO_API_KEY, env.USER_PREFS);
   } catch (e) { console.log("postSignup digest error:", String(e)); }
+}
+
+// Meta Conversions API — server-side Purchase fire(配 client-side pixel 雙寫,Meta 用 eventID 自動 dedupe)
+// 沒設 META_PIXEL_ID 或 META_CONVERSIONS_API_TOKEN secret 直接 noop,不報錯。
+async function sha256Hex(s) {
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode((s || "").trim().toLowerCase()));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join("");
+}
+
+async function sendMetaPurchase(env, opts) {
+  if (!env.META_PIXEL_ID || !env.META_CONVERSIONS_API_TOKEN) return;
+  try {
+    const userData = {};
+    if (opts.email) userData.em = [await sha256Hex(opts.email)];
+    if (opts.fbp) userData.fbp = opts.fbp;
+    if (opts.fbc) userData.fbc = opts.fbc;
+    if (opts.clientIp) userData.client_ip_address = opts.clientIp;
+    if (opts.clientUA) userData.client_user_agent = opts.clientUA;
+
+    const body = {
+      data: [{
+        event_name: "Purchase",
+        event_time: Math.floor(Date.now() / 1000),
+        event_id: opts.eventId,
+        action_source: "website",
+        event_source_url: "https://marketdaily.ai/dashboard.html",
+        user_data: userData,
+        custom_data: {
+          currency: opts.currency || "TWD",
+          value: opts.value || 299,
+          content_name: "premium_trial",
+        },
+      }],
+    };
+    const r = await fetch(`https://graph.facebook.com/v20.0/${env.META_PIXEL_ID}/events?access_token=${env.META_CONVERSIONS_API_TOKEN}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    if (!r.ok) console.log("Meta CAPI purchase fail:", r.status, (await r.text()).slice(0, 200));
+  } catch (e) { console.log("Meta CAPI error:", String(e)); }
 }
 
 // 推薦獎勵兌現:雙方各得 30 天 Premium。防自推(含 Gmail alias)、防重複、月上限。

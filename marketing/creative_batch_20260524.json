@@ -1,0 +1,207 @@
+{
+  "generated_at": "2026-05-24",
+  "product": "MarketDaily",
+  "language_mix": "zh-TW dominant, en sprinkled",
+  "variants": [
+    {
+      "variant_id": "V01",
+      "hook_type": "stat",
+      "hook": "78% 的台股投資人沒看過自己的真實戰績勝率",
+      "body": "我們公開了。過去 30 天,日報點到的每一支個股、每一個方向判斷、每一次避坑示警 — 全部用 Yahoo Finance 真實收盤價驗算。錯的我們也列。沒人這樣做。",
+      "cta": "看戰績 →",
+      "visual_direction": "深色玻璃卡 + 戰績頁截圖(90.9% 看多勝率)+ amber 警示色 highlight 數字",
+      "target_angle": "信任建立 / 對抗『AI 都是吹的』疑慮",
+      "estimated_strength": 9
+    },
+    {
+      "variant_id": "V02",
+      "hook_type": "comparison",
+      "hook": "Bloomberg Terminal $80,000/月。MarketDaily NT$299/月。",
+      "body": "都過濾 Reuters / CNBC / WSJ。都即時。差別:Bloomberg 給銀行,我們給你。中文寫的,30 秒讀完。",
+      "cta": "首月 NT$299 試讀 →",
+      "visual_direction": "左右對比 split:Bloomberg Terminal 老式藍橘配色 vs MarketDaily 深色玻璃,中間大字價差",
+      "target_angle": "對 Bloomberg 有耳聞但買不起的中產投資者",
+      "estimated_strength": 8
+    },
+    {
+      "variant_id": "V03",
+      "hook_type": "story",
+      "hook": "我以前每天 1 小時看財經。現在 30 秒。",
+      "body": "用過 Bloomberg App、CNBC、Yahoo Finance、PTT 股板 — 還是搞不清楚誰是真誰是假。後來自己寫了一個 AI 過濾系統,只看真消息,只分析我的持股。今天分享給你。",
+      "cta": "免費試試 →",
+      "visual_direction": "Founder Delvin 真實 selfie + 旁邊 phone mockup 顯示 MarketDaily 早報,casual lifestyle 感",
+      "target_angle": "真人故事,對抗 AI 廣告千篇一律",
+      "estimated_strength": 9
+    },
+    {
+      "variant_id": "V04",
+      "hook_type": "question",
+      "hook": "你的 NVDA 今天漲還是跌?幾分鐘前的事你知道嗎?",
+      "body": "Premium 用戶 LINE Bot 直接問 AI:『我手上的 NVDA / TSM / 中信金,現在大盤怎樣?』5 秒回。盤中可以直接問。",
+      "cta": "升級 Premium 試讀 NT$299 →",
+      "visual_direction": "LINE 對話框截圖 mockup + 綠色彈幕『+2.4%』『-1.2%』動態元素",
+      "target_angle": "盤中焦慮型用戶,想要 24/7 諮詢感",
+      "estimated_strength": 8
+    },
+    {
+      "variant_id": "V05",
+      "hook_type": "contrarian",
+      "hook": "週日我們不寄信。",
+      "body": "美股、台股週末都沒開盤。寄你也只是垃圾資訊。Morning Brew 每天都寄(包括你不想看的週日)。我們選擇週日讓你休息,週一 7 點再見。",
+      "cta": "免費訂閱 →",
+      "visual_direction": "極簡黑底白字 + 一個小日曆 icon 標記週日 ✗,反 newsletter convention 設計",
+      "target_angle": "對 newsletter 疲勞的 power user,差異化定位",
+      "estimated_strength": 7
+    },
+    {
+      "variant_id": "V06",
+      "hook_type": "statement",
+      "hook": "30 秒讀完。美股 + 台股。中文寫的。",
+      "body": "每天早上 7 點(週一到週六),AI 從 75+ 個可信新聞源過濾、整理、寫成 30 秒能讀完的早報。免費。",
+      "cta": "留 Email 開始 →",
+      "visual_direction": "phone mockup 顯示真實早報 screenshot,標出 30 秒倒數計時器",
+      "target_angle": "上班族通勤前快速 onboard",
+      "estimated_strength": 8
+    },
+    {
+      "variant_id": "V07",
+      "hook_type": "stat",
+      "hook": "AI 看多勝率 90.9%。我們公開了。",
+      "body": "過去 30 天我們在日報判斷『可以買 / 繼續抱』的個股,有 90.9% 在隔日真的漲。資料用 Yahoo Finance 收盤價驗算,錯的也列。100% 才是假的。",
+      "cta": "查證每一筆 →",
+      "visual_direction": "大字 90.9% + 小字下標 (n=11),旁邊小綠勾 verified by Yahoo Finance",
+      "target_angle": "懷疑型投資者,要證據才信",
+      "estimated_strength": 9
+    },
+    {
+      "variant_id": "V08",
+      "hook_type": "pain",
+      "hook": "假新聞讓你買錯股,真新聞被埋在垃圾裡。",
+      "body": "我們的 AI 每晚掃 75+ 個源,Reuters / Bloomberg / 聯合報 / 自由時報級的可信內容才放進日報。內容農場、業配、農場文 — 全擋掉。",
+      "cta": "免費訂閱 →",
+      "visual_direction": "上下對比:上方亂七八糟新聞 wall 加紅 ✗,下方乾淨日報加綠勾",
+      "target_angle": "資訊焦慮 / 假新聞 PTSD",
+      "estimated_strength": 7
+    },
+    {
+      "variant_id": "V09",
+      "hook_type": "founder",
+      "hook": "我寫 MarketDaily 是因為我自己每天要看財經煩死了。",
+      "body": "我是 Delvin,前幾年每天 1 小時掃 Bloomberg / CNBC / PTT,結果還是搞不清楚我的 TSM / NVDA 該不該動。受夠了,自己寫了個 AI 過濾系統,只給真新聞 + 個人化分析。現在每天 30 秒搞定,你也可以。",
+      "cta": "看我做了什麼 →",
+      "visual_direction": "Delvin 一人 talking-head selfie video 首幀,真實/不修圖風,字幕大字",
+      "target_angle": "founder-led trust building,對抗冷面 AI",
+      "estimated_strength": 9
+    },
+    {
+      "variant_id": "V10",
+      "hook_type": "social_proof",
+      "hook": "Jason 一個月省 NT$6 萬:『NVDA 法說前一晚日報就標短期過熱建議觀望』",
+      "body": "隔天 NVDA 真的回 3%。一個月訂閱費賺回來。Jason 是軟體工程師,他不是付費代言,只是真用戶。",
+      "cta": "看更多案例 →",
+      "visual_direction": "Jason 大頭照(stock photo) + chat 對話框 quote 截圖,綠色 +3% 標記",
+      "target_angle": "social proof + 具體損益數字",
+      "estimated_strength": 8
+    },
+    {
+      "variant_id": "V11",
+      "hook_type": "urgency",
+      "hook": "首月 Premium 4 折 NT$299(原價 NT$499)— 限前 300 人",
+      "body": "Premium 全功能:個人化日報 + LINE Bot AI 對話 + 重大新聞即時推播。首月 NT$299,30 天無理由退費。前 300 人。",
+      "cta": "立即試讀 →",
+      "visual_direction": "amber 倒數標籤 + 大字 NT$499 劃掉變 NT$299,strikethrough 動畫",
+      "target_angle": "稀缺 + 折扣 + 風險低,直接促轉換",
+      "estimated_strength": 7
+    },
+    {
+      "variant_id": "V12",
+      "hook_type": "stat",
+      "hook": "75+ 個新聞源。1 封信。30 秒讀完。",
+      "body": "Reuters、Bloomberg、CNBC、WSJ、Financial Times、CNN Business、聯合報、自由時報、經濟日報 — 我們的 AI 每晚掃完,只給你重要的 5-10 條,中文寫成你媽也看得懂。",
+      "cta": "看一封樣本 →",
+      "visual_direction": "75+ media logo wall 縮成漏斗,底端跑出一封 phone mockup 日報",
+      "target_angle": "效率 + 訊息源 credibility",
+      "estimated_strength": 8
+    },
+    {
+      "variant_id": "V13",
+      "hook_type": "question",
+      "hook": "你上次看財經報導,記得幾條?",
+      "body": "新聞看完忘掉是正常的。我們把每天最重要的 5 條濃縮成 30 秒摘要 + 個人化持股影響分析,看完就有 actionable insight,不是看 1 小時什麼都記不得。",
+      "cta": "免費試訂 →",
+      "visual_direction": "對比 split:左邊一堆新聞標題模糊化,右邊 5 條結構化要點清楚",
+      "target_angle": "資訊過載 / 記憶焦慮",
+      "estimated_strength": 7
+    },
+    {
+      "variant_id": "V14",
+      "hook_type": "demo",
+      "hook": "這是我今早收到的 MarketDaily(7:03 AM)",
+      "body": "30 秒 TL;DR、5 條精選新聞、我持股的 buy / hold / sell 訊號 + AI 信心分數。整封免費。",
+      "cta": "也讓我寄一封 →",
+      "visual_direction": "真實早報 screenshot scroll-through video(豎屏),前 3 秒 hook 已露重點",
+      "target_angle": "demo / show don't tell,Reels / TikTok format",
+      "estimated_strength": 9
+    },
+    {
+      "variant_id": "V15",
+      "hook_type": "contrarian",
+      "hook": "我們不會跟你說『穩賺』『保證』『神級操作』。",
+      "body": "因為那都是違法的。我們只給你過濾過的真新聞 + 過去 30 天我們判斷對與錯的真實紀錄。投資決定是你的。我們的價值是把你的 1 小時功課壓成 30 秒。",
+      "cta": "看我們不騙人的證據 →",
+      "visual_direction": "極簡黑底 + 紅色 ✗ 列出常見投顧話術,綠色 ✓ 我們做的事",
+      "target_angle": "被投顧 / 老師詐騙過的高知識 TA",
+      "estimated_strength": 9
+    },
+    {
+      "variant_id": "V16",
+      "hook_type": "personalization",
+      "hook": "你的 5 支股票,今早怎麼樣?",
+      "body": "MarketDaily 早報只分析你設定追蹤的 5 支股(免費版)。不是廣播泛泛市場,是看你的持股,給你的 verdict。",
+      "cta": "設定我的股票 →",
+      "visual_direction": "phone mockup 顯示用戶持股 list,每支股配個別 AI verdict 卡片",
+      "target_angle": "已有持股的投資者,要 relevance",
+      "estimated_strength": 8
+    },
+    {
+      "variant_id": "V17",
+      "hook_type": "comparison",
+      "hook": "Bloomberg 看不到的:你媽聽得懂的中文",
+      "body": "Bloomberg / WSJ / Reuters 都是英文。Moomoo 有中文但只台股(或只美股)。MarketDaily 美股 + 台股,中文寫,而且寫法是給人看的,不是給金融人看的。",
+      "cta": "看一份 sample →",
+      "visual_direction": "三個 phone 並列:Bloomberg(英文密密麻麻)/ Moomoo(中文但只台股)/ MarketDaily(中文 + 雙市場 + 簡潔)",
+      "target_angle": "雙市場投資人 / 母語使用者",
+      "estimated_strength": 8
+    },
+    {
+      "variant_id": "V18",
+      "hook_type": "pain",
+      "hook": "重大新聞發生時,你都是最後一個知道的。",
+      "body": "Premium 用戶在你的持股有重大新聞時(財報 / 法規 / M&A / 異常漲跌),5 分鐘內 LINE 推播。免費掃 75+ 新聞源 / AI 判斷嚴重度才推,不是亂發。",
+      "cta": "升級 Premium NT$299 →",
+      "visual_direction": "LINE 推播通知截圖(『⚡ NVDA 重大新聞:Q3 法說優於預期』),配時鐘標 5 分鐘前",
+      "target_angle": "資訊焦慮 + 即時感賣點",
+      "estimated_strength": 8
+    },
+    {
+      "variant_id": "V19",
+      "hook_type": "soft_sell",
+      "hook": "免費試 6 天,週日我們不打擾你。",
+      "body": "週一到週六早上 7 點 1 封,30 秒讀完,完全免費,不需邀請碼,不需信用卡。週日讓你跟家人喝杯咖啡。",
+      "cta": "留 Email →",
+      "visual_direction": "極簡 weekday calendar grid,六個格子有信封 icon,週日格子空白配咖啡 ☕",
+      "target_angle": "低承諾 onboarding + 反 newsletter overload",
+      "estimated_strength": 7
+    },
+    {
+      "variant_id": "V20",
+      "hook_type": "stat",
+      "hook": "本週回顧 + 下週重點 — 每週六我們做一份。",
+      "body": "週六不是平日日報,是『過去一週發生什麼 + 下週要看的 catalysts(財報 / Fed / CPI)』。你不用自己整理,我們幫你做。",
+      "cta": "免費訂閱 →",
+      "visual_direction": "週六專題 screenshot:本週 winners/losers + 下週日曆 catalysts",
+      "target_angle": "週末做功課習慣的投資者,差異化內容",
+      "estimated_strength": 8
+    }
+  ]
+}
