@@ -10,7 +10,7 @@ const INVITE_CODES = [
 
 const TIER_BY_AMOUNT = { 19900: "Pro", 190800: "Pro", 29900: "Pro", 287000: "Pro", 49900: "Premium", 478800: "Premium" };
 
-const PLAN_CAPS = { free: 3, pro: 15, premium: Infinity };
+const PLAN_CAPS = { free: 5, pro: 15, premium: Infinity };
 function planCap(plan) { return PLAN_CAPS[plan] || PLAN_CAPS.free; }
 function applyCap(us, tw, cap) {
   if (cap === Infinity || us.length + tw.length <= cap) return [us, tw];
@@ -873,7 +873,7 @@ export default {
       if (!usedBy) {
         await env.USER_PREFS.put(usedKey, email);
       }
-      // 邀請碼註冊者 = 免費方案(3 檔上限);Premium 需付費升級或管理員手動開通
+      // 邀請碼註冊者 = 免費方案(5 檔上限);Premium 需付費升級或管理員手動開通
       await env.USER_PREFS.put(`plan:${email}`, "free");
       // 歡迎信、補寄日報、推薦轉換全部背景化 —— 任一失敗都不影響「註冊成功」的回應
       ctx.waitUntil(postSignupTasks(email, body.ref, env));
