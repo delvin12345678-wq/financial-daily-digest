@@ -56,8 +56,10 @@ def _llm_generate(prompt: str) -> str:
 
 def get_personalized_subject(data: dict, us_stocks: list, tw_stocks: list, date: str) -> str:
     # 週六走 weekend recap → 主旨改成「本週回顧 + 下週重點」
+    # 週一走 monday outlook → 主旨改成「週末重點 + 週一展望」,個股提及明示「上週五」
     from datetime import datetime, timezone, timedelta
-    if (datetime.now(timezone.utc) + timedelta(hours=8)).weekday() == 5:
+    weekday = (datetime.now(timezone.utc) + timedelta(hours=8)).weekday()
+    if weekday == 5:
         return f"📅 本週回顧 + 下週重點｜MarketDaily {date}"
     us_market = data.get("us_market", {})
     tw_market = data.get("tw_market", {})
@@ -74,6 +76,13 @@ def get_personalized_subject(data: dict, us_stocks: list, tw_stocks: list, date:
             if pct > biggest_pct:
                 biggest_pct = pct
                 biggest_sym = (sym, tw_market[sym]["change_pct"])
+    if weekday == 0:
+        # 週一:基準是上週五收盤,主旨明寫「上週五」避免誤導
+        if biggest_sym and biggest_pct >= 2:
+            sym, pct = biggest_sym
+            direction = "漲" if pct > 0 else "跌"
+            return f"📅 上週五 {sym} {direction} {abs(pct):.1f}%+週一展望｜MarketDaily {date}"
+        return f"📅 週末重點 + 週一展望｜MarketDaily {date}"
     if biggest_sym and biggest_pct >= 2:
         sym, pct = biggest_sym
         direction = "漲" if pct > 0 else "跌"
@@ -784,6 +793,173 @@ def generate_weekend_report(data: dict, user_us_stocks: list = None, user_tw_sto
 5. .verdict.neutral 結尾的「週末思考」
 
 不要 markdown ```、不要在 .stock-card 內塞當日資料(改成本週區間)、不要寫「今日」「盤中」這類週六不該出現的字眼。
+"""
+
+    raw = _llm_generate(prompt)
+    if raw.startswith("```"):
+        raw = re.sub(r'^```[a-zA-Z]*\n?', '', raw)
+        raw = re.sub(r'\n?```$', '', raw)
+    result = _postprocess_html(raw, data)
+    if is_beginner:
+        result += ROOKIE_GUIDE_HTML
+    return result
+
+
+# ─── Monday Outlook(週一專用:上週五收盤 + 週末新聞 + 本週展望 + Gap 警示)──────────────
+def generate_monday_report(data: dict, user_us_stocks: list = None, user_tw_stocks: list = None,
+                           email_safe: bool = False) -> str:
+    """週一晨間日報:前兩天(週六、週日)沒開盤,所以基準是『上週五收盤』。
+    重點:週末新聞累積 + 上週五收盤回顧 + 本週 catalysts + 週一開盤 gap 風險 +
+    每檔持股仍給明確操作建議(買/抱/賣/觀望)。"""
+    if email_safe:
+        us0 = list(user_us_stocks or [])
+        tw0 = list(user_tw_stocks or [])
+        if len(us0) + len(tw0) > DIGEST_EMAIL_MAX_HOLDINGS:
+            um = data.get("us_market", {})
+            tm = data.get("tw_market", {})
+            def _mv(sym, mkt):
+                return abs((mkt.get(sym) or {}).get("change_pct", 0) or 0)
+            ranked = sorted(
+                [(s, "us") for s in us0] + [(s, "tw") for s in tw0],
+                key=lambda x: _mv(x[0], um if x[1] == "us" else tm),
+                reverse=True,
+            )[:DIGEST_EMAIL_MAX_HOLDINGS]
+            user_us_stocks = [s for s, k in ranked if k == "us"]
+            user_tw_stocks = [s for s, k in ranked if k == "tw"]
+
+    market_text = _format_market_data(data, user_us_stocks, user_tw_stocks)
+    us_news_text = _format_news(data.get("us_news", []), max_items=10)
+    tw_news_text = _format_news(data.get("tw_news", []), max_items=8)
+    date = data.get("date", "")
+
+    holdings = (user_us_stocks or []) + (user_tw_stocks or [])
+    has_holdings = bool(holdings)
+    is_beginner = len(holdings) <= 4
+
+    # 算上週五日期(今天是週一,往前推 3 天)
+    from datetime import datetime as _dt, timezone as _tz, timedelta as _td
+    tw_now = _dt.now(_tz.utc) + _td(hours=8)
+    last_friday = (tw_now - _td(days=3)).strftime("%Y-%m-%d")
+
+    default_us = ["AAPL", "MSFT", "GOOGL", "AMZN", "META", "NVDA", "TSLA", "AMD", "TSM", "JPM"]
+    watchlist_us = user_us_stocks if user_us_stocks else default_us
+    watchlist_tw = user_tw_stocks if user_tw_stocks else []
+    all_holdings = watchlist_us + watchlist_tw
+
+    # 操作訊號卡的股票清單(用戶持倉優先,持倉超過 8 檔取波動最大前 8 檔)
+    us_market = data.get("us_market", {})
+    tw_market = data.get("tw_market", {})
+    all_market = {**us_market, **tw_market}
+    def _abs_change(sym):
+        d = all_market.get(sym, {})
+        return abs(d.get("change_pct", 0))
+    if has_holdings:
+        signal_stocks = sorted(all_holdings, key=_abs_change, reverse=True)[:8]
+    else:
+        signal_stocks = ["AAPL", "MSFT", "NVDA", "TSLA"]
+
+    signal_skeleton = f"""
+<div class="signal-header">
+  <div class="signal-header-title">💡 你的持股本週怎麼操作</div>
+  <div class="signal-header-subtitle">上週五收盤位置 + 週末新聞 + 本週催化劑 · 給出明確動詞</div>
+</div>
+<div class="signal-grid">
+為以下每一支股票各生成一張 signal-card(一支都不能少,順序照列):{', '.join(signal_stocks)}
+每張卡完整格式(最外層 class 從 buy/hold/sell/wait 四選一,動詞對應:buy=買進加碼 / hold=抱緊 / sell=減碼賣出 / wait=今早觀望):
+<div class="signal-card buy">
+  <div class="signal-card-top">
+    <span class="signal-ticker">代號</span>
+    <span class="signal-day-move up">▲ +x.xx%(上週五單日)</span>
+    <div class="signal-score-block"><span class="signal-score">0-10</span><span class="signal-score-label">/ 10</span></div>
+    <span class="signal-bias bullish">📈 BULLISH</span>
+  </div>
+  <div class="signal-body">
+    <div class="signal-reason">必須含 4 要素:①上週五收盤位置(例:上週五收 $XXX,週線 +X%)②週末新聞影響(例:週末傳出 OOO 對 XXX 屬利多/利空;若無新聞寫「週末無重大新聞」)③本週催化劑(例:本週四財報、Fed 週三開會)④為何給這個動作(例:故建議今早觀望前 30 分鐘是否守住 $XXX)。嚴禁寫「靜觀其變」「視情況」「再觀察看看」這類模糊詞 — 必須有明確動詞。</div>
+    <div class="signal-battle-plan">
+      <div class="battle-row"><span class="battle-label">建議買價</span><span class="battle-val">$xxx–$xxx</span></div>
+      <div class="battle-row"><span class="battle-label">賺錢目標</span><span class="battle-val up">$xxx</span></div>
+      <div class="battle-row"><span class="battle-label">止損賣價</span><span class="battle-val down">$xxx</span></div>
+    </div>
+    <div class="signal-watch">👀 本週要盯:接下來最該盯的一件事(財報日/Fed 講話/關鍵價位)</div>
+    <div class="signal-meta">
+      <span class="signal-badge buy">🟢 建議買入</span>
+      <span class="signal-confidence">信心 XX%</span>
+      <span class="signal-horizon">⏱ 本週視角</span>
+    </div>
+  </div>
+</div>
+規則:
+- signal-ticker span 內只放純代號(例如 NVDA、2330),系統會自動補公司中英文名
+- signal-day-move 填「上週五」單日漲跌幅,class(up/down)跟漲跌方向一致;上週五無數據就整個 signal-day-move span 省略
+- 評分對應:8-10 強力買進 / 6-7 偏多可加碼 / 4-5 持有觀望 / 2-3 偏空減碼 / 0-1 建議賣出
+- signal-badge 文字用「🟢 建議買入 / 🟡 續抱持有 / 🔴 建議賣出 / ⚪ 今早觀望」,class 對應 buy/hold/sell/wait,要跟最外層 class 一致
+- 進場/目標/停損價位要落在該股上週五收盤的合理範圍,台股台幣、美股美元
+- 嚴禁省略 signal-header、signal-ticker、signal-reason 三個 span — 缺一個系統「一眼看懂」總覽就生不出來
+</div>
+<div class="signal-disclaimer">⚠️ AI 分析僅供參考,不構成投資建議</div>"""
+
+    prompt = f"""你是這位用戶的專屬財經顧問。今天是**週一晨間**,週六週日股市都沒開盤,所以這份報告的數據基準是「**上週五({last_friday})收盤**」,內容主軸是:
+1. 週末兩天累積的新聞(可能影響今早開盤)
+2. 上週五美股/台股收盤回顧
+3. 週一開盤可能跳空的風險(gap risk)
+4. 本週重要事件預告(財報、Fed、CPI、台股除權息等)
+5. 每檔持股的明確操作建議(必須給出動詞)
+
+【無幻覺原則 — 違反就廢稿】
+- 所有內容只能基於下方提供的真實市場數據和新聞,不得憑空補充或臆測
+- 新聞 URL 必須一字不差原樣複製,嚴禁編造
+- 找不到對應真實新聞就不要硬寫
+- 「上週五收盤」價格直接引用下方市場數據,不可改動
+
+【個人化原則】
+- 用戶持倉:{', '.join(holdings) if has_holdings else '尚未設定持股,以大盤龍頭股為例'}
+- 內容圍繞他的持股做:上週五表現 + 週末新聞影響 + 本週催化劑 + 操作建議
+- 台股一律用公司名稱(可附代號),不要只報數字
+
+【🚨 強制操作建議規則(週一最重要)】
+就算前兩天沒開盤,**每檔持股仍必須給出明確操作動詞**。不可寫「靜觀其變」「視情況」「再觀察看看」這類模糊詞。
+每張 signal-card 必須:
+- class 用 "buy" / "hold" / "sell" / "wait" 其中一個(對應動詞:買進加碼 / 抱緊 / 減碼賣出 / 觀望)
+- signal-reason 必須包含:
+  ① 上週五收盤位置(例:「上週五收 $XXX,週線+X%」)
+  ② 週末新聞影響(例:「週末傳出 OOO,對 XXX 屬利多/利空」),如無新聞寫「週末無重大新聞」
+  ③ 本週要盯的催化劑(例:「本週四財報」、「Fed 週三開會」)
+  ④ 為什麼是這個動作(例:「故建議今早觀望,等盤中前 30 分鐘看是否守住 $XXX」)
+- 嚴禁只給動詞不給理由
+
+【📅 週末新聞 + 週一 Gap 風險】
+這是週一特有區塊,必須出現:
+- 整理週末兩天(週六週日)累積的關鍵新聞,標題明示「週末發生」
+- 根據週末新聞推估今早美股期貨/台股開盤偏多/偏空/中性的方向
+- 對應到具體 playbook:例如「若 NVDA 開盤跳空向上 >2% → 等回拉接;跳空向下 → 分批接 $XXX-XXX」
+
+【本週催化劑(必須出現)】
+- 從新聞中找出本週會發生的事件:財報日、Fed 講話、CPI/PPI、台股除權息
+- 條列 5-8 個 catalysts,標明日期(週幾)與對哪些持股有影響
+- 如新聞中沒提到,寫「本週新聞中未明示具體事件,持續追蹤」即可,不要捏造
+
+【日期】{date}(週一,基準=上週五 {last_friday} 收盤)
+
+【上週五市場數據】
+{market_text}
+
+【週末美股新聞(週六週日累積)】
+{us_news_text}
+
+【週末台股新聞(週六週日累積)】
+{tw_news_text}
+
+【輸出格式】嚴格回傳純 HTML,沿用平日日報 CSS class,順序如下:
+1. .tldr 區改成「📅 週一展望」標題,列 3-4 條:①週末最大事件 ②上週五收盤摘要 ③本週要看什麼 ④今早 gap 方向
+2. .section-label「📰 週末重點新聞」+ 數張 .news-card,標題明示「週末發生」,有影響個股就掛 impact-stock
+3. .section-label「📊 上週五收盤回顧」+ .market-summary,**所有數據敘述都要說「上週五」不可寫「今天」**
+4. .section-label「⚠️ 週一開盤 Gap 風險」+ 一張 .verdict.SENTIMENT 卡片,寫明開盤方向 + 具體 playbook
+5. .section-label「📅 本週催化劑」+ .watch-list 列出本週事件 + 日期
+6. **持股操作訊號卡(必須完整輸出下方 signal-skeleton 模板)**:
+{signal_skeleton}
+7. .verdict.neutral 結尾「週一心法」,提醒週一通常波動大、可觀察前 30 分鐘再進場
+
+不要 markdown ```、不要寫「今天大盤」這類週一早上不該出現的字眼(因為現在還沒開盤),改用「上週五」「今早開盤前」「本週」。
 """
 
     raw = _llm_generate(prompt)

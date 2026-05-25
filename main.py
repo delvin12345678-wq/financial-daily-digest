@@ -11,18 +11,35 @@ cssutils.log.setLevel(logging.CRITICAL)
 from datetime import datetime, timezone, timedelta
 from data_fetcher import fetch_all
 from fake_news_filter import filter_us_news, filter_tw_news
-from analyzer import generate_report, generate_weekend_report, DIGEST_EMAIL_MAX_HOLDINGS
+from analyzer import generate_report, generate_weekend_report, generate_monday_report, DIGEST_EMAIL_MAX_HOLDINGS
 from publisher import publish_to_brevo
 
 
-# 週六晨間(TWT)走 weekend recap 版本 — digest-cron 已把週日跳過,週六照寄但內容轉本週回顧
+# 週六晨間(TWT)走 weekend recap、週一晨間走 monday outlook、其他平日走預設版
 def _is_saturday_tw() -> bool:
     tw_now = datetime.now(timezone.utc) + timedelta(hours=8)
     return tw_now.weekday() == 5  # Monday=0, Saturday=5
 
 
+def _is_monday_tw() -> bool:
+    tw_now = datetime.now(timezone.utc) + timedelta(hours=8)
+    return tw_now.weekday() == 0
+
+
 def _report_fn():
-    return generate_weekend_report if _is_saturday_tw() else generate_report
+    if _is_saturday_tw():
+        return generate_weekend_report
+    if _is_monday_tw():
+        return generate_monday_report
+    return generate_report
+
+
+def _report_variant_label() -> str:
+    if _is_saturday_tw():
+        return "週末回顧"
+    if _is_monday_tw():
+        return "週一展望"
+    return "預設"
 
 
 CSS = """
@@ -434,7 +451,7 @@ def run():
         print("② 過濾假訊息...")
         data["us_news"] = filter_us_news(data["us_news"])
         data["tw_news"] = filter_tw_news(data["tw_news"])
-        print(f"③ AI 生成報告（{'週末回顧' if _is_saturday_tw() else '預設'}版）...")
+        print(f"③ AI 生成報告（{_report_variant_label()}版）...")
         inner = _report_fn()(data)
         print("④ 生成 AI 市場情緒 Banner...")
         inner = _inject_ai_banner(inner, data["date"])
@@ -470,8 +487,8 @@ def run():
     print(f"   美股新聞：{len(data['us_news'])} 則通過過濾")
     print(f"   台股新聞：{len(data['tw_news'])} 則通過過濾")
 
-    is_sat = _is_saturday_tw()
-    print(f"④ 生成 AI 市場情緒 Banner（{'週末回顧' if is_sat else '預設'}版）...")
+    variant_label = _report_variant_label()
+    print(f"④ 生成 AI 市場情緒 Banner（{variant_label}版）...")
     default_report = _report_fn()(data)
     default_report = _inject_ai_banner(default_report, data["date"])
     print("⑤ 儲存本地預覽（預設版）...")

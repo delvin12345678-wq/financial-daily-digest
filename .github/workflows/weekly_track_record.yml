@@ -1,10 +1,14 @@
-name: 戰績紀錄每週刷新
+name: 戰績紀錄刷新
 
-# 每週日 15:00 UTC = 台灣時間 23:00,跑完更新 docs/data/track-record.json
-# 並把變更 commit 回 main + 用 wrangler 部署到 Cloudflare Pages。
+# 兩個排程點:
+#  1) 美股每個交易日收盤 +2 小時:UTC 週一~週五 22:07 = TW 週二~週六 06:07
+#     美股 NY 16:00 ET 收盤 ≈ UTC 20:00,加 2 小時讓 Yahoo 數據結算穩定
+#  2) 每週日 15:00 UTC = TW 週日 23:00:全量回掃 + 週末總整理
+# 跑完更新 docs/data/track-record.json,commit 回 main 並用 wrangler 部署 Pages
 on:
   schedule:
-    - cron: "0 15 * * 0"     # 每週日 23:00 TWT
+    - cron: "7 22 * * 1-5"   # 美股交易日收盤 +2 小時
+    - cron: "0 15 * * 0"     # 每週日 23:00 TWT 全量回掃
   workflow_dispatch:          # 手動觸發備援
 
 permissions:
@@ -48,7 +52,7 @@ jobs:
           git config user.name "marketdaily-bot"
           git config user.email "marketdailyhq@gmail.com"
           git add docs/data/track-record.json
-          git commit -m "chore(track-record): weekly auto-refresh $(date -u +%Y-%m-%d)"
+          git commit -m "chore(track-record): auto-refresh $(date -u +%Y-%m-%d_%H%M)UTC"
           git push origin HEAD:main
           echo "no_changes=false" >> "$GITHUB_OUTPUT"
 
@@ -67,4 +71,4 @@ jobs:
           npx wrangler@latest pages deploy docs \
             --project-name marketdaily \
             --commit-dirty=true \
-            --commit-message "Weekly track-record refresh"
+            --commit-message "track-record auto-refresh"
