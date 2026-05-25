@@ -1,15 +1,15 @@
 {
   "stats": {
-    "generated_at": "2026-05-24T18:13:34",
-    "days_covered": 3,
-    "total_records": 24,
-    "judged_records": 18,
-    "a_count": 11,
-    "a_wins": 10,
-    "a_rate": 90.9,
-    "c_count": 7,
-    "c_wins": 3,
-    "c_rate": 42.9
+    "generated_at": "2026-05-25T14:15:54",
+    "days_covered": 2,
+    "total_records": 18,
+    "judged_records": 12,
+    "a_count": 12,
+    "a_wins": 11,
+    "a_rate": 91.7,
+    "c_count": 0,
+    "c_wins": 0,
+    "c_rate": 0.0
   },
   "records": [
     {
@@ -135,30 +135,6 @@
     {
       "date": "2026-05-21",
       "name": "",
-      "ticker": "NVDA",
-      "market": "us",
-      "verdict_class": "wait",
-      "verdict_text": "⚠️ 風險",
-      "reason": "今天小漲，但 Nvidia 承認中國 AI 晶片市場可能讓給華為，長期來看對營收有潛在壓力，建議觀望。",
-      "type": "C",
-      "source": "stock-card",
-      "outcome": "win"
-    },
-    {
-      "date": "2026-05-21",
-      "name": "",
-      "ticker": "NFLX",
-      "market": "us",
-      "verdict_class": "wait",
-      "verdict_text": "⚠️ 風險",
-      "reason": "今天小跌，可能受市場對串流媒體競爭加劇的擔憂影響，建議觀望。",
-      "type": "C",
-      "source": "stock-card",
-      "outcome": "win"
-    },
-    {
-      "date": "2026-05-21",
-      "name": "",
       "ticker": "MSFT",
       "market": "us",
       "verdict_class": "buy",
@@ -206,18 +182,6 @@
     },
     {
       "date": "2026-05-21",
-      "name": "群創",
-      "ticker": "3481",
-      "market": "tw",
-      "verdict_class": "wait",
-      "verdict_text": "⚠️ 風險",
-      "reason": "群創今天小跌，面板產業近期波動較大，建議觀望，注意停損。",
-      "type": "C",
-      "source": "stock-card",
-      "outcome": "loss"
-    },
-    {
-      "date": "2026-05-21",
       "name": "國泰金",
       "ticker": "2882",
       "market": "tw",
@@ -253,52 +217,16 @@
       "outcome": "win"
     },
     {
-      "date": "2026-05-20",
-      "name": "",
-      "ticker": "TSLA",
-      "market": "us",
-      "verdict_class": "wait",
-      "verdict_text": "⚠️ 風險",
-      "reason": "TSLA 跌 1.43%，建議觀望。",
-      "type": "C",
-      "source": "stock-card",
-      "outcome": "loss"
-    },
-    {
-      "date": "2026-05-20",
-      "name": "",
-      "ticker": "NVDA",
-      "market": "us",
-      "verdict_class": "wait",
-      "verdict_text": "⚠️ 風險",
-      "reason": "NVDA 小跌 0.77%，建議觀望。",
-      "type": "C",
-      "source": "stock-card",
-      "outcome": "win"
-    },
-    {
-      "date": "2026-05-20",
-      "name": "聯發科",
-      "ticker": "2454",
-      "market": "tw",
-      "verdict_class": "wait",
-      "verdict_text": "⚠️ 風險",
-      "reason": "聯發科大跌 7.21%，建議觀望。",
-      "type": "C",
-      "source": "stock-card",
-      "outcome": "loss"
-    },
-    {
-      "date": "2026-05-20",
+      "date": "2026-05-21",
       "name": "台積電",
       "ticker": "2330",
       "market": "tw",
-      "verdict_class": "wait",
-      "verdict_text": "⚠️ 風險",
-      "reason": "台積電跌 1.56%，建議觀望。",
-      "type": "C",
+      "verdict_class": "buy",
+      "verdict_text": "🟢 偏多",
+      "reason": "台積電今天小跌，雖然大盤漲勢強勁，但權值股表現分歧，建議觀望。",
+      "type": "A",
       "source": "stock-card",
-      "outcome": "loss"
+      "outcome": "win"
     }
   ]
 }

@@ -414,7 +414,8 @@ def generate_report(data: dict, user_us_stocks: list = None, user_tw_stocks: lis
 2. 在「今天的結論」後面，加一個「💡 你可能也感興趣」區塊，推薦 2-3 支跟用戶持倉同產業或有關聯的股票，附上今日表現和一句話說明理由
 3. TLDR 的最後一條改成：「建議你也關注：XXX（理由一句話）」"""
 
-    holdings_instruction = f"（只寫用戶持倉：{', '.join(watchlist_us)}，有數據的才寫。stock-comment 必須與該股今日實際漲跌方向一致——上漲就講上漲原因、下跌就講下跌原因，嚴禁對下跌的股票說「營收成長帶來正面影響」這類與走勢矛盾的話。每支給明確今日評語：漲跌原因 + 短期要注意什麼）"
+    holdings_instruction = f"（只寫用戶持倉：{', '.join(watchlist_us)}，有數據的才寫。stock-comment 必須與該股今日實際漲跌方向一致——上漲就講上漲原因、下跌就講下跌原因，嚴禁對下跌的股票說「營收成長帶來正面影響」這類與走勢矛盾的話。每支給明確今日評語：漲跌原因 + 短期要注意什麼。"
+    "‼️ 看空語意管控：『觀望/拉回/保守』屬中性偏謹慎，不要在 stock-comment 隨手丟。要喊看空就要言之有物：用『停損/減碼/獲利了結/短期過熱/風險升高/看跌/偏空』這類強看空詞，且必須說明具體理由（估值過高、技術破位、催化劑利空等）。若只是當日小跌但中期中性，直接寫『短線拉回但中期維持中性』，不要混用看空詞。）"
     tw_holdings_instruction = ""
     if watchlist_tw:
         tw_holdings_instruction = f"""
@@ -490,6 +491,7 @@ def generate_report(data: dict, user_us_stocks: list = None, user_tw_stocks: lis
 - signal-day-move 填該股今日實際漲跌幅，class（up/down）跟漲跌方向一致；今日無數據就整個 signal-day-move span 省略
 - 評分對應：8-10 強力買進 / 6-7 偏多可加碼 / 4-5 持有觀望 / 2-3 偏空減碼 / 0-1 建議賣出
 - signal-badge 文字用「🟢 建議買入 / 🟡 續抱持有 / 🔴 建議賣出 / ⚪ 暫時觀望」，class 對應 buy/hold/sell/wait，要跟最外層 class 一致
+- ‼️ 敢給 sell/wait：當該股有真實利空（估值過高 / 技術破位 / 重大利空消息 / 法人連續賣超），就要明確給 sell（強利空）或 wait（短中期不利但未到認賠程度），不要為了「政治正確」永遠 buy/hold。理由必須言之有物，不可只寫「短期波動大」這種空話
 - 進場 / 目標 / 停損價位要落在該股目前股價的合理範圍，台股用台幣、美股用美元
 </div>
 <div class="signal-disclaimer">⚠️ AI 分析僅供參考，不構成投資建議</div>"""
@@ -893,6 +895,7 @@ def generate_monday_report(data: dict, user_us_stocks: list = None, user_tw_stoc
 - signal-day-move 填「上週五」單日漲跌幅,class(up/down)跟漲跌方向一致;上週五無數據就整個 signal-day-move span 省略
 - 評分對應:8-10 強力買進 / 6-7 偏多可加碼 / 4-5 持有觀望 / 2-3 偏空減碼 / 0-1 建議賣出
 - signal-badge 文字用「🟢 建議買入 / 🟡 續抱持有 / 🔴 建議賣出 / ⚪ 今早觀望」,class 對應 buy/hold/sell/wait,要跟最外層 class 一致
+- ‼️ 敢給 sell/wait:當該股有真實利空(週末爆出重大利空新聞 / 上週五已破關鍵支撐 / 本週有負面催化劑),就要明確給 sell 或 wait,不要為了「政治正確」永遠 buy/hold。理由必須言之有物,點名具體利空消息或價位
 - 進場/目標/停損價位要落在該股上週五收盤的合理範圍,台股台幣、美股美元
 - 嚴禁省略 signal-header、signal-ticker、signal-reason 三個 span — 缺一個系統「一眼看懂」總覽就生不出來
 </div>

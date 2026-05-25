@@ -34,8 +34,12 @@ CDN_BASE = "https://marketdaily.ai/output"
 # ── Keyword maps ──────────────────────────────────────────────────
 BULL_KW = ("看漲", "建議買進", "可以買進", "繼續持有", "繼續抱", "抱緊", "適合新手",
            "穩健", "動能充足", "可以期待", "強勁", "突破", "偏多")
-BEAR_KW = ("停損", "獲利了結", "認賠出場", "建議賣出", "風險升高", "短期過熱", "拉回",
-           "觀望", "別出手", "保守", "減碼", "看跌", "偏空")
+
+# 真正看空才算 C(stock-card 解析時必須命中至少 2 個關鍵字才採用,避免「觀望」
+# 之類的中性偏謹慎詞被當成看空,造成 C 類勝率虛低)。
+# 已移除 "拉回" "觀望" "保守" "別出手" — 這些屬於中性偏謹慎,不是看空。
+BEAR_KW = ("停損", "獲利了結", "認賠出場", "建議賣出", "風險升高", "短期過熱",
+           "減碼", "看跌", "偏空")
 
 # ── TW ticker → 中文公司名 對照表 ────────────────────────────────
 # 用於 signal-card / stock-card 解析時補上中文公司名(parse 出來只有 4 位數代碼時)
@@ -178,11 +182,14 @@ def parse_digest_html(date_str: str, html: str) -> list[dict]:
             continue
         name = _enrich_tw_name(name, ticker)
         comment = _clean(comment_div.get_text())
-        hit_bear = any(kw in comment for kw in BEAR_KW)
-        hit_bull = any(kw in comment for kw in BULL_KW)
-        if hit_bear and not hit_bull:
+        bear_hits = sum(1 for kw in BEAR_KW if kw in comment)
+        bull_hits = sum(1 for kw in BULL_KW if kw in comment)
+        # stock-card 沒有明確 verdict,完全靠 NLP 推斷,門檻要嚴:
+        # 看空必須命中 ≥2 個強看空詞才採用,避免單一個「停損」二字就被當看空
+        # 看多只要命中 ≥1 個(看多詞本身就比較少誤判)
+        if bear_hits >= 2 and bull_hits == 0:
             verdict_class, rtype = "wait", "C"
-        elif hit_bull and not hit_bear:
+        elif bull_hits >= 1 and bear_hits == 0:
             verdict_class, rtype = "buy", "A"
         else:
             continue
@@ -309,8 +316,12 @@ def judge(rec: dict, prices: dict) -> str | None:
         return "win" if chg >= 0 else "loss"
     if vc == "hold":
         return "win" if abs(chg) <= 0.02 else "loss"
-    if vc in ("sell", "wait"):
+    if vc == "sell":
+        # sell 是強信號,必須真跌才算對
         return "win" if chg < 0 else "loss"
+    if vc == "wait":
+        # wait 是「中性偏空 / 暫時別進場」— 加 1% 緩衝,小漲不算錯
+        return "win" if chg < 0.01 else "loss"
     return None
 
 
