@@ -178,18 +178,73 @@ def _call_gemini(prompt: str, model: str) -> str:
     return resp.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
 
 
+def _call_claude(prompt: str) -> str:
+    """Claude Haiku 4.5 作為付費後援(Gemini 全掛時用)。需要 ANTHROPIC_API_KEY。"""
+    import os
+    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    if not api_key:
+        raise RuntimeError("未設定 ANTHROPIC_API_KEY")
+    resp = requests.post(
+        "https://api.anthropic.com/v1/messages",
+        headers={"x-api-key": api_key, "anthropic-version": "2023-06-01",
+                 "content-type": "application/json"},
+        json={
+            "model": "claude-haiku-4-5-20251001",
+            "max_tokens": 16000,
+            "system": _SYSTEM_PROMPT,
+            "messages": [{"role": "user", "content": prompt}],
+        },
+        timeout=180,
+    )
+    resp.raise_for_status()
+    data = resp.json()
+    return "".join(b.get("text", "") for b in data.get("content", [])).strip()
+
+
+def _call_openai(prompt: str) -> str:
+    """OpenAI gpt-4o-mini 作為最終付費後援(Claude 也掛時用)。需要 OPENAI_API_KEY。"""
+    import os
+    api_key = os.environ.get("OPENAI_API_KEY")
+    if not api_key:
+        raise RuntimeError("未設定 OPENAI_API_KEY")
+    resp = requests.post(
+        "https://api.openai.com/v1/chat/completions",
+        headers={"Authorization": f"Bearer {api_key}",
+                 "Content-Type": "application/json"},
+        json={
+            "model": "gpt-4o-mini",
+            "max_tokens": 16000,
+            "temperature": 0.4,
+            "messages": [
+                {"role": "system", "content": _SYSTEM_PROMPT},
+                {"role": "user", "content": prompt},
+            ],
+        },
+        timeout=180,
+    )
+    resp.raise_for_status()
+    return resp.json()["choices"][0]["message"]["content"].strip()
+
+
 def _llm_generate(prompt: str) -> str:
-    """免費 LLM 引擎鏈：依序嘗試各 Gemini 免費模型，全部失敗才報錯。"""
+    """多 provider LLM 鏈:Gemini Flash → Gemini Lite → Claude Haiku → OpenAI gpt-4o-mini。
+    四層 LLM,任一可用就成功 — deterministic fallback 在現實中應該永遠跑不到。
+    2026-05-26:用戶要求不能有「最差情況」,LLM 路徑必須近 100%。"""
     last_err = None
+    providers = []
     for model in GEMINI_MODELS:
+        providers.append((f"gemini:{model}", lambda p, m=model: _call_gemini(p, m)))
+    providers.append(("claude:haiku-4.5", _call_claude))
+    providers.append(("openai:gpt-4o-mini", _call_openai))
+    for name, fn in providers:
         try:
-            out = _call_gemini(prompt, model)
-            print(f"  [LLM] 使用 {model}")
+            out = fn(prompt)
+            print(f"  [LLM] 使用 {name}")
             return out
         except Exception as e:
             last_err = e
-            print(f"  [LLM] {model} 失敗（{e}）")
-    raise RuntimeError(f"所有免費 LLM 引擎都失敗：{last_err}")
+            print(f"  [LLM] {name} 失敗({str(e)[:120]})")
+    raise RuntimeError(f"所有 LLM provider 都失敗:{last_err}")
 
 
 def get_personalized_subject(data: dict, us_stocks: list, tw_stocks: list, date: str) -> str:
