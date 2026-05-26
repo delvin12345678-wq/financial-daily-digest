@@ -116,15 +116,32 @@ def audit_digest(
         fails.append({"check": "signal_card_missing_battle", "severity": "high",
                       "msg": f"{cards_missing_battle}/{len(signal_cards)} 張 signal-card 缺少進場/目標/停損價位"})
 
-    # 9. 持股覆蓋率:用戶每支持股至少要在 signal-card 出現一次
+    # 9. 持股覆蓋率:用戶每支持股**都**要在 signal-card 出現,漏一支都 high
+    # 2026-05-26 用戶:「使用者選擇每一個台股美股都要顯示下一步」
     all_holdings = us_holdings + tw_holdings
     if all_holdings and signal_cards:
         signal_text = " ".join(signal_cards)
         missing = [s for s in all_holdings if s not in signal_text]
         if missing:
-            severity = "high" if len(missing) >= 3 else "med"
-            fails.append({"check": "holdings_uncovered", "severity": severity,
-                          "msg": f"{len(missing)}/{len(all_holdings)} 支持股沒進 signal-card:{missing[:5]}"})
+            fails.append({"check": "holdings_uncovered", "severity": "high",
+                          "msg": f"用戶選的 {len(missing)}/{len(all_holdings)} 支持股沒給 signal-card 下一步:{missing[:10]}"})
+
+    # 9b. 每張 signal-reason 必須有「下一步」具體性:至少一個 $/NT$/數字+元 或時間窗
+    if signal_cards:
+        vague_cards = []
+        for card in signal_cards:
+            reason_m = re.search(r'<div class="signal-reason"[^>]*>(.*?)</div>', card, re.S)
+            if not reason_m:
+                continue
+            reason = reason_m.group(1)
+            has_price = re.search(r"\$\s*\d|NT\$?\s*\d|\d+\s*(元|美元|塊|點)", reason)
+            has_time_window = re.search(r"今早|今晚|盤後|盤前|財報前|財報後|開盤|收盤|本週|下週|\d+\s*月\s*\d+", reason)
+            if not (has_price or has_time_window):
+                ticker_m = re.search(r'<span class="signal-ticker"[^>]*>([^<]+)</span>', card)
+                vague_cards.append(ticker_m.group(1).strip() if ticker_m else "?")
+        if vague_cards:
+            fails.append({"check": "signal_reason_vague", "severity": "high",
+                          "msg": f"{len(vague_cards)} 張 signal-card 的「下一步」沒附價位或時間窗(虛詞卡):{vague_cards[:10]}"})
 
     # ───── 大盤覆蓋 ─────
     market_sec = _section(html, "market-summary")

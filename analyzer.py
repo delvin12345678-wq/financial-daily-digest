@@ -464,7 +464,9 @@ def _postprocess_html(html: str, data: dict) -> str:
     return html
 
 
-DIGEST_EMAIL_MAX_HOLDINGS = 12
+DIGEST_EMAIL_MAX_HOLDINGS = 30  # email 版上限提到 30(原 12 太少)。Gmail 約 102KB 截斷,
+# 30 張 signal-card + TLDR + 新聞應該還在範圍內。網頁完整版仍含全部不切。
+# 2026-05-26 用戶炸:「使用者選擇每一個台股美股都要顯示」,原 12 等於把 27 支砍掉 15 支。
 
 # 新手專區：開戶教學 + 名詞小辭典（靜態內容，附在輕度用戶日報底部）
 ROOKIE_GUIDE_HTML = """
@@ -590,19 +592,23 @@ def generate_report(data: dict, user_us_stocks: list = None, user_tw_stocks: lis
     def _abs_change(sym):
         d = all_market.get(sym, {})
         return abs(d.get("change_pct", 0))
-    # 個人化版本：用戶每一支持倉都要有操作訊號卡（上限 10 張，依波動排序）
+    # 個人化版本：用戶每一支持倉都要有操作訊號卡 — **絕對不切**,日報是主商品,
+    # 用戶選的每一支台股美股都必須給「下一步」。波動大者排前面方便讀,但全留。
+    # 2026-05-26 用戶炸:「使用者選擇每一個台股美股都要顯示下一步他們要做什麼」
     if has_holdings:
-        top_signal_stocks = sorted(signal_stocks, key=_abs_change, reverse=True)[:10]
+        top_signal_stocks = sorted(signal_stocks, key=_abs_change, reverse=True)
     else:
         top_signal_stocks = sorted(signal_stocks, key=_abs_change, reverse=True)[:5]
 
     signal_instruction = f"""
 <div class="signal-header">
   <div class="signal-header-title">⚡ 詳細進出場計畫</div>
-  <div class="signal-header-subtitle">上面每支股票的買賣價位拆解 · 1-2 週視角</div>
+  <div class="signal-header-subtitle">用戶選的每一支台股美股,都列下一步要做什麼 · 1-2 週視角</div>
 </div>
 <div class="signal-grid">
-為以下每一支股票各生成一個 signal-card（一支都不能少，順序照列）：{', '.join(top_signal_stocks)}
+**為以下每一支股票各生成一個 signal-card（共 {len(top_signal_stocks)} 支,一支都不能少、不能合併、不能省略,順序照列）**：{', '.join(top_signal_stocks)}
+⚠️ 這份是用戶的主商品 — 他選的每一支都期待看到「下一步」,漏掉任一支用戶會炸。如果某支今日無報價數據,仍要生成 signal-card,用「📭 今日無報價」標示,並寫「等盤後數據出來後 X」這類動作。
+
 每張卡格式（最外層 class 從 buy/hold/sell/wait 四選一，要跟結論一致）：
 <div class="signal-card buy">
   <div class="signal-card-top">
@@ -612,13 +618,13 @@ def generate_report(data: dict, user_us_stocks: list = None, user_tw_stocks: lis
     <span class="signal-bias bullish">📈 BULLISH</span>
   </div>
   <div class="signal-body">
-    <div class="signal-reason">用新手也聽得懂的白話，講這支股票今天該怎麼辦，依它今天自己的數據與消息，不可用「AI 潛力」這類通用空話</div>
+    <div class="signal-reason">**下一步要做什麼**:用白話講清楚這支股票「{'今早 9:00 開盤後' if mkt_status['tw_will_open_today'] else '下個交易日'}」(台股) 或「{'今晚開盤後' if mkt_status['us_will_open_tonight'] else '下個交易日'}」(美股) 該做什麼具體動作。動作必須是「買進 X / 加碼 X / 續抱 X / 減碼 X / 賣出 X / 等到 X 條件才動」其中一個,絕對禁止只寫「觀望」「先別動」「保守」沒附條件的虛詞。每張卡至少要有 1 個明確價位 + 1 個觸發條件(時間或事件)。例:「今晚開盤後若跌到 $580 以下,分批接 1/3 部位;若直接開高跳空,等回測 $590 再進」</div>
     <div class="signal-battle-plan">
       <div class="battle-row"><span class="battle-label">建議買價</span><span class="battle-val">$xxx–$xxx</span></div>
       <div class="battle-row"><span class="battle-label">賺錢目標</span><span class="battle-val up">$xxx</span></div>
       <div class="battle-row"><span class="battle-label">止損賣價</span><span class="battle-val down">$xxx</span></div>
     </div>
-    <div class="signal-watch">👀 觀察重點：接下來最該盯的一件事（財報日 / 某個關鍵價位 / 某則消息後續）</div>
+    <div class="signal-watch">👀 觀察重點：接下來最該盯的一件事（具體財報日 / 某個關鍵價位 / 某則消息後續）— 不可寫「持續觀察」這種空話</div>
     <div class="signal-meta">
       <span class="signal-badge buy">🟢 建議買入</span>
       <span class="signal-confidence">信心 XX%</span>
@@ -633,6 +639,7 @@ def generate_report(data: dict, user_us_stocks: list = None, user_tw_stocks: lis
 - signal-badge 文字用「🟢 建議買入 / 🟡 續抱持有 / 🔴 建議賣出 / ⚪ 暫時觀望」，class 對應 buy/hold/sell/wait，要跟最外層 class 一致
 - ‼️ 敢給 sell/wait：當該股有真實利空（估值過高 / 技術破位 / 重大利空消息 / 法人連續賣超），就要明確給 sell（強利空）或 wait（短中期不利但未到認賠程度），不要為了「政治正確」永遠 buy/hold。理由必須言之有物，不可只寫「短期波動大」這種空話
 - 進場 / 目標 / 停損價位要落在該股目前股價的合理範圍，台股用台幣、美股用美元
+- **signal-reason 內必須出現至少一個 $ 美元 / NT$ / 數字+元 / 時間窗(今早/今晚/盤後/財報前/X 月 X 日);三件都缺就是廢卡**
 </div>
 <div class="signal-disclaimer">⚠️ AI 分析僅供參考，不構成投資建議</div>"""
 
