@@ -95,6 +95,12 @@ noise grain、scroll progress bar、page transition wipe、magnetic buttons、cl
 | 技能 | 用途 |
 |------|------|
 | `ui-ux-pro-max` | 全方位 UI/UX 設計智能（50+ 樣式、161 色板、57 字型配對、99 UX 規範、25 圖表類型，涵蓋 React/Next.js/Vue/Svelte/SwiftUI/React Native/Flutter/Tailwind/shadcn/HTML）；同時包含 MarketDaily 品牌設計系統（深色玻璃卡片、indigo 漸層、Inter 字體、scene-reveal 動畫） |
+| `spy` | 競品廣告偵察:抓 Meta Ad Library / TikTok Creative Center / Google Ads Transparency 上競品在跑什麼廣告,找 hook / promo / whitespace |
+| `competitive-ads-extractor` | 從 /spy 抓到的競品廣告中拆出可複製骨架:hook pattern、pain framing、social proof、CTA、視覺 grid |
+| `bulk-creative` | 批量產 10-30 套廣告 variant(headline × body × CTA × 視覺),強制多樣性(hook 類型、pain framing、視覺方向)|
+| `ads-score` | 對廣告 variants 5 維打分(hook / CTA / value / target / risk),自動 flag 法規違規(保證/穩賺)直接 kill |
+| `ads-meta` | 把 top creative 包成完整 Meta Ads Campaign / Ad Set / Ad spec(audience, budget, schedule, UTM, conversion event),手動或 API 模式 |
+| **Marketing Agents 串聯** | 用戶說「Marketing Agents」= 5 個工具按序跑:`/spy` → `/competitive-ads-extractor` → `/bulk-creative` → `/ads-score` → `/ads-meta` |
 | `nano-banana-pro` | 快速生成 AI 影片概念或網站，單一想法直接輸出 |
 | `open-generative-ai` | 使用 OpenAI / DALL-E 生成圖片或內容（opengenai_client.py / image_generator.py） |
 | `workflow` | 執行 MarketDaily 每日日報 Pipeline（tuna_pipeline → HTML → 部署） |
@@ -214,6 +220,8 @@ noise grain、scroll progress bar、page transition wipe、magnetic buttons、cl
 
 ## 重要慣例（從過去 session 學到）
 - **🚫 禁止手動寄信（用戶 2026-05-22 明確指令）**：非台灣時間早上 7:00，禁止做任何會寄 email 給訂閱者的動作 —— 包括手動觸發 `daily_digest` workflow、跑 `send_*.py` 測試腳本、直接 curl Brevo 寄信 API。日報**只能**由 digest-cron worker 的排程 cron（每天 06:55 UTC）自動寄出。**唯一例外**：新訂閱者歡迎信，由 Cloudflare Worker 在註冊當下自動發送，允許。已加 PreToolUse hook（`.claude/hooks/block-mass-email.sh`）強制攔截。任何發信動作有疑慮一律先問用戶，不可自行觸發。
+- **🚫 社群自動發文：發前必逐字驗 caption（2026-05-26 出包）**：`marketing/daily_run.py` 跑前**必須**先 `python daily_run.py --dry` 看下一篇 id，然後讀 `social_posts.json` 對該 id 的 caption + 圖片內容，逐字比對現行方案/事實（價格、來源數、勝率、邀請制、即時市況）。任何一條對不上 → 停手不發、先問用戶。歷史教訓:5/26 我直接補發 `referral`,caption 還寫「免費方案邀請制」+「推薦 3 人 → Pro 免費 1 個月」(早改掉的舊文案);同一批 `social_posts.json` 還埋有「75+ 來源」「勝率 75.5%」「捏造訂戶 Jason」「寫死 Fed/台積電/油價」等地雷,全清空 backup 在 `marketing/social_posts.json.bak-2026-05-26`。
+- **社群排程改 Cloudflare Worker cron（2026-05-26）**：原本 `~/Library/LaunchAgents/com.marketdaily.socialpost.plist` 因 Mac 睡眠 missed 14:00 firing → 改 05:00 補跑導致時間亂掉,已 unload + rename `.disabled-by-cf-worker`。改用 `social-post-cron/` worker 觸發 `social_post.yml` workflow。**目前 cron = []**(暫停,等 social_posts.json 重填新文案才開回 `0 6 * * *` = 14:00 TW)。要重啟:改 `social-post-cron/wrangler.toml` 內 `crons` 後 `npx wrangler deploy`。手動觸發:`/trigger?token=<INTERNAL_TOKEN>`。
 - **不加自訂游標**：ui-pro.js 裡的 custom cursor 已刪除，不要再加
 - **Email 樣式**：日報一律用完整 HTML 卡片樣式，不能是純文字
 - **台股顯示**：偏好 tag 要同時顯示股票代碼 + 公司名稱
