@@ -1,0 +1,215 @@
+"""
+日報品質自動稽核 — 使用者視角 checklist。
+
+呼叫方式:
+    from digest_audit import audit_digest
+    failures = audit_digest(html, today_iso, us_holdings, tw_holdings, mkt_status)
+    # failures = [{"check": "tldr_has_tw", "msg": "..."}], 空 list = 全 pass
+
+設計理念:每個 check 都對應一次「用戶曾經 / 將會生氣」的場景。
+新加 check 比修 bug 更便宜 — 抓到越多越好,寧可 false positive 也不漏。
+"""
+import re
+from typing import List, Dict
+
+
+def _strip_html_to_text(html: str) -> str:
+    """粗略去 tag,留下純文字供 keyword 比對。"""
+    txt = re.sub(r"<script[\s\S]*?</script>", "", html, flags=re.I)
+    txt = re.sub(r"<style[\s\S]*?</style>", "", txt, flags=re.I)
+    txt = re.sub(r"<[^>]+>", " ", txt)
+    return re.sub(r"\s+", " ", txt).strip()
+
+
+def _section(html: str, class_name: str) -> str:
+    """抓出特定 class 的 div 內容(粗略)。"""
+    m = re.search(rf'<div class="{class_name}"[\s\S]*?</div>', html, re.I)
+    return m.group(0) if m else ""
+
+
+def _all_sections(html: str, class_name: str) -> List[str]:
+    return re.findall(rf'<div class="{class_name}"[\s\S]*?</div>', html, re.I)
+
+
+def audit_digest(
+    html: str,
+    today_iso: str,
+    us_holdings: List[str] = None,
+    tw_holdings: List[str] = None,
+    mkt_status: Dict = None,
+) -> List[Dict]:
+    """
+    回傳 failures list,空 list 代表通過。
+    每筆 failure: {"check": <name>, "severity": "high|med|low", "msg": <人話>}
+    """
+    us_holdings = us_holdings or []
+    tw_holdings = tw_holdings or []
+    mkt_status = mkt_status or {}
+    fails = []
+    text = _strip_html_to_text(html)
+
+    # ───── 時序紀律 ─────
+    # 1. 早上 7 點不可寫「今天台股已 X」(台股 9:00 才開盤)
+    if re.search(r"今天台股(已|正|超|大)?(漲|跌|狂|挫|爆|沖|噴)", text):
+        fails.append({"check": "tw_pre_market_tense", "severity": "high",
+                      "msg": "TW 早上 7 點台股還沒開盤,卻寫「今天台股漲/跌」"})
+    if re.search(r"今早台股(已|正)(漲|跌)", text):
+        fails.append({"check": "tw_pre_market_tense_zaoshen", "severity": "high",
+                      "msg": "「今早台股已漲/跌」— 9:00 前盤前不可能知道"})
+
+    # 2. 美股休市日不可寫「今天美股漲/跌」「昨晚美股收紅/黑」
+    if mkt_status.get("us_traded_last_session") is False:
+        if re.search(r"(今天|昨晚)美股(漲|跌|收紅|收黑|大漲|大跌)", text):
+            fails.append({"check": "us_holiday_tense", "severity": "high",
+                          "msg": f"昨晚美股休市({mkt_status.get('us_last_trading_date')}),卻寫「昨晚美股漲/跌」"})
+
+    # 3. 台股休市日不可寫「今早 9:00 開盤」
+    if mkt_status.get("tw_will_open_today") is False:
+        if re.search(r"今早.{0,4}開盤|今日早盤|9:?00.{0,4}開盤", text):
+            fails.append({"check": "tw_holiday_open_tense", "severity": "high",
+                          "msg": "今天台股休市,卻寫「今早 9:00 開盤」"})
+
+    # 4. 美股休市日不可寫「今晚開盤」
+    if mkt_status.get("us_will_open_tonight") is False:
+        if re.search(r"今晚.{0,4}開盤|今晚美股.{0,4}開", text):
+            fails.append({"check": "us_holiday_tonight_tense", "severity": "high",
+                          "msg": "今晚美股休市,卻寫「今晚開盤」"})
+
+    # ───── TLDR 個人化 ─────
+    tldr = _section(html, "tldr")
+    if tldr:
+        tldr_text = _strip_html_to_text(tldr)
+        # 5. 用戶持有台股 → TLDR 至少要有一條提到台股關鍵字或台股代號
+        if tw_holdings:
+            tw_keywords = tw_holdings + ["台股", "台積電", "聯發科", "鴻海", "加權"]
+            if not any(k in tldr_text for k in tw_keywords):
+                fails.append({"check": "tldr_missing_tw", "severity": "high",
+                              "msg": f"用戶持有台股 {tw_holdings} 但 TLDR 30 秒重點完全沒提到台股"})
+        # 6. TLDR 至少 3 條 bullet
+        bullets = re.findall(r"<li[^>]*>", tldr)
+        if len(bullets) < 3:
+            fails.append({"check": "tldr_too_short", "severity": "med",
+                          "msg": f"TLDR 只有 {len(bullets)} 條,至少要 3 條"})
+
+    # ───── 操作建議具體性 ─────
+    # 7. 禁止孤立的「先觀望」「先別動」「保守為上」(必須附條件)
+    isolated_wait = re.findall(r"(先觀望|先別動|保守為上|靜觀其變|按兵不動)(?:[^,。\n]{0,12})", text)
+    bad_isolated = []
+    for m in isolated_wait:
+        # 看後面 30 字內有沒有具體條件(價位/事件/日期)
+        idx = text.find(m)
+        ctx = text[idx:idx + 60]
+        has_cond = re.search(r"\$\d|NT\$?\d|\d+\s*(元|美元|塊|點)|(等|直到).{0,12}(再|才|後)|財報|FOMC|\d+月\d+", ctx)
+        if not has_cond:
+            bad_isolated.append(m)
+    if bad_isolated:
+        fails.append({"check": "isolated_wait_phrase", "severity": "med",
+                      "msg": f"出現孤立的觀望/別動字眼,沒附條件:{bad_isolated[:3]}"})
+
+    # 8. signal-card 必須每張都有「battle-row」三件套(進場/目標/停損)
+    signal_cards = _all_sections(html, r"signal-card[^\"]*")
+    cards_missing_battle = 0
+    for card in signal_cards:
+        if "battle-row" not in card or card.count("battle-row") < 3:
+            cards_missing_battle += 1
+    if cards_missing_battle > 0:
+        fails.append({"check": "signal_card_missing_battle", "severity": "high",
+                      "msg": f"{cards_missing_battle}/{len(signal_cards)} 張 signal-card 缺少進場/目標/停損價位"})
+
+    # 9. 持股覆蓋率:用戶每支持股至少要在 signal-card 出現一次
+    all_holdings = us_holdings + tw_holdings
+    if all_holdings and signal_cards:
+        signal_text = " ".join(signal_cards)
+        missing = [s for s in all_holdings if s not in signal_text]
+        if missing:
+            severity = "high" if len(missing) >= 3 else "med"
+            fails.append({"check": "holdings_uncovered", "severity": severity,
+                          "msg": f"{len(missing)}/{len(all_holdings)} 支持股沒進 signal-card:{missing[:5]}"})
+
+    # ───── 大盤覆蓋 ─────
+    market_sec = _section(html, "market-summary")
+    if market_sec:
+        msec_text = _strip_html_to_text(market_sec)
+        # 10. 「大盤怎麼了」若用戶有台股,必須提到台股大盤
+        if tw_holdings and not re.search(r"台股|加權|台灣加權|TWII", msec_text):
+            fails.append({"check": "market_summary_missing_tw", "severity": "med",
+                          "msg": "「大盤怎麼了」沒提到台股大盤(用戶持有台股)"})
+
+    # ───── 中英文股名 ─────
+    # 11. 內文出現純代號(NVDA / 2330) 沒有中英文公司名
+    code_only_us = re.findall(r"(?<![A-Za-z])(NVDA|AAPL|MSFT|TSLA|GOOGL|META|AMD|TSM|JPM|AMZN)(?![A-Za-z])", text)
+    if code_only_us:
+        # 抽樣檢查:每個代號前後 12 字是否有中文公司名
+        for code in set(code_only_us[:5]):
+            idx = text.find(code)
+            ctx = text[max(0, idx - 12):idx + 12]
+            has_zh = re.search(r"[一-鿿]{2,}", ctx)
+            if not has_zh:
+                fails.append({"check": "ticker_no_zh_name", "severity": "low",
+                              "msg": f"代號 {code} 附近沒有中文公司名"})
+                break  # 抽樣一個就夠
+
+    # ───── 編造/假數據 ─────
+    # 12. URL 必須是 http(s):// 開頭,不可是 example.com / xxx.com
+    fake_urls = re.findall(r"https?://(?:www\.)?(example|xxx|test|placeholder|todo)\.[a-z]+", html, re.I)
+    if fake_urls:
+        fails.append({"check": "fake_urls", "severity": "high",
+                      "msg": f"出現假網址:{fake_urls[:3]}"})
+
+    # 13. 價位 token 必須是真數字,不可是 XXX / YYY / $xxx
+    placeholder_prices = re.findall(r"\$X+|NT\$X+|\$\?+", html)
+    if placeholder_prices:
+        fails.append({"check": "placeholder_prices", "severity": "high",
+                      "msg": f"signal-card 留下 $XXX 沒填:{placeholder_prices[:3]}"})
+
+    # ───── 美股動作窗口對稱 ─────
+    # 14. 若今晚美股將開盤,signal-card 應該有「今晚」字眼至少一張
+    if mkt_status.get("us_will_open_tonight") and us_holdings and signal_cards:
+        signal_text = " ".join(signal_cards)
+        if "今晚" not in signal_text and "盤後" not in signal_text:
+            fails.append({"check": "us_tonight_action_missing", "severity": "med",
+                          "msg": "今晚美股開盤,但 signal-card 沒有任何「今晚開盤後」動作指示"})
+
+    # 15. 若今早台股將開盤,signal-card 應該有「今早 / 開盤」字眼
+    if mkt_status.get("tw_will_open_today") and tw_holdings and signal_cards:
+        signal_text = " ".join(signal_cards)
+        if not re.search(r"今早|早盤|9.{0,2}開盤", signal_text):
+            fails.append({"check": "tw_morning_action_missing", "severity": "med",
+                          "msg": "今早台股將開盤,但 signal-card 沒有「今早開盤後」動作指示"})
+
+    return fails
+
+
+def format_failures(fails: List[Dict]) -> str:
+    """把 failure list 格式化成人話,供 admin LINE / stdout 印用。"""
+    if not fails:
+        return "✅ 日報通過所有 audit checklist"
+    by_sev = {"high": [], "med": [], "low": []}
+    for f in fails:
+        by_sev.get(f.get("severity", "med"), by_sev["med"]).append(f)
+    lines = [f"🚨 日報 audit 失分 {len(fails)} 條:"]
+    for sev in ["high", "med", "low"]:
+        for f in by_sev[sev]:
+            tag = {"high": "🔴 HIGH", "med": "🟡 MED ", "low": "🔵 LOW "}[sev]
+            lines.append(f"  {tag} [{f['check']}] {f['msg']}")
+    return "\n".join(lines)
+
+
+if __name__ == "__main__":
+    # CLI 模式:python digest_audit.py <html_path> <today_iso>
+    import sys
+    if len(sys.argv) < 3:
+        print("usage: python digest_audit.py <html_path> <today_iso> [us_holdings_csv] [tw_holdings_csv]")
+        sys.exit(1)
+    html = open(sys.argv[1], encoding="utf-8").read()
+    today = sys.argv[2]
+    us = sys.argv[3].split(",") if len(sys.argv) > 3 and sys.argv[3] else []
+    tw = sys.argv[4].split(",") if len(sys.argv) > 4 and sys.argv[4] else []
+    try:
+        from analyzer import _market_status
+        mkt = _market_status(today)
+    except Exception:
+        mkt = {}
+    fails = audit_digest(html, today, us, tw, mkt)
+    print(format_failures(fails))
+    sys.exit(1 if any(f["severity"] == "high" for f in fails) else 0)

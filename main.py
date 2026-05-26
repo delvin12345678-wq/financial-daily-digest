@@ -508,6 +508,7 @@ def run():
     success_count = 0
     ai_calls = 0
     tier_counts = {"新手": 0, "一般": 0, "老手": 0}
+    audit_failures_by_email = {}  # 寄送前的使用者視角 audit 結果,寄完彙總推給 admin
     for email in subscribers:
         prefs = subscriber_prefs[email]
         us_stocks = prefs.get("us_stocks") or []
@@ -555,6 +556,16 @@ def run():
 
         try:
             html = build_email_html(data["date"], inner)
+            # 使用者視角 audit:fail 不擋寄,但累計到 admin 警報
+            try:
+                from digest_audit import audit_digest
+                from analyzer import _market_status
+                mkt = _market_status(data["date"])
+                fails = audit_digest(html, data["date"], us_stocks, tw_stocks, mkt)
+                if fails:
+                    audit_failures_by_email[email] = fails
+            except Exception as e:
+                print(f"   ⚠️ audit 異常: {e}")
             ok = send_transactional_email(email, data["date"], html, BREVO_API_KEY, subject=subject)
         except Exception as e:
             ok = False
@@ -566,6 +577,34 @@ def run():
 
     print(f"✅ 今日財經日報發送完成！成功 {success_count}/{len(subscribers)} 位")
     print(f"   經驗分布 → 🌱新手 {tier_counts['新手']} · 📈一般 {tier_counts['一般']} · 🎯老手 {tier_counts['老手']}")
+
+    # audit 結果彙整 → 印 cron log + 寫報告檔(下一輪我會看)
+    if audit_failures_by_email:
+        all_checks = {}
+        for em, fs in audit_failures_by_email.items():
+            for f in fs:
+                all_checks.setdefault(f["check"], []).append((em, f))
+        summary_lines = [f"🚨 日報 audit:{len(audit_failures_by_email)}/{len(subscribers)} 位用戶的日報失分"]
+        for check, items in sorted(all_checks.items(), key=lambda x: -len(x[1])):
+            sev = items[0][1].get("severity", "med")
+            tag = {"high": "🔴", "med": "🟡", "low": "🔵"}.get(sev, "🟡")
+            summary_lines.append(f"{tag} [{check}] {len(items)} 人:{items[0][1]['msg']}")
+        summary = "\n".join(summary_lines)
+        print(summary)
+        # 寫報告檔給下一輪 review;commit 進 repo 讓 Claude 開新 session 也看得到
+        try:
+            import json as _json, os as _os
+            _os.makedirs("output", exist_ok=True)
+            report_path = f"output/digest_audit_{data['date']}.json"
+            with open(report_path, "w", encoding="utf-8") as f:
+                _json.dump({
+                    "date": data["date"],
+                    "summary": summary,
+                    "by_email": {em: fs for em, fs in audit_failures_by_email.items()},
+                }, f, ensure_ascii=False, indent=2)
+            print(f"📋 audit 報告寫到 {report_path}")
+        except Exception as e:
+            print(f"   ⚠️ audit 報告寫檔失敗: {e}")
 
 
 if __name__ == "__main__":
