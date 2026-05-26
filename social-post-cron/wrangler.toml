@@ -5,10 +5,10 @@ compatibility_date = "2026-05-01"
 # 每天 06:00 UTC = 台灣 14:00 觸發 social_post.yml,GitHub Actions 跑 daily_run.py 發下一篇貼文。
 # 取代本機 launchd com.marketdaily.socialpost(Mac 睡眠 missed firing 導致時間亂掉)。
 #
-# 2026-05-26: cron 暫停 —— social_posts.json 還有未審文案(虛假勝率/編造訂戶/舊價/舊邀請制),
-# 用戶完成逐篇審核才能重新啟用。手動觸發走 /trigger?token=<INTERNAL_TOKEN>。
+# 2026-05-26: cron 開回 —— v2 backlog 15 篇已就位 (commit 6c6bed3),
+# 圖卡已 deploy 到 prod (docs/social/*.jpg)。手動觸發走 /trigger?token=<INTERNAL_TOKEN>。
 [triggers]
-crons = []
+crons = ["0 6 * * *"]
 
 # Secret(用 `wrangler secret put GITHUB_TOKEN` 設定):
 #   GITHUB_TOKEN — fine-grained PAT,對 marketdaily/financial-daily-digest 有 Actions: Read and write
