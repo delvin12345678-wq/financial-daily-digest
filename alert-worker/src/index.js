@@ -16,17 +16,48 @@ const PUSHED_TTL = 48 * 3600;
 const COUNT_TTL = 26 * 3600;
 
 // 規則粗篩:重大事件關鍵字分組,命中才往下走。type 也用於 story cluster 去重。
+// 含中英文關鍵字 — 中文台股新聞(UDN/LTN/經濟日報)也要能被分類,否則永遠不會進 AI 推播 pipeline。
 const EVENT_RULES = [
-  { type: "earnings", kw: ["earnings", "beats estimates", "misses estimates", "quarterly results", "profit jump", "profit drop"] },
-  { type: "guidance", kw: ["guidance", "outlook", "forecast", "profit warning", "cuts target", "lowers", "slashes"] },
-  { type: "mna", kw: ["acquire", "acquisition", "merger", "buyout", "takeover", "to buy ", "agrees to buy"] },
-  { type: "regulatory", kw: ["fda", "approval", "recall", "antitrust", "investigation", "probe", "subpoena", "regulator", "fines"] },
-  { type: "legal", kw: ["lawsuit", "sues", "sued", "settlement", "verdict", "court ruling"] },
-  { type: "trading", kw: ["halt", "halted", "suspended", "plunge", "soar", "surge", "tumble", "crash", "spike", "sell-off"] },
-  { type: "distress", kw: ["bankruptcy", "chapter 11", "insolvency", "default", "delist"] },
-  { type: "rating", kw: ["downgrade", "upgrade", "price target", "initiated coverage", "cut to"] },
-  { type: "leadership", kw: ["ceo", "chief executive", "resign", "steps down", "ousted", "appoints", "fired"] },
-  { type: "incident", kw: ["data breach", "hacked", "outage", "strike", "production halt"] },
+  { type: "earnings", kw: [
+    "earnings", "beats estimates", "misses estimates", "quarterly results", "profit jump", "profit drop",
+    "財報", "營收", "季報", "法說會", "獲利", "EPS", "業績"
+  ]},
+  { type: "guidance", kw: [
+    "guidance", "outlook", "forecast", "profit warning", "cuts target", "lowers", "slashes",
+    "展望", "預測", "財測", "下修", "上修", "上調", "下調", "砍目標", "獲利警訊"
+  ]},
+  { type: "mna", kw: [
+    "acquire", "acquisition", "merger", "buyout", "takeover", "to buy ", "agrees to buy",
+    "併購", "收購", "合併", "入股", "收購案", "敵意併購"
+  ]},
+  { type: "regulatory", kw: [
+    "fda", "approval", "recall", "antitrust", "investigation", "probe", "subpoena", "regulator", "fines",
+    "公平會", "金管會", "證交所", "調查", "罰款", "違規", "停牌", "處分"
+  ]},
+  { type: "legal", kw: [
+    "lawsuit", "sues", "sued", "settlement", "verdict", "court ruling",
+    "訴訟", "提告", "敗訴", "勝訴", "判決", "和解"
+  ]},
+  { type: "trading", kw: [
+    "halt", "halted", "suspended", "plunge", "soar", "surge", "tumble", "crash", "spike", "sell-off",
+    "跳水", "暴跌", "暴漲", "飆漲", "重挫", "急殺", "噴出", "漲停", "跌停", "亮燈漲停", "崩跌"
+  ]},
+  { type: "distress", kw: [
+    "bankruptcy", "chapter 11", "insolvency", "default", "delist",
+    "破產", "重整", "倒閉", "下市", "違約", "聲請破產"
+  ]},
+  { type: "rating", kw: [
+    "downgrade", "upgrade", "price target", "initiated coverage", "cut to",
+    "調降", "調升", "評等", "目標價", "投資評等", "買進評等", "賣出評等"
+  ]},
+  { type: "leadership", kw: [
+    "ceo", "chief executive", "resign", "steps down", "ousted", "appoints", "fired",
+    "執行長", "董事長", "請辭", "下台", "任命", "卸任", "接班"
+  ]},
+  { type: "incident", kw: [
+    "data breach", "hacked", "outage", "strike", "production halt",
+    "駭客", "資料外洩", "停工", "罷工", "斷鏈", "工安", "停產"
+  ]},
 ];
 
 // 各事件類型的平均重大度權重 —— 規則預評分用,只擋明顯偏弱的,真正嚴重度仍交給 AI 判。
@@ -47,11 +78,19 @@ function twDate(d = new Date()) {
   return new Date(d.getTime() + 8 * 3600 * 1000).toISOString().slice(0, 10);
 }
 
-// 詞界比對,避免 "issues" 命中 "sues"、"followers" 命中 "lowers" 之類的子字串誤判。
-const EVENT_MATCHERS = EVENT_RULES.map((r) => ({
-  type: r.type,
-  re: new RegExp("\\b(?:" + r.kw.map((k) => k.trim()).join("|") + ")", "i"),
-}));
+// 詞界比對:英文 kw 用 \b 避免 "issues" 命中 "sues";中文沒 word boundary,
+// 直接 substring 比對(中文字本身就是 token,不會誤判)。
+const EVENT_MATCHERS = EVENT_RULES.map((r) => {
+  const en = r.kw.filter(k => /^[\x00-\x7F]+$/.test(k));  // 純 ASCII
+  const zh = r.kw.filter(k => !/^[\x00-\x7F]+$/.test(k)); // 含中文
+  const regexes = [];
+  if (en.length) regexes.push(new RegExp("\\b(?:" + en.map(k => k.trim()).join("|") + ")", "i"));
+  if (zh.length) regexes.push(new RegExp("(?:" + zh.map(k => k.trim()).join("|") + ")"));
+  return {
+    type: r.type,
+    re: { test: (s) => regexes.some(re => re.test(s)) },
+  };
+});
 
 function classify(text) {
   const t = text || "";
@@ -156,11 +195,16 @@ async function aiSeverity(env, news, tickers) {
   }
 }
 
-// 取 LINE Messaging API 推播 token:優先用長期 token,否則用 channel id+secret 動態換並快取。
-async function lineToken(env) {
-  if (env.LINE_CHANNEL_ACCESS_TOKEN) return env.LINE_CHANNEL_ACCESS_TOKEN;
-  const cached = await env.USER_PREFS.get("alert:linetoken");
-  if (cached) return cached;
+// 取 LINE Messaging API 推播 token。
+// 預設順序:KV cache(alert:linetoken,動態 OAuth 結果)→ static env LINE_CHANNEL_ACCESS_TOKEN
+// → 動態 OAuth swap(client_credentials)。force=true 跳過 cache 和 static,
+// 直接動態換(linePush 收 401 時用)。
+async function lineToken(env, { force = false } = {}) {
+  if (!force) {
+    const cached = await env.USER_PREFS.get("alert:linetoken");
+    if (cached) return cached;
+    if (env.LINE_CHANNEL_ACCESS_TOKEN) return env.LINE_CHANNEL_ACCESS_TOKEN;
+  }
   if (!env.LINE_CHANNEL_ID || !env.LINE_CHANNEL_SECRET) return null;
   const res = await fetch("https://api.line.me/v2/oauth/accessToken", {
     method: "POST",
@@ -194,14 +238,83 @@ function alertMessage(news, ticker, severity, reason) {
   ].join("\n");
 }
 
-async function linePush(token, userId, text) {
-  const res = await fetch(LINE_PUSH_URL, {
+async function linePush(env, token, userId, text) {
+  const tryOnce = (t) => fetch(LINE_PUSH_URL, {
     method: "POST",
-    headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+    headers: { authorization: `Bearer ${t}`, "content-type": "application/json" },
     body: JSON.stringify({ to: userId, messages: [{ type: "text", text }] }),
   });
+  let res = await tryOnce(token);
+  // 401 = token 失效(過期或被 LINE 撤銷)。清 cache、強制動態換,重試一次。
+  // 2026-05-24 17:54 UTC 起 static LINE_CHANNEL_ACCESS_TOKEN 失效,28 筆推播全炸,
+  // 因此加 self-healing fallback。
+  if (res.status === 401) {
+    await env.USER_PREFS.delete("alert:linetoken");
+    const fresh = await lineToken(env, { force: true });
+    if (fresh && fresh !== token) {
+      res = await tryOnce(fresh);
+    }
+  }
   if (res.ok) return { ok: true };
   return { ok: false, status: res.status, body: (await res.text()).slice(0, 300) };
+}
+
+// 主動告訴 admin(Delvin 的 LINE):推播 / canary 出狀況。
+// 節流:同小時最多 1 則,避免炸訊息;ADMIN_LINE_USER_ID 沒設就跳過。
+async function alertAdmin(env, summary) {
+  if (!env.ADMIN_LINE_USER_ID) return;
+  const hourKey = `admin_alert:${new Date().toISOString().slice(0, 13)}`;
+  if (await env.USER_PREFS.get(hourKey)) return;
+  const token = await lineToken(env, { force: true });
+  if (!token) {
+    // 連 token 都拿不到 → 換 secret 才有救,但至少留個 KV trail
+    await env.USER_PREFS.put(`admin_alert_failed:${Date.now()}`,
+      JSON.stringify({ summary, reason: "lineToken null" }),
+      { expirationTtl: 7 * 24 * 3600 });
+    return;
+  }
+  try {
+    const res = await fetch(LINE_PUSH_URL, {
+      method: "POST",
+      headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+      body: JSON.stringify({
+        to: env.ADMIN_LINE_USER_ID,
+        messages: [{ type: "text", text: `🚨 MarketDaily Alert\n\n${summary}\n\n— alert-worker` }],
+      }),
+    });
+    if (res.ok) {
+      await env.USER_PREFS.put(hourKey, "1", { expirationTtl: 3700 });
+    }
+  } catch {}
+}
+
+// Canary:不依賴真實事件,定期驗 token+LINE API 都活著。
+// 失敗就 alertAdmin,在使用者察覺前就抓到。
+async function canaryCheck(env) {
+  await env.USER_PREFS.delete("alert:linetoken"); // 強制重抓最新
+  const t = await lineToken(env, { force: true });
+  const out = { ts: new Date().toISOString(), ok: false };
+  if (!t) {
+    out.reason = "OAuth swap 拿不到 token (channel id/secret 可能失效)";
+    await alertAdmin(env, `Canary 失敗:${out.reason}\n請查 LINE Developer Console`);
+    await env.USER_PREFS.put("alert:lastcanary", JSON.stringify(out));
+    return out;
+  }
+  // 用一個一定無效的 userId 試推,期望回 400/403 表示 token 本身有效
+  const probe = await fetch(LINE_PUSH_URL, {
+    method: "POST",
+    headers: { authorization: `Bearer ${t}`, "content-type": "application/json" },
+    body: JSON.stringify({ to: "U0000000000000000000000000000000", messages: [{ type: "text", text: "x" }] }),
+  });
+  out.probeStatus = probe.status;
+  if (probe.status === 401) {
+    out.reason = "token 仍被 LINE 視為無效(401)";
+    await alertAdmin(env, `Canary 失敗:${out.reason}\nchannel id/secret 可能要重生`);
+  } else {
+    out.ok = true;
+  }
+  await env.USER_PREFS.put("alert:lastcanary", JSON.stringify(out));
+  return out;
 }
 
 // 完整偵測→推播管線。
@@ -327,12 +440,51 @@ async function runPipeline(env, { push, persist }) {
         continue;
       }
       const msg = alertMessage(news, hit, severity, reason);
-      const pushed = await linePush(token, h.userId, msg);
+      const pushed = await linePush(env, token, h.userId, msg);
       if (pushed.ok) {
         await env.USER_PREFS.put(cluster, report.ts, { expirationTtl: PUSHED_TTL });
         await env.USER_PREFS.put(countKey, String(count + 1), { expirationTtl: COUNT_TTL });
         report.counts.pushed++;
         cand.recipients.push({ email: h.email, ticker: hit, status: "pushed" });
+        // 把推播訊息同時寫進兩個 KV,讓 stripe-webhook 的 chat bot 認得「剛剛那則」:
+        //  (A) linechat:${userId} —— 塞進對話歷史(role:assistant + [系統主動推播] 前綴)
+        //  (B) alerthistory:${userId} —— per-user push 清單(結構化),chat bot 開場直接注入 system
+        // 雙保險:即使 chat history 滿 20 輪被擠掉,alerthistory 仍獨立留 24h。
+        try {
+          const chatKey = `linechat:${h.userId}`;
+          let history = [];
+          const raw = await env.USER_PREFS.get(chatKey);
+          if (raw) { try { history = JSON.parse(raw); } catch {} }
+          history.push({
+            role: "assistant",
+            content: `[系統主動推播] ${msg}`,
+          });
+          if (history.length > 20) history = history.slice(-20);
+          await env.USER_PREFS.put(chatKey, JSON.stringify(history),
+            { expirationTtl: 24 * 3600 });
+        } catch (e) {
+          report.errors.push(`chat-session-write:${h.email}:${String(e).slice(0,80)}`);
+        }
+        try {
+          const alertHistKey = `alerthistory:${h.userId}`;
+          let alertList = [];
+          const raw = await env.USER_PREFS.get(alertHistKey);
+          if (raw) { try { alertList = JSON.parse(raw); } catch {} }
+          alertList.push({
+            ts: report.ts,
+            ticker: hit,
+            title: news.title,
+            url: news.url,
+            reason: reason,
+            severity: severity,
+            body: msg.slice(0, 1200),
+          });
+          if (alertList.length > 8) alertList = alertList.slice(-8);
+          await env.USER_PREFS.put(alertHistKey, JSON.stringify(alertList),
+            { expirationTtl: 24 * 3600 });
+        } catch (e) {
+          report.errors.push(`alert-history-write:${h.email}:${String(e).slice(0,80)}`);
+        }
       } else if (pushed.status === 400 || pushed.status === 403) {
         // userId 失效 / 未加好友 → 標記 stale,提示重新綁定。
         await env.USER_PREFS.put(`linestale:${h.email}`, report.ts);
@@ -363,12 +515,37 @@ async function runPipeline(env, { push, persist }) {
       try { recent = JSON.parse((await env.USER_PREFS.get("alert:recent")) || "[]"); } catch {}
       await env.USER_PREFS.put("alert:recent", JSON.stringify([...report.fired, ...recent].slice(0, 40)));
     }
+    // 推播炸了就告訴 admin。401 retry 之後還是失敗、或其他非 4xx 都會被計入。
+    // 用 fired[].recipients[].status 判;只要不是 "pushed" / "would-push" / "skip:*" 都算失敗。
+    if (push) {
+      const failed = [];
+      for (const f of report.fired) {
+        for (const r of f.recipients || []) {
+          const s = r.status || "";
+          if (s.startsWith("fail:")) failed.push({ email: r.email, ticker: r.ticker, status: s, title: f.title });
+        }
+      }
+      if (failed.length) {
+        const lines = failed.slice(0, 3).map(f =>
+          `• ${f.email}(${f.ticker}) ${f.status}\n  ${(f.title || "").slice(0, 50)}`);
+        await alertAdmin(env,
+          `推播失敗 ${failed.length} 筆(/${report.fired.length} 達標事件)\n${lines.join("\n")}` +
+          (failed.length > 3 ? `\n…還有 ${failed.length - 3} 筆` : ""));
+      }
+    }
   }
   return report;
 }
 
 export default {
   async scheduled(event, env, ctx) {
+    // 2 個 cron 分支:
+    //   "*/2 * * * *" → 主管線(抓新聞 → 比對 → 推播)
+    //   "0 * * * *"   → 每小時 canary,自動驗 token 健康度,失敗就 LINE 告 admin
+    if (event.cron === "0 * * * *") {
+      ctx.waitUntil(canaryCheck(env));
+      return;
+    }
     const enabled = (await env.USER_PREFS.get("alert:enabled")) === "true";
     // 不論 dry/live 都 persist:每則新聞只評估一次,控 AI 成本。
     ctx.waitUntil(runPipeline(env, { push: enabled, persist: true }));
@@ -377,44 +554,167 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
 
+    // Admin token check — /dry-run 會消耗 AI 額度,/recent 含訂閱者持股暗示,
+    // /token-test 會洩漏 token metadata,/check 含 secret 開關+config。
+    // 未設 ADMIN_TOKEN/INTERNAL_TOKEN secret 時 → fail-closed (回 403)。
+    function authed() {
+      const tok = env.ADMIN_TOKEN || env.INTERNAL_TOKEN;
+      if (!tok) return false;
+      const got = (request.headers.get("authorization") || "").replace(/^Bearer\s+/i, "")
+        || url.searchParams.get("token") || "";
+      if (got.length !== tok.length) return false;
+      let diff = 0;
+      for (let i = 0; i < got.length; i++) diff |= got.charCodeAt(i) ^ tok.charCodeAt(i);
+      return diff === 0;
+    }
+
     if (url.pathname === "/check") {
+      // 公開回最低限度健康狀態;敏感細節(secret 開關 / config / lastRun)要帶 token。
       let kvOk = true;
       try { await env.USER_PREFS.get("alert:enabled"); } catch { kvOk = false; }
+      const mode = (await env.USER_PREFS.get("alert:enabled")) === "true" ? "live" : "dry";
+      if (!authed()) {
+        return json({ ok: true, ts: new Date().toISOString(), mode, kv: kvOk });
+      }
       const lastRaw = await env.USER_PREFS.get("alert:laststatus");
+      const canaryRaw = await env.USER_PREFS.get("alert:lastcanary");
       return json({
         ok: true,
         ts: new Date().toISOString(),
-        mode: (await env.USER_PREFS.get("alert:enabled")) === "true" ? "live" : "dry",
+        mode,
         kv: kvOk,
         secrets: {
           ANTHROPIC_API_KEY: !!env.ANTHROPIC_API_KEY,
           LINE_CHANNEL_ACCESS_TOKEN: !!env.LINE_CHANNEL_ACCESS_TOKEN,
           LINE_CHANNEL_ID: !!env.LINE_CHANNEL_ID,
           LINE_CHANNEL_SECRET: !!env.LINE_CHANNEL_SECRET,
+          ADMIN_LINE_USER_ID: !!env.ADMIN_LINE_USER_ID,
+          INTERNAL_TOKEN: !!env.INTERNAL_TOKEN,
         },
         config: {
           severityThreshold: SEVERITY_THRESHOLD, dailyCap: DAILY_CAP,
-          maxAgeHours: MAX_AGE_HOURS, preScoreFloor: PRESCORE_FLOOR, cron: "*/2 * * * *",
+          maxAgeHours: MAX_AGE_HOURS, preScoreFloor: PRESCORE_FLOOR,
+          crons: ["*/2 * * * *(pipeline)", "0 * * * *(canary)"],
         },
         lastRun: lastRaw ? JSON.parse(lastRaw) : null,
+        lastCanary: canaryRaw ? JSON.parse(canaryRaw) : null,
       });
     }
 
-    if (url.pathname === "/dry-run") {
+    // 手動跑 canary(等同每小時自動排程的那個):驗 token + LINE API,失敗會 alertAdmin
+    if (url.pathname === "/canary") {
+      if (!authed()) return json({ error: "forbidden" }, 403);
+      const result = await canaryCheck(env);
+      return json(result);
+    }
+
+    // 診斷:驗證 LINE 動態 OAuth swap 是否能拿到有效 token(不洩漏 token 本身)
+    if (url.pathname === "/token-test") {
+      if (!authed()) return json({ error: "forbidden" }, 403);
       try {
-        return json(await runPipeline(env, { push: false, persist: false }));
+        await env.USER_PREFS.delete("alert:linetoken");
+        const t = await lineToken(env, { force: true });
+        if (!t) return json({ ok: false, reason: "OAuth swap returned no token" }, 500);
+        // 用一個明顯無效的 userId 試推播,期望 LINE 回 400/403 而非 401(401 才是 token 問題)
+        const probe = await fetch(LINE_PUSH_URL, {
+          method: "POST",
+          headers: { authorization: `Bearer ${t}`, "content-type": "application/json" },
+          body: JSON.stringify({ to: "U0000000000000000000000000000000", messages: [{ type: "text", text: "x" }] }),
+        });
+        return json({
+          ok: true,
+          tokenLen: t.length,
+          tokenHead: t.slice(0, 6) + "...",
+          probeStatus: probe.status,
+          probeBody: (await probe.text()).slice(0, 200),
+          interpretation: probe.status === 401
+            ? "❌ token 仍被 LINE 視為無效"
+            : "✅ token 有效(non-401);400/403 屬無效 userId 是預期的",
+        });
       } catch (e) {
-        return json({ ok: false, error: e.message, stack: e.stack }, 500);
+        return json({ ok: false, error: e.message }, 500);
       }
     }
 
-    // 近期達標(severity≥7)的提醒紀錄 —— dry-run 觀察期用來看「會推什麼」。
+    // 推 LINE 訊息給 admin(daily digest pipeline / audit 失分通知用)
+    // 認證:MARKETING_TARGETS_TOKEN 或 INTERNAL_TOKEN(timing-safe,跟 marketing-line-targets 同套)
+    if (url.pathname === "/internal/admin-line-push" && request.method === "POST") {
+      const got = (request.headers.get("authorization") || "").replace(/^Bearer\s+/i, "");
+      const candidates = [env.MARKETING_TARGETS_TOKEN, env.INTERNAL_TOKEN].filter(Boolean);
+      let okAuth = false;
+      for (const t of candidates) {
+        if (got.length !== t.length) continue;
+        let diff = 0;
+        for (let i = 0; i < got.length; i++) diff |= got.charCodeAt(i) ^ t.charCodeAt(i);
+        if (diff === 0) { okAuth = true; break; }
+      }
+      if (!okAuth) return json({ error: "forbidden" }, 403);
+      let body;
+      try { body = await request.json(); } catch { return json({ error: "bad_body" }, 400); }
+      const message = String(body.message || "").slice(0, 4900);
+      if (!message) return json({ error: "empty_message" }, 400);
+      if (!env.ADMIN_LINE_USER_ID) return json({ error: "admin_line_not_configured" }, 503);
+      const token = await lineToken(env, { force: true });
+      if (!token) return json({ error: "line_token_unavailable" }, 503);
+      const res = await fetch(LINE_PUSH_URL, {
+        method: "POST",
+        headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+        body: JSON.stringify({ to: env.ADMIN_LINE_USER_ID, messages: [{ type: "text", text: message }] }),
+      });
+      return json({ ok: res.ok, status: res.status });
+    }
+
+    // 行銷貼文 multicast 目標清單:列出所有綁過 LINE 但 plan != premium 的 userId。
+    // marketing/auto_post.py post_line 會打這支取得排除 premium 的 multicast targets。
+    if (url.pathname === "/internal/marketing-line-targets") {
+      // 接受 MARKETING_TARGETS_TOKEN 或 INTERNAL_TOKEN(timing-safe)
+      const got = (request.headers.get("authorization") || "").replace(/^Bearer\s+/i, "")
+        || url.searchParams.get("token") || "";
+      const candidates = [env.MARKETING_TARGETS_TOKEN, env.INTERNAL_TOKEN].filter(Boolean);
+      let okAuth = false;
+      for (const t of candidates) {
+        if (got.length !== t.length) continue;
+        let diff = 0;
+        for (let i = 0; i < got.length; i++) diff |= got.charCodeAt(i) ^ t.charCodeAt(i);
+        if (diff === 0) { okAuth = true; break; }
+      }
+      if (!okAuth) return json({ error: "forbidden" }, 403);
+      const targets = [];
+      let scanned = 0, excluded = 0;
+      let cursor;
+      do {
+        const page = await env.USER_PREFS.list({ prefix: "line:", cursor });
+        for (const k of page.keys) {
+          scanned++;
+          const email = k.name.slice(5);
+          const plan = await env.USER_PREFS.get(`plan:${email}`);
+          if (plan === "premium") { excluded++; continue; }
+          const userId = await env.USER_PREFS.get(k.name);
+          if (userId) targets.push(userId);
+        }
+        cursor = page.list_complete ? null : page.cursor;
+      } while (cursor);
+      return json({ count: targets.length, scanned, excludedPremium: excluded, targets });
+    }
+
+    if (url.pathname === "/dry-run") {
+      if (!authed()) return json({ error: "forbidden" }, 403);
+      try {
+        return json(await runPipeline(env, { push: false, persist: false }));
+      } catch (e) {
+        // 不洩漏 stack;只回 generic message
+        return json({ ok: false, error: String(e.message || "error").slice(0, 200) }, 500);
+      }
+    }
+
+    // 近期達標(severity≥7)的提醒紀錄 —— 含訂閱者持股暗示,需 auth。
     if (url.pathname === "/recent") {
+      if (!authed()) return json({ error: "forbidden" }, 403);
       const raw = await env.USER_PREFS.get("alert:recent");
       return json({ recent: raw ? JSON.parse(raw) : [] });
     }
 
-    return new Response("MarketDaily alert-worker — /check /dry-run /recent", {
+    return new Response("MarketDaily alert-worker — /check (token for detail) /dry-run /recent /token-test (token required)", {
       status: 200,
       headers: { "content-type": "text/plain; charset=utf-8" },
     });

@@ -685,8 +685,8 @@ def run():
 def _push_preflight_alert(date_str, high_fails, total_subscribers):
     """Pre-flight 跑出 HIGH fail → 立刻推 admin,他有 30 分鐘修。"""
     import os, json as _json, urllib.request
-    worker = os.environ.get("MARKETDAILY_WEBHOOK_URL",
-                            "https://marketdaily-webhook.delvin-12345678.workers.dev")
+    worker = os.environ.get("MARKETDAILY_ALERT_WORKER_URL",
+                            "https://marketdaily-alert-worker.delvin-12345678.workers.dev")
     tok = os.environ.get("MARKETDAILY_INTERNAL_TOKEN") or os.environ.get("INTERNAL_TOKEN")
     if not tok:
         print("   (skip preflight push:INTERNAL_TOKEN 未設)")
@@ -715,8 +715,8 @@ def _push_admin_halt_alert(date_str, det_fallbacks, perso_fails, dry_run=False):
     """日報品質守門:走 deterministic fallback / personalization fail → LINE 即時推 admin。
     用戶不會缺信(都有寄),但 admin 需要立刻知道哪些用戶今天拿到的是降級版,趕快查 prompt 問題。"""
     import os, json as _json, urllib.request
-    worker = os.environ.get("MARKETDAILY_WEBHOOK_URL",
-                            "https://marketdaily-webhook.delvin-12345678.workers.dev")
+    worker = os.environ.get("MARKETDAILY_ALERT_WORKER_URL",
+                            "https://marketdaily-alert-worker.delvin-12345678.workers.dev")
     tok = os.environ.get("MARKETDAILY_INTERNAL_TOKEN") or os.environ.get("INTERNAL_TOKEN")
     if not tok:
         print("   (skip:MARKETDAILY_INTERNAL_TOKEN/INTERNAL_TOKEN 未設,無法推 admin)")
