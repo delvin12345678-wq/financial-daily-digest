@@ -466,6 +466,93 @@ def _postprocess_html(html: str, data: dict) -> str:
     return html
 
 
+def generate_deterministic_fallback(data: dict, us_stocks: list, tw_stocks: list, mkt_status: dict) -> str:
+    """無 LLM 的安全 fallback:純 Python 模板列出用戶持股事實 + 開盤狀態。
+    當 LLM 兩次都 fail audit 時用,絕不會「今天台股漲」這類胡寫,因為完全沒有自由生成。
+    內容稀疏但 100% 正確。寄出總比讓用戶缺信好。
+    2026-05-26 用戶:「不能缺,也不能寄錯的給人」"""
+    us_market = data.get("us_market", {})
+    tw_market = data.get("tw_market", {})
+    today = data.get("date", "")
+    parts = ['<div class="tldr"><div class="tldr-title">☕ 30 秒看完今天重點</div><ul>']
+    parts.append('<li>⚠️ 今天 AI 個人化生成異常,這封是備援版本,只列基本事實不做主觀分析</li>')
+    if mkt_status.get("us_traded_last_session"):
+        parts.append(f'<li>昨晚美股({mkt_status["us_last_trading_date"]})已收盤,以下是你的美股持股表現</li>')
+    else:
+        parts.append(f'<li>昨晚美股因假日/週末休市,最近收盤 {mkt_status.get("us_last_trading_date", "?")}</li>')
+    if mkt_status.get("tw_will_open_today"):
+        parts.append('<li>今早 9:00 台股將開盤,以下是你的台股昨日收盤</li>')
+    else:
+        parts.append('<li>今天台股休市不開盤</li>')
+    if mkt_status.get("us_will_open_tonight"):
+        parts.append(f'<li>今晚美股將開盤(美東 9:30 = TW 21:30-22:30)</li>')
+    else:
+        parts.append(f'<li>今晚美股休市,下次開盤 {mkt_status.get("us_next_trading_date", "?")}</li>')
+    parts.append('</ul></div>')
+
+    parts.append('<div class="section-label">📊 你的持股(備援版)</div>')
+    if us_stocks:
+        parts.append('<div class="signal-grid">')
+        for sym in us_stocks:
+            d = us_market.get(sym)
+            if d:
+                chg = d.get("change_pct", 0)
+                up = "up" if chg >= 0 else "down"
+                arrow = "▲" if chg >= 0 else "▼"
+                name = stock_names.display_name(sym)
+                action = "等今晚開盤觀察價量" if mkt_status.get("us_will_open_tonight") else "等下個交易日"
+                parts.append(
+                    f'<div class="signal-card hold">'
+                    f'<div class="signal-card-top">'
+                    f'<span class="signal-ticker">{sym}</span>'
+                    f'<span class="signal-day-move {up}">{arrow} {chg:+.2f}%</span>'
+                    f'</div>'
+                    f'<div class="signal-body">'
+                    f'<div class="signal-reason">{name}({sym}) 昨晚收 ${d.get("price","?")} ,'
+                    f'{action}。今日 AI 分析異常,主編將於 24 小時內修復並重發完整版。</div>'
+                    f'</div></div>'
+                )
+            else:
+                parts.append(
+                    f'<div class="signal-card wait">'
+                    f'<div class="signal-card-top"><span class="signal-ticker">{sym}</span></div>'
+                    f'<div class="signal-body"><div class="signal-reason">'
+                    f'{stock_names.display_name(sym)}({sym}) 今日無報價數據</div></div></div>'
+                )
+        parts.append('</div>')
+    if tw_stocks:
+        parts.append('<div class="signal-grid">')
+        for sym in tw_stocks:
+            d = tw_market.get(sym)
+            if d:
+                chg = d.get("change_pct", 0)
+                up = "up" if chg >= 0 else "down"
+                arrow = "▲" if chg >= 0 else "▼"
+                name = stock_names.display_name(sym, d.get("name"))
+                action = "等今早 9:00 開盤觀察價量" if mkt_status.get("tw_will_open_today") else "今天台股休市"
+                parts.append(
+                    f'<div class="signal-card hold">'
+                    f'<div class="signal-card-top">'
+                    f'<span class="signal-ticker">{sym}</span>'
+                    f'<span class="signal-day-move {up}">{arrow} {chg:+.2f}%</span>'
+                    f'</div>'
+                    f'<div class="signal-body">'
+                    f'<div class="signal-reason">{name}({sym}) 昨日收 ${d.get("price","?")} 元,'
+                    f'{action}。今日 AI 分析異常,主編將於 24 小時內修復並重發完整版。</div>'
+                    f'</div></div>'
+                )
+            else:
+                parts.append(
+                    f'<div class="signal-card wait">'
+                    f'<div class="signal-card-top"><span class="signal-ticker">{sym}</span></div>'
+                    f'<div class="signal-body"><div class="signal-reason">'
+                    f'{stock_names.display_name(sym, d.get("name") if d else None)}({sym}) 今日無報價數據</div></div></div>'
+                )
+        parts.append('</div>')
+    parts.append('<div class="signal-disclaimer">⚠️ 備援版本,僅為基本資料整理。主編已收到通知將盡速修復個人化分析。</div>')
+    return "\n".join(parts)
+
+
 DIGEST_EMAIL_MAX_HOLDINGS = 30  # email 版上限提到 30(原 12 太少)。Gmail 約 102KB 截斷,
 # 30 張 signal-card + TLDR + 新聞應該還在範圍內。網頁完整版仍含全部不切。
 # 2026-05-26 用戶炸:「使用者選擇每一個台股美股都要顯示」,原 12 等於把 27 支砍掉 15 支。

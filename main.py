@@ -510,7 +510,7 @@ def run():
     tier_counts = {"新手": 0, "一般": 0, "老手": 0}
     audit_failures_by_email = {}  # 寄送前的使用者視角 audit 結果,寄完彙總推給 admin
     personalization_failures = []  # AI 個人化失敗的 (email, reason),寄完一起推給 admin
-    halted_high_audit = []  # HIGH severity audit fail → 拒寄(寧可缺不要錯)
+    deterministic_fallbacks = []  # retry 仍 HIGH fail → 用 deterministic 模板(無 LLM)寄出
     for email in subscribers:
         prefs = subscriber_prefs[email]
         us_stocks = prefs.get("us_stocks") or []
@@ -565,25 +565,44 @@ def run():
 
         try:
             html = build_email_html(data["date"], inner)
-            # 使用者視角 audit:HIGH severity → 拒寄該封信(避免錯誤訊息流向用戶);
-            # MED/LOW 仍寄但記報告。HIGH halt 累計到 admin LINE 即時推。
-            has_high_fail = False
+            # 使用者視角 audit:HIGH severity → retry 一次,仍 fail → deterministic fallback,
+            # 絕不寄錯誤內容,也絕不讓用戶收不到信。MED/LOW 直接寄。
+            from digest_audit import audit_digest
+            from analyzer import _market_status, generate_deterministic_fallback
+            mkt = _market_status(data["date"])
             try:
-                from digest_audit import audit_digest
-                from analyzer import _market_status
-                mkt = _market_status(data["date"])
                 fails = audit_digest(html, data["date"], us_stocks, tw_stocks, mkt)
-                if fails:
-                    audit_failures_by_email[email] = fails
-                    has_high_fail = any(f.get("severity") == "high" for f in fails)
             except Exception as e:
+                fails = []
                 print(f"   ⚠️ audit 異常: {e}")
-            if has_high_fail:
-                halted_high_audit.append((email, audit_failures_by_email[email]))
-                print(f"   🛑 HALT 不寄 {email} — HIGH audit fail")
-                ok = False
-            else:
-                ok = send_transactional_email(email, data["date"], html, BREVO_API_KEY, subject=subject)
+            if any(f.get("severity") == "high" for f in fails) and (us_stocks or tw_stocks):
+                print(f"   ⚠️ {email} HIGH audit fail,retry 一次")
+                try:
+                    time.sleep(5)
+                    retry_inner = _report_fn()(data, us_stocks or None, tw_stocks or None)
+                    ai_calls += 1
+                    retry_inner = _inject_ai_banner(retry_inner, data["date"])
+                    retry_html = build_email_html(data["date"], retry_inner)
+                    retry_fails = audit_digest(retry_html, data["date"], us_stocks, tw_stocks, mkt)
+                    if not any(f.get("severity") == "high" for f in retry_fails):
+                        print(f"   ✅ retry pass")
+                        html = retry_html
+                        fails = retry_fails
+                    else:
+                        print(f"   🛡️ retry 仍 HIGH fail → 切 deterministic fallback")
+                        det_inner = generate_deterministic_fallback(data, us_stocks, tw_stocks, mkt)
+                        html = build_email_html(data["date"], det_inner)
+                        fails = audit_digest(html, data["date"], us_stocks, tw_stocks, mkt)
+                        deterministic_fallbacks.append(email)
+                except Exception as e:
+                    print(f"   🛡️ retry 異常 → deterministic fallback ({e})")
+                    det_inner = generate_deterministic_fallback(data, us_stocks, tw_stocks, mkt)
+                    html = build_email_html(data["date"], det_inner)
+                    fails = audit_digest(html, data["date"], us_stocks, tw_stocks, mkt)
+                    deterministic_fallbacks.append(email)
+            if fails:
+                audit_failures_by_email[email] = fails
+            ok = send_transactional_email(email, data["date"], html, BREVO_API_KEY, subject=subject)
         except Exception as e:
             ok = False
             print(f"   ❌ 發送異常：{email}（{e}）")
@@ -595,11 +614,11 @@ def run():
     print(f"✅ 今日財經日報發送完成！成功 {success_count}/{len(subscribers)} 位")
     print(f"   經驗分布 → 🌱新手 {tier_counts['新手']} · 📈一般 {tier_counts['一般']} · 🎯老手 {tier_counts['老手']}")
 
-    # HIGH halt 通知:即時 LINE 推給 admin,不等他開信才發現
-    if halted_high_audit:
-        print(f"🛑 {len(halted_high_audit)} 位用戶日報被 HALT(HIGH audit fail)")
+    # 守門通知:deterministic fallback 或個人化失敗 → 即時 LINE 推 admin
+    if deterministic_fallbacks or personalization_failures:
+        print(f"🛡️ {len(deterministic_fallbacks)} 位走 deterministic fallback")
         try:
-            _push_admin_halt_alert(data["date"], halted_high_audit, personalization_failures)
+            _push_admin_halt_alert(data["date"], deterministic_fallbacks, personalization_failures)
         except Exception as e:
             print(f"   ⚠️ admin LINE 推失敗:{e}")
 
@@ -642,9 +661,9 @@ def run():
             print(f"   ⚠️ audit 報告寫檔失敗: {e}")
 
 
-def _push_admin_halt_alert(date_str, halted, perso_fails):
-    """日報品質守門:HIGH audit fail / personalization fail → LINE 即時推 admin。
-    不靠 admin 開信才發現問題。"""
+def _push_admin_halt_alert(date_str, det_fallbacks, perso_fails):
+    """日報品質守門:走 deterministic fallback / personalization fail → LINE 即時推 admin。
+    用戶不會缺信(都有寄),但 admin 需要立刻知道哪些用戶今天拿到的是降級版,趕快查 prompt 問題。"""
     import os, json as _json, urllib.request
     worker = os.environ.get("MARKETDAILY_WEBHOOK_URL",
                             "https://marketdaily-webhook.delvin-12345678.workers.dev")
@@ -652,14 +671,13 @@ def _push_admin_halt_alert(date_str, halted, perso_fails):
     if not tok:
         print("   (skip:MARKETDAILY_INTERNAL_TOKEN/INTERNAL_TOKEN 未設,無法推 admin)")
         return
-    lines = [f"🛑 MarketDaily 日報守門告警 {date_str}"]
-    if halted:
-        lines.append(f"❌ {len(halted)} 封信被 HALT 不寄(HIGH audit fail):")
-        for em, fs in halted[:5]:
-            high_msgs = [f["msg"][:60] for f in fs if f.get("severity") == "high"][:2]
-            lines.append(f"  • {em}: {' / '.join(high_msgs)}")
-        if len(halted) > 5:
-            lines.append(f"  …另 {len(halted) - 5} 位")
+    lines = [f"🛡️ MarketDaily 日報品質告警 {date_str}"]
+    if det_fallbacks:
+        lines.append(f"⬇️ {len(det_fallbacks)} 位走 deterministic fallback(retry 仍 HIGH fail):")
+        for em in det_fallbacks[:8]:
+            lines.append(f"  • {em}")
+        if len(det_fallbacks) > 8:
+            lines.append(f"  …另 {len(det_fallbacks) - 8} 位")
     if perso_fails:
         lines.append(f"⚠️ {len(perso_fails)} 位個人化失敗(顯著 banner 已加):")
         for em, err in perso_fails[:3]:

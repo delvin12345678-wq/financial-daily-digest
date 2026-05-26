@@ -22,13 +22,43 @@ def _strip_html_to_text(html: str) -> str:
 
 
 def _section(html: str, class_name: str) -> str:
-    """抓出特定 class 的 div 內容(粗略)。"""
-    m = re.search(rf'<div class="{class_name}"[\s\S]*?</div>', html, re.I)
-    return m.group(0) if m else ""
+    """抓出特定 class 的 div 內容,**支援巢狀 div**(配對開合,不被內層 </div> 提早切斷)。"""
+    m = re.search(rf'<div class="{class_name}"[^>]*>', html, re.I)
+    if not m:
+        return ""
+    start = m.start()
+    i = m.end()
+    depth = 1
+    while i < len(html) and depth > 0:
+        open_m = re.search(r'<div\b', html[i:], re.I)
+        close_m = re.search(r'</div\s*>', html[i:], re.I)
+        if not close_m:
+            return html[start:]
+        if open_m and open_m.start() < close_m.start():
+            depth += 1
+            i += open_m.end()
+        else:
+            depth -= 1
+            i += close_m.end()
+    return html[start:i]
 
 
 def _all_sections(html: str, class_name: str) -> List[str]:
-    return re.findall(rf'<div class="{class_name}"[\s\S]*?</div>', html, re.I)
+    """抓所有同 class 的 div 區塊(支援巢狀)。"""
+    sections = []
+    cursor = 0
+    pattern = re.compile(rf'<div class="{class_name}"[^>]*>', re.I)
+    while True:
+        m = pattern.search(html, cursor)
+        if not m:
+            break
+        sec = _section(html[m.start():], class_name)
+        if sec:
+            sections.append(sec)
+            cursor = m.start() + len(sec)
+        else:
+            cursor = m.end()
+    return sections
 
 
 def audit_digest(
@@ -107,14 +137,20 @@ def audit_digest(
                       "msg": f"出現孤立的觀望/別動字眼,沒附條件:{bad_isolated[:3]}"})
 
     # 8. signal-card 必須每張都有「battle-row」三件套(進場/目標/停損)
+    # 例外:deterministic fallback 卡片(reason 內有「備援/異常/修復」字眼)豁免,因為刻意不給價位以免誤導
     signal_cards = _all_sections(html, r"signal-card[^\"]*")
     cards_missing_battle = 0
+    real_cards = 0
     for card in signal_cards:
+        is_fallback = bool(re.search(r"備援|個人化生成異常|fallback|主編將.{0,8}修復", card))
+        if is_fallback:
+            continue
+        real_cards += 1
         if "battle-row" not in card or card.count("battle-row") < 3:
             cards_missing_battle += 1
     if cards_missing_battle > 0:
         fails.append({"check": "signal_card_missing_battle", "severity": "high",
-                      "msg": f"{cards_missing_battle}/{len(signal_cards)} 張 signal-card 缺少進場/目標/停損價位"})
+                      "msg": f"{cards_missing_battle}/{real_cards} 張 signal-card 缺少進場/目標/停損價位"})
 
     # 9. 持股覆蓋率:用戶每支持股**都**要在 signal-card 出現,漏一支都 high
     # 2026-05-26 用戶:「使用者選擇每一個台股美股都要顯示下一步」
