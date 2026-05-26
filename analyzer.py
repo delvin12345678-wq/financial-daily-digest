@@ -16,6 +16,118 @@ _SYSTEM_PROMPT = (
 )
 
 
+# US 聯邦假日(NYSE 休市) — 2026 ~ 2028 涵蓋。每年初要補。
+# 來源:NYSE 官方行事曆。
+_US_HOLIDAYS = {
+    # 2026
+    "2026-01-01",  # New Year's Day
+    "2026-01-19",  # MLK Day
+    "2026-02-16",  # Presidents Day
+    "2026-04-03",  # Good Friday
+    "2026-05-25",  # Memorial Day
+    "2026-06-19",  # Juneteenth
+    "2026-07-03",  # Independence Day (observed)
+    "2026-09-07",  # Labor Day
+    "2026-11-26",  # Thanksgiving
+    "2026-12-25",  # Christmas
+    # 2027
+    "2027-01-01", "2027-01-18", "2027-02-15", "2027-03-26",
+    "2027-05-31", "2027-06-18", "2027-07-05", "2027-09-06",
+    "2027-11-25", "2027-12-24",
+    # 2028
+    "2028-01-17", "2028-02-21", "2028-04-14", "2028-05-29",
+    "2028-06-19", "2028-07-04", "2028-09-04", "2028-11-23", "2028-12-25",
+}
+
+# TW 國定假日 (TWSE 休市) — 2026 涵蓋,每年初要補。
+_TW_HOLIDAYS = {
+    "2026-01-01",  # 元旦
+    "2026-02-16", "2026-02-17", "2026-02-18", "2026-02-19", "2026-02-20",  # 春節
+    "2026-02-27", "2026-02-28",  # 228
+    "2026-04-03", "2026-04-06",  # 兒童節 + 清明
+    "2026-05-01",  # 勞動節
+    "2026-06-19",  # 端午
+    "2026-09-25",  # 中秋
+    "2026-10-09",  # 國慶連假
+}
+
+
+def _market_status(today_iso: str) -> dict:
+    """
+    根據今天日期(TW 時區),回傳美股 + 台股的開盤狀態,
+    讓 prompt 能明說「昨晚美股休市」「今天台股有開盤」等真實事實,
+    避免 LLM 把幾天前收盤當「今天/昨晚」寫。
+
+    today_iso 形如 '2026-05-26'(TW 當地日期,日報寄送日)
+    """
+    from datetime import date, timedelta
+    try:
+        y, m, d = map(int, today_iso.split("-"))
+        td = date(y, m, d)
+    except Exception:
+        return {"us_traded_last_session": True, "tw_will_open_today": True,
+                "us_last_trading_date": None, "tw_last_trading_date": None,
+                "us_note": "", "tw_note": ""}
+
+    def _is_trading(d_: date, holidays: set) -> bool:
+        if d_.weekday() >= 5:  # 週六日
+            return False
+        return d_.isoformat() not in holidays
+
+    # 「昨晚美股」對應 TW 今天 - 1 天 (因美股 04:00 TW 收盤)
+    yest = td - timedelta(days=1)
+    us_traded = _is_trading(yest, _US_HOLIDAYS)
+    us_last = yest
+    if not us_traded:
+        # 往前找最近一個美股交易日
+        scan = yest
+        for _ in range(7):
+            scan = scan - timedelta(days=1)
+            if _is_trading(scan, _US_HOLIDAYS):
+                us_last = scan
+                break
+
+    # 今天台股是否將開盤
+    tw_open = _is_trading(td, _TW_HOLIDAYS)
+    tw_last = td
+    if not tw_open:
+        scan = td
+        for _ in range(7):
+            scan = scan - timedelta(days=1)
+            if _is_trading(scan, _TW_HOLIDAYS):
+                tw_last = scan
+                break
+    else:
+        # 今天有開,「最新已有數據」= 昨日(若是交易日)
+        scan = td - timedelta(days=1)
+        for _ in range(7):
+            if _is_trading(scan, _TW_HOLIDAYS):
+                tw_last = scan
+                break
+            scan = scan - timedelta(days=1)
+
+    us_note = ""
+    if not us_traded:
+        us_note = (f"⚠️ **昨晚({yest.isoformat()})美股因美國假日/週末休市,沒有新收盤數據。"
+                   f"資料中的美股數字是 {us_last.isoformat()} 的收盤。**"
+                   f"絕對不可寫「今天美股漲/跌」「昨晚美股收紅/黑」 — 要明說「昨晚美股因 X 休市,最近一次收盤是 {us_last.isoformat()}」。")
+
+    tw_note = ""
+    if not tw_open:
+        tw_note = (f"⚠️ **今天({today_iso})台股休市,不會開盤。**"
+                   f"資料中的台股數字是 {tw_last.isoformat()} 的收盤。"
+                   f"不要寫「今早 9:00 開盤」「今日早盤」這類字眼 — 要明說「今天台股休市,本期重點放美股」。")
+
+    return {
+        "us_traded_last_session": us_traded,
+        "tw_will_open_today": tw_open,
+        "us_last_trading_date": us_last.isoformat(),
+        "tw_last_trading_date": tw_last.isoformat(),
+        "us_note": us_note,
+        "tw_note": tw_note,
+    }
+
+
 def _call_gemini(prompt: str, model: str) -> str:
     if not GEMINI_API_KEY:
         raise RuntimeError("未設定 GEMINI_API_KEY")
@@ -378,6 +490,7 @@ def generate_report(data: dict, user_us_stocks: list = None, user_tw_stocks: lis
     us_news_text = _format_news(data.get("us_news", []), max_items=6)
     tw_news_text = _format_news(data.get("tw_news", []), max_items=5)
     date = data.get("date", "")
+    mkt_status = _market_status(date)
 
     has_holdings = bool(user_us_stocks or user_tw_stocks)
     user_holding_count = len(user_us_stocks or []) + len(user_tw_stocks or [])
@@ -584,10 +697,15 @@ rookie-name span 內只放純代號，系統會自動補公司名。最多 2 張
 
 【⏰ 時序紀律 — 違反 = 廢稿】
 **這份日報在台灣時間早上 7:00 寄出，那時台股還沒開盤（台股 9:00 開盤、13:30 收盤）。**
-- 美股：剛收盤不久（台灣時間 04:00 美股收盤），可以用「今天（美股）漲/跌」「美股收紅/收黑」這類完成式口吻。
+- 美股：通常剛收盤不久（台灣時間 04:00 美股收盤），可以用「昨晚美股收紅/收黑」這類完成式口吻。
 - 台股：**數據是昨日收盤**，今天 9:00 才開盤。**絕對禁止寫「今天台股已漲/已跌/超狂/大跌」這類盤中口吻**。要寫就寫：「昨日台股收 XXX」「今早開盤可留意 XXX」「9:00 開盤後若 XXX 就 XXX」「今日早盤策略」。看到「{date}」這個日期 = 台股還沒開盤的一天。
 - 違反例：「今天台積電（2330）漲 3%！」← 廢稿（盤前不可能知道）
 - 正確例：「台積電（2330）昨日收 XXX 元」「今早 9:00 開盤後留意 XXX 元支撐」
+
+【⚠️ 今天的市場開盤狀態 — 絕對要遵守】
+{mkt_status['us_note'] or f"昨晚({date} 前一天)美股有開盤,數據是新鮮的,可寫「昨晚美股 XXX」。"}
+{mkt_status['tw_note'] or f"今天台股 9:00 將開盤,可寫「今早開盤」「今日早盤策略」。"}
+**規則：休市日的市場,不可在「30 秒看完今天重點」「大盤怎麼了」「持股本日動向」這幾個區塊把舊收盤當「今天/昨晚」寫,務必點明休市。**
 
 【無幻覺原則 — 違反 = 廢稿】
 - 所有內容只能基於以下提供的真實數據和新聞，不得憑空補充或使用訓練資料臆測
