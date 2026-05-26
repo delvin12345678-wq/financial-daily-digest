@@ -87,6 +87,17 @@ def _market_status(today_iso: str) -> dict:
                 us_last = scan
                 break
 
+    # 「今晚美股」對應 TW 今天那天的美股 session (美東 9:30 = TW 21:30 / 22:30)
+    us_will_open_tonight = _is_trading(td, _US_HOLIDAYS)
+    us_next_trading = td
+    if not us_will_open_tonight:
+        scan = td
+        for _ in range(7):
+            scan = scan + timedelta(days=1)
+            if _is_trading(scan, _US_HOLIDAYS):
+                us_next_trading = scan
+                break
+
     # 今天台股是否將開盤
     tw_open = _is_trading(td, _TW_HOLIDAYS)
     tw_last = td
@@ -112,6 +123,16 @@ def _market_status(today_iso: str) -> dict:
                    f"資料中的美股數字是 {us_last.isoformat()} 的收盤。**"
                    f"絕對不可寫「今天美股漲/跌」「昨晚美股收紅/黑」 — 要明說「昨晚美股因 X 休市,最近一次收盤是 {us_last.isoformat()}」。")
 
+    # 今晚美股動作窗口(對稱台股的「今早 9:00 開盤」)
+    if us_will_open_tonight:
+        us_action_note = (f"✅ **今晚({td.isoformat()})美股將正常開盤(美東 9:30 = TW 21:30-22:30 之間,看夏令時間)。**"
+                          f"美股每張 signal-card / stock-card 必須給「今晚開盤後該做什麼」的明確指示:"
+                          f"「今晚開盤後若 $XXX 以下分批接」「突破 $XXX 才追」「跌破 $XXX 停損」「今晚財報前先觀望,等盤後出數字」。"
+                          f"不可只寫「續抱」「觀望」這類沒有時間窗的字眼 — 用戶看的是「我今晚下班後該怎麼動」。")
+    else:
+        us_action_note = (f"⚠️ **今晚({td.isoformat()})美股休市,不會開盤。下次開盤是 {us_next_trading.isoformat()}。**"
+                          f"美股部分只寫「持有觀察 / 等 {us_next_trading.isoformat()} 開盤後 X」,不可寫「今晚開盤」這類字眼。")
+
     tw_note = ""
     if not tw_open:
         tw_note = (f"⚠️ **今天({today_iso})台股休市,不會開盤。**"
@@ -120,10 +141,13 @@ def _market_status(today_iso: str) -> dict:
 
     return {
         "us_traded_last_session": us_traded,
+        "us_will_open_tonight": us_will_open_tonight,
         "tw_will_open_today": tw_open,
         "us_last_trading_date": us_last.isoformat(),
+        "us_next_trading_date": us_next_trading.isoformat(),
         "tw_last_trading_date": tw_last.isoformat(),
         "us_note": us_note,
+        "us_action_note": us_action_note,
         "tw_note": tw_note,
     }
 
@@ -703,8 +727,11 @@ rookie-name span 內只放純代號，系統會自動補公司名。最多 2 張
 - 正確例：「台積電（2330）昨日收 XXX 元」「今早 9:00 開盤後留意 XXX 元支撐」
 
 【⚠️ 今天的市場開盤狀態 — 絕對要遵守】
-{mkt_status['us_note'] or f"昨晚({date} 前一天)美股有開盤,數據是新鮮的,可寫「昨晚美股 XXX」。"}
-{mkt_status['tw_note'] or f"今天台股 9:00 將開盤,可寫「今早開盤」「今日早盤策略」。"}
+昨晚美股:{mkt_status['us_note'] or f"美股有開盤,數據是新鮮的,可寫「昨晚美股 XXX」。"}
+今天台股:{mkt_status['tw_note'] or f"台股 9:00 將開盤,可寫「今早開盤」「今日早盤策略」。"}
+今晚美股:{mkt_status['us_action_note']}
+
+**雙市場動作對稱性:每張美股 signal-card 要給「今晚開盤後做什麼」(若今晚開盤),每張台股 signal-card 要給「今早 9:00 開盤後做什麼」(若今天開盤)。休市日只給「等下一個交易日 X」,不可寫「今晚/今早開盤」這類字眼。**
 **規則：休市日的市場,不可在「30 秒看完今天重點」「大盤怎麼了」「持股本日動向」這幾個區塊把舊收盤當「今天/昨晚」寫,務必點明休市。**
 
 【無幻覺原則 — 違反 = 廢稿】
