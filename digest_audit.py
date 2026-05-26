@@ -179,6 +179,23 @@ def audit_digest(
         fails.append({"check": "placeholder_prices", "severity": "high",
                       "msg": f"signal-card 留下 $XXX 沒填:{placeholder_prices[:3]}"})
 
+    # ───── AI 輸出被截斷 ─────
+    # 16. HTML 結尾不該是 unclosed tag / 半行字 (代表 LLM token 超出上限被切)
+    tail = html.rstrip()[-200:]
+    truncation_signals = []
+    if signal_cards:
+        last_card = signal_cards[-1]
+        if last_card.count("<div") > last_card.count("</div"):
+            truncation_signals.append("最後一張 signal-card 沒收尾")
+        if "signal-disclaimer" in html and not re.search(r"signal-disclaimer[^<]*</div>", html):
+            truncation_signals.append("disclaimer 結尾不完整")
+    # tail 沒有結束標籤 / 句點 / 半行字
+    if re.search(r"[a-zA-Z一-鿿]$", tail) and not tail.endswith((">", "。", "！", "？", "」", ")", "．")):
+        truncation_signals.append(f"HTML 結尾像被截斷:'...{tail[-40:]}'")
+    if truncation_signals:
+        fails.append({"check": "ai_output_truncated", "severity": "high",
+                      "msg": "AI 輸出疑似被截斷(token 超上限):" + " | ".join(truncation_signals)})
+
     # ───── 美股動作窗口對稱 ─────
     # 14. 若今晚美股將開盤,signal-card 應該有「今晚」字眼至少一張
     if mkt_status.get("us_will_open_tonight") and us_holdings and signal_cards:

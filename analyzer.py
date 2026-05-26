@@ -160,7 +160,9 @@ def _call_gemini(prompt: str, model: str) -> str:
         "contents": [{"parts": [{"text": prompt}]}],
         "generationConfig": {
             "temperature": 0.4,
-            "maxOutputTokens": 16000,
+            # 2026-05-26 從 16000 → 32000:27 支持股 × ~600 tokens/卡 = 16k 上限剛好爆,
+            # 任何持股多的用戶 signal-card 都會被截斷。提到 32k 留安全裕度。
+            "maxOutputTokens": 32000,
             "thinkingConfig": {"thinkingBudget": 0},
         },
     }

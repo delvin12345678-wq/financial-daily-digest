@@ -509,6 +509,7 @@ def run():
     ai_calls = 0
     tier_counts = {"新手": 0, "一般": 0, "老手": 0}
     audit_failures_by_email = {}  # 寄送前的使用者視角 audit 結果,寄完彙總推給 admin
+    personalization_failures = []  # AI 個人化失敗的 (email, reason),寄完一起推給 admin
     for email in subscribers:
         prefs = subscriber_prefs[email]
         us_stocks = prefs.get("us_stocks") or []
@@ -542,7 +543,14 @@ def run():
                 subject = get_personalized_subject(data, us_stocks, tw_stocks, data["date"])
             except Exception as e:
                 print(f"   ⚠️ {email} 個人化失敗，改用預設版（{e}）")
-                inner = default_report
+                # fallback 不能偷偷把通用版當個人化日報寄,用戶會以為自己的持股被忽略。
+                # 加顯著 banner 告知 + 累計推 admin 讓我下一輪知道誰沒拿到完整版。
+                personalization_failures.append((email, str(e)[:120]))
+                fail_banner = ('<div style="background:#fff3cd;border:2px solid #ffc107;'
+                               'padding:14px;margin:16px 0;border-radius:8px;color:#856404">'
+                               '⚠️ <b>今天你的個人化日報生成異常</b>,以下是大盤通用版本(你的持股股票未在內)。'
+                               '主編已收到通知,明天會修復;暫時請看網頁完整版或主動聯絡。</div>')
+                inner = fail_banner + default_report
                 subject = None
                 web_url = default_web_url
                 shown = total
@@ -578,8 +586,14 @@ def run():
     print(f"✅ 今日財經日報發送完成！成功 {success_count}/{len(subscribers)} 位")
     print(f"   經驗分布 → 🌱新手 {tier_counts['新手']} · 📈一般 {tier_counts['一般']} · 🎯老手 {tier_counts['老手']}")
 
+    # 個人化失敗的用戶 → 寫進 audit 報告主檔
+    if personalization_failures:
+        print(f"⚠️ 個人化失敗 {len(personalization_failures)} 位:")
+        for em, err in personalization_failures:
+            print(f"   - {em}: {err}")
+
     # audit 結果彙整 → 印 cron log + 寫報告檔(下一輪我會看)
-    if audit_failures_by_email:
+    if audit_failures_by_email or personalization_failures:
         all_checks = {}
         for em, fs in audit_failures_by_email.items():
             for f in fs:
@@ -599,7 +613,11 @@ def run():
             with open(report_path, "w", encoding="utf-8") as f:
                 _json.dump({
                     "date": data["date"],
-                    "summary": summary,
+                    "total_subscribers": len(subscribers),
+                    "personalization_failed_count": len(personalization_failures),
+                    "personalization_failures": personalization_failures,
+                    "audit_failed_count": len(audit_failures_by_email),
+                    "summary": summary if audit_failures_by_email else "",
                     "by_email": {em: fs for em, fs in audit_failures_by_email.items()},
                 }, f, ensure_ascii=False, indent=2)
             print(f"📋 audit 報告寫到 {report_path}")
