@@ -510,6 +510,7 @@ def run():
     tier_counts = {"新手": 0, "一般": 0, "老手": 0}
     audit_failures_by_email = {}  # 寄送前的使用者視角 audit 結果,寄完彙總推給 admin
     personalization_failures = []  # AI 個人化失敗的 (email, reason),寄完一起推給 admin
+    halted_high_audit = []  # HIGH severity audit fail → 拒寄(寧可缺不要錯)
     for email in subscribers:
         prefs = subscriber_prefs[email]
         us_stocks = prefs.get("us_stocks") or []
@@ -564,7 +565,9 @@ def run():
 
         try:
             html = build_email_html(data["date"], inner)
-            # 使用者視角 audit:fail 不擋寄,但累計到 admin 警報
+            # 使用者視角 audit:HIGH severity → 拒寄該封信(避免錯誤訊息流向用戶);
+            # MED/LOW 仍寄但記報告。HIGH halt 累計到 admin LINE 即時推。
+            has_high_fail = False
             try:
                 from digest_audit import audit_digest
                 from analyzer import _market_status
@@ -572,9 +575,15 @@ def run():
                 fails = audit_digest(html, data["date"], us_stocks, tw_stocks, mkt)
                 if fails:
                     audit_failures_by_email[email] = fails
+                    has_high_fail = any(f.get("severity") == "high" for f in fails)
             except Exception as e:
                 print(f"   ⚠️ audit 異常: {e}")
-            ok = send_transactional_email(email, data["date"], html, BREVO_API_KEY, subject=subject)
+            if has_high_fail:
+                halted_high_audit.append((email, audit_failures_by_email[email]))
+                print(f"   🛑 HALT 不寄 {email} — HIGH audit fail")
+                ok = False
+            else:
+                ok = send_transactional_email(email, data["date"], html, BREVO_API_KEY, subject=subject)
         except Exception as e:
             ok = False
             print(f"   ❌ 發送異常：{email}（{e}）")
@@ -585,6 +594,14 @@ def run():
 
     print(f"✅ 今日財經日報發送完成！成功 {success_count}/{len(subscribers)} 位")
     print(f"   經驗分布 → 🌱新手 {tier_counts['新手']} · 📈一般 {tier_counts['一般']} · 🎯老手 {tier_counts['老手']}")
+
+    # HIGH halt 通知:即時 LINE 推給 admin,不等他開信才發現
+    if halted_high_audit:
+        print(f"🛑 {len(halted_high_audit)} 位用戶日報被 HALT(HIGH audit fail)")
+        try:
+            _push_admin_halt_alert(data["date"], halted_high_audit, personalization_failures)
+        except Exception as e:
+            print(f"   ⚠️ admin LINE 推失敗:{e}")
 
     # 個人化失敗的用戶 → 寫進 audit 報告主檔
     if personalization_failures:
@@ -623,6 +640,40 @@ def run():
             print(f"📋 audit 報告寫到 {report_path}")
         except Exception as e:
             print(f"   ⚠️ audit 報告寫檔失敗: {e}")
+
+
+def _push_admin_halt_alert(date_str, halted, perso_fails):
+    """日報品質守門:HIGH audit fail / personalization fail → LINE 即時推 admin。
+    不靠 admin 開信才發現問題。"""
+    import os, json as _json, urllib.request
+    worker = os.environ.get("MARKETDAILY_WEBHOOK_URL",
+                            "https://marketdaily-webhook.delvin-12345678.workers.dev")
+    tok = os.environ.get("MARKETDAILY_INTERNAL_TOKEN") or os.environ.get("INTERNAL_TOKEN")
+    if not tok:
+        print("   (skip:MARKETDAILY_INTERNAL_TOKEN/INTERNAL_TOKEN 未設,無法推 admin)")
+        return
+    lines = [f"🛑 MarketDaily 日報守門告警 {date_str}"]
+    if halted:
+        lines.append(f"❌ {len(halted)} 封信被 HALT 不寄(HIGH audit fail):")
+        for em, fs in halted[:5]:
+            high_msgs = [f["msg"][:60] for f in fs if f.get("severity") == "high"][:2]
+            lines.append(f"  • {em}: {' / '.join(high_msgs)}")
+        if len(halted) > 5:
+            lines.append(f"  …另 {len(halted) - 5} 位")
+    if perso_fails:
+        lines.append(f"⚠️ {len(perso_fails)} 位個人化失敗(顯著 banner 已加):")
+        for em, err in perso_fails[:3]:
+            lines.append(f"  • {em}: {err[:60]}")
+    lines.append("\n見 output/digest_audit_*.json 詳細報告")
+    msg = "\n".join(lines)[:4900]
+    req = urllib.request.Request(
+        f"{worker.rstrip('/')}/internal/admin-line-push",
+        data=_json.dumps({"message": msg}).encode("utf-8"),
+        headers={"Content-Type": "application/json", "Authorization": f"Bearer {tok}"},
+        method="POST",
+    )
+    with urllib.request.urlopen(req, timeout=10) as resp:
+        print(f"   admin LINE push status={resp.status}")
 
 
 if __name__ == "__main__":

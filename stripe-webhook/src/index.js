@@ -60,6 +60,146 @@ async function maybeUpgradeHash(env, email, password, stored) {
   } catch {}
 }
 
+// --- Brute-force lockout (KV-backed) ---
+// 同一 (email, IP) 失敗 5 次 → lock 15 分鐘。新失敗會延長視窗。
+const AUTH_FAIL_LIMIT = 5;
+const AUTH_FAIL_WINDOW_SEC = 900;
+function clientIp(request) {
+  return request.headers.get("cf-connecting-ip") || request.headers.get("x-real-ip") || "unknown";
+}
+function authFailKey(email, request) {
+  return `auth_fail:${(email || "anon").toLowerCase()}:${clientIp(request)}`;
+}
+async function isAuthLocked(env, email, request) {
+  if (!email) return false;
+  const raw = await env.USER_PREFS.get(authFailKey(email, request));
+  if (!raw) return false;
+  try {
+    const { count, until } = JSON.parse(raw);
+    return count >= AUTH_FAIL_LIMIT && Date.now() < until;
+  } catch { return false; }
+}
+async function recordAuthFail(env, email, request) {
+  if (!email) return;
+  const key = authFailKey(email, request);
+  const raw = await env.USER_PREFS.get(key);
+  let count = 0;
+  try { if (raw) count = (JSON.parse(raw).count || 0); } catch {}
+  count += 1;
+  await env.USER_PREFS.put(
+    key,
+    JSON.stringify({ count, until: Date.now() + AUTH_FAIL_WINDOW_SEC * 1000 }),
+    { expirationTtl: AUTH_FAIL_WINDOW_SEC }
+  );
+}
+async function clearAuthFail(env, email, request) {
+  if (!email) return;
+  try { await env.USER_PREFS.delete(authFailKey(email, request)); } catch {}
+}
+
+// 統一驗密碼 + rate limit + auto-upgrade。回 {ok, status, error, stored}。
+async function gatePassword(env, request, email, password) {
+  if (!email || !password) return { ok: false, status: 400, error: "auth" };
+  if (await isAuthLocked(env, email, request)) {
+    return { ok: false, status: 429, error: "too_many_attempts" };
+  }
+  const stored = await env.USER_PREFS.get(`pwd:${email}`);
+  if (!stored || !(await verifyPwd(password, stored))) {
+    await recordAuthFail(env, email, request);
+    return { ok: false, status: 403, error: "auth", stored };
+  }
+  await clearAuthFail(env, email, request);
+  await maybeUpgradeHash(env, email, password, stored);
+  return { ok: true, stored };
+}
+
+// --- 密碼強度檢查(新密碼專用,既有密碼不受影響)---
+const WEAK_PASSWORDS = new Set([
+  "password","password1","password123","passw0rd","123456","1234567","12345678","123456789","1234567890",
+  "qwerty","qwerty123","qwertyuiop","abc123","abcdef","letmein","welcome","welcome1","admin","admin123",
+  "iloveyou","monkey","dragon","baseball","football","superman","trustno1","sunshine","princess","login",
+  "starwars","master","passw0rd1","00000000","11111111","87654321","aaaaaa","000000","marketdaily","delvin"
+]);
+function checkPwdStrength(pwd) {
+  if (typeof pwd !== "string" || pwd.length < 10) return "too_short";
+  if (pwd.length > 200) return "too_long";
+  const lc = pwd.toLowerCase();
+  if (WEAK_PASSWORDS.has(lc)) return "too_weak";
+  let kinds = 0;
+  if (/[a-z]/.test(pwd)) kinds++;
+  if (/[A-Z]/.test(pwd)) kinds++;
+  if (/[0-9]/.test(pwd)) kinds++;
+  if (/[^a-zA-Z0-9]/.test(pwd)) kinds++;
+  if (kinds < 2) return "too_weak";
+  return null;
+}
+
+// --- TOTP (RFC 6238) — admin 2FA ---
+const BASE32 = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+function base32Encode(bytes) {
+  let bits = 0, value = 0, out = "";
+  for (const b of bytes) {
+    value = (value << 8) | b;
+    bits += 8;
+    while (bits >= 5) { out += BASE32[(value >> (bits - 5)) & 31]; bits -= 5; }
+  }
+  if (bits > 0) out += BASE32[(value << (5 - bits)) & 31];
+  return out;
+}
+function base32Decode(input) {
+  const s = (input || "").toUpperCase().replace(/=+$/, "").replace(/\s/g, "");
+  let bits = 0, value = 0;
+  const out = [];
+  for (const c of s) {
+    const i = BASE32.indexOf(c);
+    if (i < 0) continue;
+    value = (value << 5) | i;
+    bits += 5;
+    if (bits >= 8) { out.push((value >> (bits - 8)) & 0xff); bits -= 8; }
+  }
+  return new Uint8Array(out);
+}
+async function hotp(secretBytes, counter) {
+  const key = await crypto.subtle.importKey("raw", secretBytes, { name: "HMAC", hash: "SHA-1" }, false, ["sign"]);
+  const buf = new ArrayBuffer(8);
+  const dv = new DataView(buf);
+  dv.setUint32(0, Math.floor(counter / 0x100000000));
+  dv.setUint32(4, counter >>> 0);
+  const h = new Uint8Array(await crypto.subtle.sign("HMAC", key, buf));
+  const o = h[19] & 0xf;
+  const code = ((h[o] & 0x7f) << 24) | (h[o+1] << 16) | (h[o+2] << 8) | h[o+3];
+  return (code % 1000000).toString().padStart(6, "0");
+}
+async function verifyTotp(secretBase32, code, time) {
+  if (!/^\d{6}$/.test(code || "")) return false;
+  const t = time || Date.now();
+  const counter = Math.floor(t / 30000);
+  const bytes = base32Decode(secretBase32);
+  for (let delta = -1; delta <= 1; delta++) {
+    if ((await hotp(bytes, counter + delta)) === code) return true;
+  }
+  return false;
+}
+function generateTotpSecret() {
+  const buf = new Uint8Array(20);
+  crypto.getRandomValues(buf);
+  return base32Encode(buf);
+}
+
+// --- CORS: 對寫入操作擋掉非允許 origin(防 CSRF/惡意網站盜用 API)---
+const ALLOWED_ORIGINS = new Set([
+  "https://marketdaily.ai",
+  "https://www.marketdaily.ai",
+  "https://marketdaily.pages.dev",
+]);
+function isAllowedOrigin(request) {
+  const origin = request.headers.get("origin") || "";
+  if (!origin) return true; // 非瀏覽器(curl/server)沒 origin,不是 CSRF 攻擊面
+  if (ALLOWED_ORIGINS.has(origin)) return true;
+  if (/^https:\/\/[a-z0-9-]+\.marketdaily\.pages\.dev$/i.test(origin)) return true;
+  return false;
+}
+
 // Gmail alias 正規化:bob+a@gmail.com → bob@gmail.com,b.o.b@gmail.com → bob@gmail.com
 function normalizeEmail(email) {
   const e = (email || "").toLowerCase().trim();
@@ -74,15 +214,34 @@ function normalizeEmail(email) {
   return `${local}@${domain}`;
 }
 
-// 統一 admin 端點驗證:email 必須在 ADMIN_EMAILS,且 password 必須正確
-async function requireAdmin(env, body) {
+// 統一 admin 端點驗證:email 必須在 ADMIN_EMAILS,且 password 必須正確;含 rate limit。
+// 若該 admin 已啟用 TOTP(KV totp:${email}):驗證 body.totp;同 IP 通過後 10 分鐘記憶。
+// 回傳 email(成功)或 null(失敗/被 lock/缺 TOTP)。
+async function requireAdmin(env, body, request) {
   const email = ((body && (body.email || body.admin_email || body.auth_email)) || "").trim().toLowerCase();
   if (!ADMIN_EMAILS.includes(email)) return null;
   const password = (body && body.password) || "";
+  if (request && await isAuthLocked(env, email, request)) return null;
   const stored = await env.USER_PREFS.get(`pwd:${email}`);
-  if (!stored) return null;
-  const ok = await verifyPwd(password, stored);
-  if (!ok) return null;
+  if (!stored || !(await verifyPwd(password, stored))) {
+    if (request) await recordAuthFail(env, email, request);
+    return null;
+  }
+  const totpSecret = await env.USER_PREFS.get(`totp:${email}`);
+  if (totpSecret) {
+    const ip = request ? clientIp(request) : "unknown";
+    const memKey = `totp_ok:${email}:${ip}`;
+    const recent = await env.USER_PREFS.get(memKey);
+    if (!recent) {
+      const code = (body && body.totp) || "";
+      if (!(await verifyTotp(totpSecret, code))) {
+        if (request) await recordAuthFail(env, email, request);
+        return null;
+      }
+      await env.USER_PREFS.put(memKey, "1", { expirationTtl: 600 });
+    }
+  }
+  if (request) await clearAuthFail(env, email, request);
   await maybeUpgradeHash(env, email, password, stored);
   return email;
 }
@@ -197,6 +356,97 @@ export default {
 
     const url = new URL(request.url);
 
+    // CSRF 防護:POST 必須來自允許的 origin。
+    // Stripe/LINE server-to-server webhook 沒 Origin header → isAllowedOrigin 自動放行(且還有 signature 驗證)。
+    if (request.method === "POST" && !isAllowedOrigin(request)) {
+      return json({ error: "forbidden_origin" }, 403);
+    }
+
+    // --- Admin 2FA TOTP setup ---
+    // 查詢是否已啟用 TOTP(無需密碼,僅回 boolean)
+    if (url.pathname === "/admin/totp-status" && request.method === "POST") {
+      let body;
+      try { body = await request.json(); } catch { return json({ error: "Invalid" }, 400); }
+      const email = ((body.email || "") + "").trim().toLowerCase();
+      if (!ADMIN_EMAILS.includes(email)) return json({ enabled: false });
+      const sec = await env.USER_PREFS.get(`totp:${email}`);
+      return json({ enabled: !!sec });
+    }
+
+    // 啟用 TOTP:第一步 — 要 password,回 secret + otpauth URL(不寫入 KV)
+    if (url.pathname === "/admin/totp-setup" && request.method === "POST") {
+      let body;
+      try { body = await request.json(); } catch { return json({ error: "Invalid" }, 400); }
+      const email = ((body.email || "") + "").trim().toLowerCase();
+      if (!ADMIN_EMAILS.includes(email)) return json({ error: "Forbidden" }, 403);
+      // 暫存草稿 secret(不影響現有 totp:${email}),5 分鐘有效
+      const password = body.password || "";
+      if (await isAuthLocked(env, email, request)) return json({ error: "too_many_attempts" }, 429);
+      const storedHash = await env.USER_PREFS.get(`pwd:${email}`);
+      if (!storedHash || !(await verifyPwd(password, storedHash))) {
+        await recordAuthFail(env, email, request);
+        return json({ error: "auth" }, 403);
+      }
+      await clearAuthFail(env, email, request);
+      const secret = generateTotpSecret();
+      await env.USER_PREFS.put(`totp_draft:${email}`, secret, { expirationTtl: 600 });
+      const label = encodeURIComponent("MarketDaily:" + email);
+      const issuer = "MarketDaily";
+      const otpauth = `otpauth://totp/${label}?secret=${secret}&issuer=${issuer}&algorithm=SHA1&digits=6&period=30`;
+      return json({ secret, otpauth });
+    }
+
+    // 啟用 TOTP:第二步 — 用 setup 草稿 + 6 碼 confirm,正確才寫 totp:${email}
+    if (url.pathname === "/admin/totp-confirm" && request.method === "POST") {
+      let body;
+      try { body = await request.json(); } catch { return json({ error: "Invalid" }, 400); }
+      const email = ((body.email || "") + "").trim().toLowerCase();
+      if (!ADMIN_EMAILS.includes(email)) return json({ error: "Forbidden" }, 403);
+      const password = body.password || "";
+      const code = (body.code || "") + "";
+      if (await isAuthLocked(env, email, request)) return json({ error: "too_many_attempts" }, 429);
+      const storedHash = await env.USER_PREFS.get(`pwd:${email}`);
+      if (!storedHash || !(await verifyPwd(password, storedHash))) {
+        await recordAuthFail(env, email, request);
+        return json({ error: "auth" }, 403);
+      }
+      const draft = await env.USER_PREFS.get(`totp_draft:${email}`);
+      if (!draft) return json({ error: "no_draft" }, 400);
+      if (!(await verifyTotp(draft, code))) {
+        await recordAuthFail(env, email, request);
+        return json({ error: "wrong_code" }, 403);
+      }
+      await env.USER_PREFS.put(`totp:${email}`, draft);
+      await env.USER_PREFS.delete(`totp_draft:${email}`);
+      await clearAuthFail(env, email, request);
+      return json({ ok: true });
+    }
+
+    // 停用 TOTP:要 password + 當前 6 碼
+    if (url.pathname === "/admin/totp-disable" && request.method === "POST") {
+      let body;
+      try { body = await request.json(); } catch { return json({ error: "Invalid" }, 400); }
+      const email = ((body.email || "") + "").trim().toLowerCase();
+      if (!ADMIN_EMAILS.includes(email)) return json({ error: "Forbidden" }, 403);
+      const password = body.password || "";
+      const code = (body.code || "") + "";
+      if (await isAuthLocked(env, email, request)) return json({ error: "too_many_attempts" }, 429);
+      const storedHash = await env.USER_PREFS.get(`pwd:${email}`);
+      if (!storedHash || !(await verifyPwd(password, storedHash))) {
+        await recordAuthFail(env, email, request);
+        return json({ error: "auth" }, 403);
+      }
+      const secret = await env.USER_PREFS.get(`totp:${email}`);
+      if (!secret) return json({ ok: true }); // 本來就沒啟用
+      if (!(await verifyTotp(secret, code))) {
+        await recordAuthFail(env, email, request);
+        return json({ error: "wrong_code" }, 403);
+      }
+      await env.USER_PREFS.delete(`totp:${email}`);
+      await clearAuthFail(env, email, request);
+      return json({ ok: true });
+    }
+
     // Check if email is a subscriber
     if (url.pathname === "/check-subscriber" && request.method === "POST") {
       let body;
@@ -234,37 +484,72 @@ export default {
       if (!password) {
         return json({ subscribed: true, needsPasswordEntry: true, hasKvPlan });
       }
+      if (await isAuthLocked(env, email, request)) {
+        return json({ subscribed: true, error: "too_many_attempts" }, 429);
+      }
       if (!(await verifyPwd(password, storedHash))) {
+        await recordAuthFail(env, email, request);
         return json({ subscribed: true, error: "wrong_password" });
       }
+      await clearAuthFail(env, email, request);
       await maybeUpgradeHash(env, email, password, storedHash);
       return json({ subscribed: true, plan, since, hasKvPlan });
     }
 
     // Set subscriber password (first-time setup)
+    // 新流程:全新 email 也可直接設密碼;若還沒在 Brevo,自動以 free 加入再存密碼
     if (url.pathname === "/set-password" && request.method === "POST") {
       let body;
       try { body = await request.json(); } catch { return json({ error: "Invalid request" }, 400); }
       const email = (body.email || "").trim().toLowerCase();
       const password = body.password || "";
       if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json({ error: "invalid_email" }, 400);
-      if (password.length < 6) return json({ error: "too_short" }, 400);
+      {
+        const weak = checkPwdStrength(password);
+        if (weak) return json({ error: weak }, 400);
+      }
 
+      const targetList = parseInt(env.BREVO_LIST_ID) || 2;
+      let contact = null;
+      let inTargetList = false;
       const res = await fetch(`https://api.brevo.com/v3/contacts/${encodeURIComponent(email)}`, {
         headers: { "api-key": env.BREVO_API_KEY }
       });
-      if (!res.ok) return json({ error: "not_subscriber" }, 403);
-      const contact = await res.json();
-      const listIds = contact.listIds || [];
-      const targetList = parseInt(env.BREVO_LIST_ID) || 2;
-      if (!listIds.includes(targetList)) return json({ error: "not_subscriber" }, 403);
+      if (res.ok) {
+        contact = await res.json();
+        inTargetList = (contact.listIds || []).includes(targetList);
+      }
+
+      let createdNew = false;
+      if (!inTargetList) {
+        // Anti-spam: 進入觸發 welcome email + Brevo add 的 path 前先 rate limit
+        // (避免繞 /subscribe-free-direct 改打 /set-password 達到同樣 spam 效果)
+        const ip = request.headers.get("cf-connecting-ip") || "anon";
+        const ipKey = `rl:signup-ip:${ip}`;
+        const ipCount = parseInt((await env.USER_PREFS.get(ipKey)) || "0", 10);
+        if (ipCount >= 10) return json({ error: "too_many_attempts", retry_after: "1h" }, 429);
+        if (await env.USER_PREFS.get(`rl:signup-email:${email}`)) return json({ error: "rate_limited" }, 429);
+        ctx.waitUntil(env.USER_PREFS.put(ipKey, String(ipCount + 1), { expirationTtl: 3600 }));
+        ctx.waitUntil(env.USER_PREFS.put(`rl:signup-email:${email}`, "1", { expirationTtl: 300 }));
+        const added = await addToBrevo(email, env.BREVO_API_KEY, targetList);
+        if (!added) return json({ error: "brevo_error" }, 502);
+        const existingPlan = await env.USER_PREFS.get(`plan:${email}`);
+        if (!existingPlan) await env.USER_PREFS.put(`plan:${email}`, "free");
+        createdNew = true;
+        ctx.waitUntil(postSignupTasks(email, body.ref || "", env));
+        ctx.waitUntil(recordConvert(env, {
+          email, event: "subscribe_free",
+          visit_id: body.visit_id, utm_source: body.utm_source,
+          utm_medium: body.utm_medium, utm_campaign: body.utm_campaign,
+        }));
+      }
 
       const hash = await makePwdHash(password);
       await env.USER_PREFS.put(`pwd:${email}`, hash);
 
-      const isPaid = (contact.attributes?.PAID === true || contact.attributes?.PLAN === "paid");
+      const isPaid = !!(contact && (contact.attributes?.PAID === true || contact.attributes?.PLAN === "paid"));
       const plan = (await env.USER_PREFS.get(`plan:${email}`)) || (isPaid ? "premium" : "free");
-      return json({ ok: true, plan, since: contact.createdAt || null });
+      return json({ ok: true, plan, since: (contact && contact.createdAt) || null, createdNew });
     }
 
     // Change password (authenticated users)
@@ -275,12 +560,15 @@ export default {
       const oldPassword = body.old_password || "";
       const newPassword = body.new_password || "";
       if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json({ error: "invalid_email" }, 400);
-      if (newPassword.length < 6) return json({ error: "too_short" }, 400);
+      const weak = checkPwdStrength(newPassword);
+      if (weak) return json({ error: weak }, 400);
 
-      const storedHash = await env.USER_PREFS.get(`pwd:${email}`);
-      if (!storedHash) return json({ error: "not_found" }, 404);
-
-      if (!(await verifyPwd(oldPassword, storedHash))) return json({ error: "wrong_password" }, 403);
+      const gate = await gatePassword(env, request, email, oldPassword);
+      if (!gate.ok) {
+        if (gate.status === 429) return json({ error: "too_many_attempts" }, 429);
+        if (gate.status === 403 && !gate.stored) return json({ error: "not_found" }, 404);
+        return json({ error: "wrong_password" }, 403);
+      }
 
       const newHash = await makePwdHash(newPassword);
       await env.USER_PREFS.put(`pwd:${email}`, newHash);
@@ -294,11 +582,10 @@ export default {
       const email = (body.email || "").trim().toLowerCase();
       const password = body.password || "";
       if (!email) return json({ error: "invalid_email" }, 400);
-      const storedHash = await env.USER_PREFS.get(`pwd:${email}`);
-      if (!storedHash || !(await verifyPwd(password, storedHash))) {
-        return json({ error: "auth" }, 403);
+      {
+        const g = await gatePassword(env, request, email, password);
+        if (!g.ok) return json({ error: g.error }, g.status);
       }
-      await maybeUpgradeHash(env, email, password, storedHash);
       const state = await signState({ email, exp: Date.now() + 600000 }, env.LINE_LOGIN_CHANNEL_SECRET);
       const authUrl = "https://access.line.me/oauth2/v2.1/authorize?response_type=code"
         + "&client_id=" + LINE_LOGIN_CHANNEL_ID
@@ -306,6 +593,71 @@ export default {
         + "&state=" + encodeURIComponent(state)
         + "&scope=profile";
       return json({ authUrl });
+    }
+
+    // LINE 綁定:Chrome → LIFF 一次性 token(免在 LIFF 重複輸密碼)
+    if (url.pathname === "/line/bind-token" && request.method === "POST") {
+      let body;
+      try { body = await request.json(); } catch { return json({ error: "Invalid request" }, 400); }
+      const email = (body.email || "").trim().toLowerCase();
+      const password = body.password || "";
+      if (!email) return json({ error: "invalid_email" }, 400);
+      {
+        const g = await gatePassword(env, request, email, password);
+        if (!g.ok) return json({ error: g.error }, g.status);
+      }
+      const token = await signState({ email, exp: Date.now() + 300000 }, env.LINE_LOGIN_CHANNEL_SECRET);
+      return json({ token });
+    }
+
+    // LINE 綁定:用一次性 token + LIFF idToken 換綁定(LIFF 內呼叫,無需密碼)
+    if (url.pathname === "/line/bind-by-token" && request.method === "POST") {
+      let body;
+      try { body = await request.json(); } catch { return json({ error: "Invalid request" }, 400); }
+      const token = body.token || "";
+      const idToken = body.idToken || "";
+      if (!token || !idToken) return json({ error: "invalid_request" }, 400);
+      const payload = await verifyState(token, env.LINE_LOGIN_CHANNEL_SECRET);
+      if (!payload || !payload.email) return json({ error: "token_invalid" }, 400);
+      const email = payload.email;
+      const verifyRes = await fetch("https://api.line.me/oauth2/v2.1/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({ id_token: idToken, client_id: LINE_LOGIN_CHANNEL_ID }),
+      });
+      if (!verifyRes.ok) return json({ error: "idtoken_invalid" }, 400);
+      const tokPayload = await verifyRes.json();
+      const userId = tokPayload.sub;
+      if (!userId) return json({ error: "no_user_id" }, 400);
+      await env.USER_PREFS.put(`line:${email}`, userId);
+      await env.USER_PREFS.put(`linemap:${userId}`, email);
+      return json({ ok: true, email });
+    }
+
+    // LINE 綁定:LIFF 路徑(0 跳轉,LIFF 內直接拿 idToken)
+    if (url.pathname === "/line/liff-bind" && request.method === "POST") {
+      let body;
+      try { body = await request.json(); } catch { return json({ error: "Invalid request" }, 400); }
+      const email = (body.email || "").trim().toLowerCase();
+      const password = body.password || "";
+      const idToken = body.idToken || "";
+      if (!email || !idToken) return json({ error: "invalid_request" }, 400);
+      {
+        const g = await gatePassword(env, request, email, password);
+        if (!g.ok) return json({ error: g.error }, g.status);
+      }
+      const verifyRes = await fetch("https://api.line.me/oauth2/v2.1/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({ id_token: idToken, client_id: LINE_LOGIN_CHANNEL_ID }),
+      });
+      if (!verifyRes.ok) return json({ error: "idtoken_invalid" }, 400);
+      const payload = await verifyRes.json();
+      const userId = payload.sub;
+      if (!userId) return json({ error: "no_user_id" }, 400);
+      await env.USER_PREFS.put(`line:${email}`, userId);
+      await env.USER_PREFS.put(`linemap:${userId}`, email);
+      return json({ ok: true });
     }
 
     // LINE 綁定:OAuth 回呼
@@ -341,11 +693,10 @@ export default {
       let body;
       try { body = await request.json(); } catch { return json({ error: "Invalid request" }, 400); }
       const email = (body.email || "").trim().toLowerCase();
-      const storedHash = await env.USER_PREFS.get(`pwd:${email}`);
-      if (!storedHash || !(await verifyPwd(body.password || "", storedHash))) {
-        return json({ error: "auth" }, 403);
+      {
+        const g = await gatePassword(env, request, email, body.password || "");
+        if (!g.ok) return json({ error: g.error }, g.status);
       }
-      await maybeUpgradeHash(env, email, body.password || "", storedHash);
       const userId = await env.USER_PREFS.get(`line:${email}`);
       if (userId) await env.USER_PREFS.delete(`linemap:${userId}`);
       await env.USER_PREFS.delete(`line:${email}`);
@@ -388,11 +739,8 @@ export default {
 
       const isAdmin = ADMIN_EMAILS.includes(email);
       {
-        const storedHash = await env.USER_PREFS.get(`pwd:${email}`);
-        if (!storedHash || !(await verifyPwd(password, storedHash))) {
-          return json({ error: "auth" }, 403);
-        }
-        await maybeUpgradeHash(env, email, password, storedHash);
+        const g = await gatePassword(env, request, email, password);
+        if (!g.ok) return json({ error: g.error }, g.status);
       }
       const plan = await env.USER_PREFS.get(`plan:${email}`);
       if (!isAdmin && plan !== "premium") return json({ error: "not_premium" }, 403);
@@ -470,9 +818,27 @@ export default {
     }
 
     // AI 投資助手:狀態查詢(前端決定卡片顯示)
-    if (url.pathname === "/chat-status" && request.method === "GET") {
-      const email = (url.searchParams.get("email") || "").trim().toLowerCase();
+    if (url.pathname === "/chat-status" && (request.method === "GET" || request.method === "POST")) {
+      // 安全:要求 password 才回真實 plan/remaining,不然攻擊者能列舉「誰是 premium」。
+      // GET 向後相容(舊 client),但只回 generic;POST + password 才回真值。
+      let email = "", password = "";
+      if (request.method === "POST") {
+        try {
+          const body = await request.json();
+          email = (body.email || "").trim().toLowerCase();
+          password = body.password || "";
+        } catch {}
+      } else {
+        email = (url.searchParams.get("email") || "").trim().toLowerCase();
+      }
+      if (!email) return json({ premium: false, remaining: 0 });
       const isAdmin = ADMIN_EMAILS.includes(email);
+      // password 驗證 — GET (無 pwd) 或 pwd 錯時不洩漏 plan。
+      // admin 也必驗,否則攻擊者能透過回應差異(generic vs 真實 plan)列舉 admin 名單。
+      const storedHash = await env.USER_PREFS.get(`pwd:${email}`);
+      if (!storedHash || !password || !(await verifyPwd(password, storedHash))) {
+        return json({ premium: false, remaining: 0 });
+      }
       const plan = await env.USER_PREFS.get(`plan:${email}`);
       const premium = isAdmin || plan === "premium";
       const day = new Date(Date.now() + 8 * 3600 * 1000).toISOString().slice(0, 10);
@@ -484,16 +850,17 @@ export default {
     if (url.pathname === "/admin-stats" && request.method === "POST") {
       let body;
       try { body = await request.json(); } catch { return json({ error: "Invalid" }, 400); }
-      if (!await requireAdmin(env, body)) return json({ error: "Forbidden" }, 403);
+      if (!await requireAdmin(env, body, request)) return json({ error: "Forbidden" }, 403);
       try {
         const listId = parseInt(env.BREVO_LIST_ID) || 2;
-        const res = await fetch(`https://api.brevo.com/v3/contacts/lists/${listId}/contacts`, {
+        // Brevo API 預設 limit=50,最大 500;此處抓全部 contacts 給 admin 面板,不可只回前 50。
+        const res = await fetch(`https://api.brevo.com/v3/contacts/lists/${listId}/contacts?limit=500`, {
           headers: { "api-key": env.BREVO_API_KEY }
         });
         const data = await res.json();
         const contacts = data.contacts || [];
         const total = data.count || contacts.length;
-        const subscribers = await Promise.all(contacts.slice(0, 50).map(async c => {
+        const subscribers = await Promise.all(contacts.slice(0, 500).map(async c => {
           const em = (c.email || "").toLowerCase();
           const kvPlan = await env.USER_PREFS.get(`plan:${em}`);
           return {
@@ -510,7 +877,7 @@ export default {
     if (url.pathname === "/admin/get-config" && request.method === "POST") {
       let body;
       try { body = await request.json(); } catch { return json({ error: "Invalid" }, 400); }
-      if (!await requireAdmin(env, body)) return json({ error: "Forbidden" }, 403);
+      if (!await requireAdmin(env, body, request)) return json({ error: "Forbidden" }, 403);
       const raw = await env.USER_PREFS.get("admin:global-config");
       return json({ config: raw ? JSON.parse(raw) : null });
     }
@@ -519,7 +886,7 @@ export default {
     if (url.pathname === "/admin/save-config" && request.method === "POST") {
       let body;
       try { body = await request.json(); } catch { return json({ error: "Invalid" }, 400); }
-      if (!await requireAdmin(env, body)) return json({ error: "Forbidden" }, 403);
+      if (!await requireAdmin(env, body, request)) return json({ error: "Forbidden" }, 403);
       const config = body.config;
       if (!config || typeof config !== "object") return json({ error: "no config" }, 400);
       config.updated_at = new Date().toISOString();
@@ -531,7 +898,7 @@ export default {
     if (url.pathname === "/admin/set-plan" && request.method === "POST") {
       let body;
       try { body = await request.json(); } catch { return json({ error: "Invalid" }, 400); }
-      if (!await requireAdmin(env, body)) return json({ error: "Forbidden" }, 403);
+      if (!await requireAdmin(env, body, request)) return json({ error: "Forbidden" }, 403);
       const target = (body.target || "").trim().toLowerCase();
       const plan = (body.plan || "").trim().toLowerCase();
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(target)) return json({ error: "invalid_target" }, 400);
@@ -549,7 +916,7 @@ export default {
     if (url.pathname === "/admin/sync-brevo-plans" && request.method === "POST") {
       let body;
       try { body = await request.json(); } catch { return json({ error: "Invalid" }, 400); }
-      if (!await requireAdmin(env, body)) return json({ error: "Forbidden" }, 403);
+      if (!await requireAdmin(env, body, request)) return json({ error: "Forbidden" }, 403);
       const listId = parseInt(env.BREVO_LIST_ID) || 2;
       const results = { ok: 0, fail: 0, by_plan: {} };
       let cursor = undefined;
@@ -569,11 +936,49 @@ export default {
       return json(results);
     }
 
+    // Admin:清除符合 email pattern 的測試 contact(Brevo + KV 全清)。一次性工具,
+    // 用於清除 audit 留下的 *@example.com 等垃圾資料。
+    if (url.pathname === "/admin/purge-contacts" && request.method === "POST") {
+      let body;
+      try { body = await request.json(); } catch { return json({ error: "Invalid" }, 400); }
+      if (!await requireAdmin(env, body, request)) return json({ error: "Forbidden" }, 403);
+      const pattern = (body.pattern || "").trim().toLowerCase();
+      if (!pattern || pattern.length < 5) return json({ error: "pattern_too_short" }, 400);
+      // 安全:不允許 pattern 為單字串如 "gmail.com" 之類,必須夠特殊(防誤刪真實用戶)
+      if (["gmail.com", "com", "yahoo.com", "outlook.com"].includes(pattern)) {
+        return json({ error: "pattern_too_broad" }, 400);
+      }
+      const listId = parseInt(env.BREVO_LIST_ID) || 2;
+      const res = await fetch(`https://api.brevo.com/v3/contacts/lists/${listId}/contacts?limit=500`, {
+        headers: { "api-key": env.BREVO_API_KEY }
+      });
+      if (!res.ok) return json({ error: "brevo_list_failed", status: res.status }, 502);
+      const data = await res.json();
+      const contacts = data.contacts || [];
+      const targets = contacts.filter(c => (c.email || "").toLowerCase().includes(pattern));
+      const result = { matched: targets.length, brevo_deleted: 0, brevo_failed: 0, kv_deleted: 0, emails: [] };
+      for (const c of targets) {
+        const email = (c.email || "").toLowerCase();
+        result.emails.push(email);
+        const dr = await fetch(`https://api.brevo.com/v3/contacts/${encodeURIComponent(email)}`, {
+          method: "DELETE",
+          headers: { "api-key": env.BREVO_API_KEY }
+        });
+        if (dr.ok || dr.status === 204) result.brevo_deleted++;
+        else result.brevo_failed++;
+        // 同步清 KV:plan / pwd / linemap(若有 line) / 個人偏好(key = email 本身)
+        for (const key of [`plan:${email}`, `pwd:${email}`, email, `line:${email}`]) {
+          try { await env.USER_PREFS.delete(key); result.kv_deleted++; } catch {}
+        }
+      }
+      return json(result);
+    }
+
     // Admin:lifecycle email 手動測試(不檢查 days_since_signup、不寫防呆 flag)
     if (url.pathname === "/admin/lifecycle-test" && request.method === "POST") {
       let body;
       try { body = await request.json(); } catch { return json({ error: "Invalid" }, 400); }
-      if (!await requireAdmin(env, body)) return json({ error: "Forbidden" }, 403);
+      if (!await requireAdmin(env, body, request)) return json({ error: "Forbidden" }, 403);
       const target = (body.target || body.to || "").trim().toLowerCase();
       const type = (body.type || "").trim().toLowerCase();
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(target)) return json({ error: "invalid_target" }, 400);
@@ -633,7 +1038,7 @@ export default {
     if (url.pathname === "/admin/analytics-summary" && request.method === "POST") {
       let body;
       try { body = await request.json(); } catch { return json({ error: "Invalid" }, 400); }
-      if (!await requireAdmin(env, body)) return json({ error: "Forbidden" }, 403);
+      if (!await requireAdmin(env, body, request)) return json({ error: "Forbidden" }, 403);
 
       const days = [];
       const totals = { by_source: {}, by_event: {}, total: 0 };
@@ -675,7 +1080,7 @@ export default {
     if (url.pathname === "/admin/reactive-list" && request.method === "POST") {
       let body;
       try { body = await request.json(); } catch { return json({ error: "Invalid" }, 400); }
-      if (!await requireAdmin(env, body)) return json({ error: "Forbidden" }, 403);
+      if (!await requireAdmin(env, body, request)) return json({ error: "Forbidden" }, 403);
       const list = await env.USER_PREFS.list({ prefix: "reactive:pending:", limit: 200 });
       const items = [];
       for (const k of list.keys) {
@@ -691,7 +1096,7 @@ export default {
     if (url.pathname === "/admin/reactive-approve" && request.method === "POST") {
       let body;
       try { body = await request.json(); } catch { return json({ error: "Invalid" }, 400); }
-      const email = await requireAdmin(env, body);
+      const email = await requireAdmin(env, body, request);
       if (!email) return json({ error: "Forbidden" }, 403);
       const id = (body.id || "").toString();
       if (!/^[a-z0-9]{6,32}$/.test(id)) return json({ error: "invalid_id" }, 400);
@@ -747,7 +1152,7 @@ export default {
     if (url.pathname === "/admin/reactive-reject" && request.method === "POST") {
       let body;
       try { body = await request.json(); } catch { return json({ error: "Invalid" }, 400); }
-      if (!await requireAdmin(env, body)) return json({ error: "Forbidden" }, 403);
+      if (!await requireAdmin(env, body, request)) return json({ error: "Forbidden" }, 403);
       const id = (body.id || "").toString();
       if (!/^[a-z0-9]{6,32}$/.test(id)) return json({ error: "invalid_id" }, 400);
       const raw = await env.USER_PREFS.get(`reactive:pending:${id}`);
@@ -767,6 +1172,14 @@ export default {
       const email = (body.email || "").trim().toLowerCase();
       if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
         return json({ error: "invalid_email" }, 400);
+      }
+      // 身份驗證:若用戶已設密碼,save 必須帶正確密碼,否則任何人能改別人偏好。
+      const storedHash = await env.USER_PREFS.get(`pwd:${email}`);
+      if (storedHash) {
+        const password = body.password || "";
+        if (!password || !(await verifyPwd(password, storedHash))) {
+          return json({ error: "auth" }, 403);
+        }
       }
       const plan = (await env.USER_PREFS.get(`plan:${email}`)) || "free";
       const cap = planCap(plan);
@@ -798,6 +1211,14 @@ export default {
       }
       const email = (body.email || "").trim().toLowerCase();
       if (!email) return json({ error: "invalid_email" }, 400);
+      // 身份驗證:若用戶已設密碼,read 必須帶正確密碼,否則任何人能查別人持股。
+      const storedHash = await env.USER_PREFS.get(`pwd:${email}`);
+      if (storedHash) {
+        const password = body.password || "";
+        if (!password || !(await verifyPwd(password, storedHash))) {
+          return json({ error: "auth" }, 403);
+        }
+      }
       const plan = (await env.USER_PREFS.get(`plan:${email}`)) || "free";
       const cap = planCap(plan);
       const raw = await env.USER_PREFS.get(email);
@@ -815,17 +1236,44 @@ export default {
     if (url.pathname === "/save-digest" && request.method === "POST") {
       let body;
       try { body = await request.json(); } catch { return json({ error: "Invalid request" }, 400); }
-      const token = (body.token || "").trim();
+      const incoming = (body.token || "").trim();
       const html = body.html || "";
       const date = (body.date || "").trim();
-      if (!/^[A-Za-z0-9_-]{8,64}$/.test(token)) return json({ error: "invalid_token" }, 400);
+      if (!/^[A-Za-z0-9_-]{8,64}$/.test(incoming)) return json({ error: "invalid_token" }, 400);
       if (!html || html.length > 5000000) return json({ error: "invalid_html" }, 400);
+      // Anti-spam: 每 IP 每小時最多 100 次 (legitimate builder 一天 < 30 次,留充足 buffer)
+      // 防止攻擊者 spam 5MB KV entry 爆 quota
+      const ip = request.headers.get("cf-connecting-ip") || "anon";
+      const rlKey = `rl:save-digest:${ip}`;
+      const rlCount = parseInt((await env.USER_PREFS.get(rlKey)) || "0", 10);
+      if (rlCount >= 100) return json({ error: "too_many_attempts" }, 429);
+      ctx.waitUntil(env.USER_PREFS.put(rlKey, String(rlCount + 1), { expirationTtl: 3600 }));
+      // 若 client 仍送短 token(舊 builder),server 升級為 32 字元防爆破。
+      const token = incoming.length >= 32 ? incoming : crypto.randomUUID().replace(/-/g, "");
       await env.USER_PREFS.put(`digest:${token}`, html, { expirationTtl: 86400 * 45 });
       if (/^\d{4}-\d{2}-\d{2}$/.test(date)) {
         // 同步寫索引,TTL 同 digest 本體
         await env.USER_PREFS.put(`digest_idx:${date}:${token}`, "1", { expirationTtl: 86400 * 45 });
       }
-      return json({ ok: true, url: `${url.origin}/digest/${token}` });
+      return json({ ok: true, url: `${url.origin}/digest/${token}`, token });
+    }
+
+    // 內部用:推 LINE 訊息給 admin(供 digest pipeline、audit 失分通知用)
+    // 認證:Bearer header 比對 env.INTERNAL_TOKEN
+    if (url.pathname === "/internal/admin-line-push" && request.method === "POST") {
+      const auth = request.headers.get("authorization") || "";
+      const expected = `Bearer ${env.INTERNAL_TOKEN || ""}`;
+      if (!env.INTERNAL_TOKEN) return json({ error: "unauthorized" }, 401);
+      if (auth.length !== expected.length) return json({ error: "unauthorized" }, 401);
+      let diff = 0;
+      for (let i = 0; i < auth.length; i++) diff |= auth.charCodeAt(i) ^ expected.charCodeAt(i);
+      if (diff !== 0) return json({ error: "unauthorized" }, 401);
+      let body;
+      try { body = await request.json(); } catch { return json({ error: "bad_body" }, 400); }
+      const message = String(body.message || "").slice(0, 4900);
+      if (!message) return json({ error: "empty_message" }, 400);
+      const res = await sendLineAdminPush(env, message);
+      return json({ ok: !!res.ok, status: res.status, skipped: !!res.skipped });
     }
 
     // 內部用:列舉某日所有 digest tokens(供 track-record builder)
@@ -833,7 +1281,12 @@ export default {
     if (url.pathname === "/internal/list-digests" && request.method === "GET") {
       const auth = request.headers.get("authorization") || "";
       const expected = `Bearer ${env.INTERNAL_TOKEN || ""}`;
-      if (!env.INTERNAL_TOKEN || auth !== expected) return json({ error: "unauthorized" }, 401);
+      // Timing-safe compare(避免 timing attack 推斷 INTERNAL_TOKEN)
+      if (!env.INTERNAL_TOKEN) return json({ error: "unauthorized" }, 401);
+      if (auth.length !== expected.length) return json({ error: "unauthorized" }, 401);
+      let diff = 0;
+      for (let i = 0; i < auth.length; i++) diff |= auth.charCodeAt(i) ^ expected.charCodeAt(i);
+      if (diff !== 0) return json({ error: "unauthorized" }, 401);
       const date = (url.searchParams.get("date") || "").trim();
       if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return json({ error: "invalid_date" }, 400);
       const tokens = [];
@@ -932,10 +1385,14 @@ export default {
           const res = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?interval=1d&range=5d`, { headers: yfH });
           if (!res.ok) return null;
           const data = await res.json();
-          const meta = data?.chart?.result?.[0]?.meta;
+          const r = data?.chart?.result?.[0];
+          const meta = r?.meta;
           if (!meta) return null;
-          const price = meta.regularMarketPrice ?? null;
-          const prev = meta.chartPreviousClose ?? null;
+          // 同 /stock-quotes: 用 close array 最後兩個算「當日漲跌」,
+          // chartPreviousClose 是 5 天前的收盤,直接用會變累計漲幅而非當日。
+          const closes = (r.indicators?.quote?.[0]?.close || []).filter(c => c !== null && c !== undefined);
+          const price = meta.regularMarketPrice ?? (closes.length ? closes[closes.length - 1] : null);
+          const prev = closes.length >= 2 ? closes[closes.length - 2] : (meta.chartPreviousClose ?? null);
           const change = (price !== null && prev !== null && prev !== 0) ? ((price - prev) / prev * 100) : null;
           return { sym, label, price, change };
         } catch { return null; }
@@ -948,7 +1405,7 @@ export default {
 
     // Real-time stock quotes proxy (Yahoo Finance)
     if (url.pathname === "/stock-quotes" && request.method === "GET") {
-      const raw = (url.searchParams.get("tickers") || "").split(",").map(t => t.trim()).filter(Boolean).slice(0, 20);
+      const raw = (url.searchParams.get("tickers") || "").split(",").map(t => t.trim()).filter(Boolean).slice(0, 50);
       if (!raw.length) return json({ quotes: [] });
       const fh = env.FINNHUB_API_KEY;
       const yfHeaders = {
@@ -977,8 +1434,12 @@ export default {
         const r = await fetchYahooChart(t, isTW, "1d", "5d", yfHeaders, 15);
         if (!r) return { symbol: t, name: t, price: null, change: null };
         const meta = r.meta;
-        const price = meta.regularMarketPrice ?? null;
-        const prev = meta.chartPreviousClose ?? null;
+        // ⚠️ 用 chart close array 算「當日漲跌」,不可用 meta.chartPreviousClose:
+        // chartPreviousClose 是 range 起始前一天的收盤 → 5d range 它是 5 天前,
+        // 拿來算 change 會變成「5 日累計漲幅」而不是「當日漲跌」(2026-05-25 抓到的 bug)。
+        const closes = (r.indicators?.quote?.[0]?.close || []).filter(c => c !== null && c !== undefined);
+        const price = meta.regularMarketPrice ?? (closes.length ? closes[closes.length - 1] : null);
+        const prev = closes.length >= 2 ? closes[closes.length - 2] : (meta.chartPreviousClose ?? null);
         const change = (price !== null && prev !== null && prev !== 0) ? ((price - prev) / prev * 100) : null;
         return { symbol: t, name: meta.shortName || meta.longName || t, price, change };
       }));
@@ -1013,9 +1474,19 @@ export default {
         for (let i = 0; i < ts.length; i++) {
           if (closes[i] !== null && closes[i] !== undefined) points.push({ t: ts[i], c: closes[i] });
         }
+        // prevClose 語意 = 「昨日收盤」(作為圖表上「前一日收盤水平線」用):
+        //   - 1D range (intraday 5m):chartPreviousClose 剛好是昨日 ✓
+        //   - 5D / 1M / 3M (daily intervals):chartPreviousClose 是 range 起始前一天,
+        //     會變成「5 天前 / 1 個月前 / 3 個月前」的收盤,語意錯誤。
+        //     用 close array 倒數第二個才是真昨日。
+        let prevClose = r.meta?.chartPreviousClose ?? null;
+        if (cfg.range !== "1d") {
+          const validCloses = closes.filter(c => c !== null && c !== undefined);
+          if (validCloses.length >= 2) prevClose = validCloses[validCloses.length - 2];
+        }
         return new Response(JSON.stringify({
           symbol: t,
-          prevClose: r.meta?.chartPreviousClose ?? null,
+          prevClose,
           price: r.meta?.regularMarketPrice ?? null,
           points
         }), {
@@ -1032,6 +1503,14 @@ export default {
       try { body = await request.json(); } catch { return json({ error: "Invalid request" }, 400); }
       const email = (body.email || "").trim().toLowerCase();
       if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json({ error: "invalid_email" }, 400);
+      // Anti-spam: IP 級每小時 10 次 + 同 email 5 分鐘內 1 次
+      const ip = request.headers.get("cf-connecting-ip") || "anon";
+      const ipKey = `rl:signup-ip:${ip}`;
+      const ipCount = parseInt((await env.USER_PREFS.get(ipKey)) || "0", 10);
+      if (ipCount >= 10) return json({ error: "too_many_attempts", retry_after: "1h" }, 429);
+      if (await env.USER_PREFS.get(`rl:signup-email:${email}`)) return json({ error: "rate_limited" }, 429);
+      ctx.waitUntil(env.USER_PREFS.put(ipKey, String(ipCount + 1), { expirationTtl: 3600 }));
+      ctx.waitUntil(env.USER_PREFS.put(`rl:signup-email:${email}`, "1", { expirationTtl: 300 }));
       const listId = parseInt(env.BREVO_LIST_ID) || 2;
       const added = await addToBrevo(email, env.BREVO_API_KEY, listId);
       if (!added) return json({ error: "brevo_error" }, 502);
@@ -1058,6 +1537,12 @@ export default {
         utm_medium: body.utm_medium || "",
         utm_campaign: body.utm_campaign || "",
       };
+      // Anti-spam: 每 IP 每分鐘 10 次 — 用戶連刷 Pricing 頁面也夠用,擋 abuse 直打 Stripe API。
+      const ip = request.headers.get("cf-connecting-ip") || "anon";
+      const rlKey = `rl:checkout:${ip}`;
+      const rlCount = parseInt((await env.USER_PREFS.get(rlKey)) || "0", 10);
+      if (rlCount >= 10) return json({ error: "too_many_attempts" }, 429);
+      ctx.waitUntil(env.USER_PREFS.put(rlKey, String(rlCount + 1), { expirationTtl: 60 }));
       if (!env.STRIPE_SECRET_KEY) return json({ error: "missing_stripe_key" }, 500);
       const params = new URLSearchParams();
       params.set("mode", "subscription");
@@ -1115,6 +1600,12 @@ export default {
       try { body = await request.json(); } catch { return json({ error: "Invalid request" }, 400); }
       const email = (body.email || "").trim().toLowerCase();
       if (!email) return json({ error: "invalid_email" }, 400);
+      // 身份驗證:任何人查別人 referral 等同洩漏其 conversions/clicks/bonus 統計
+      const storedHash = await env.USER_PREFS.get(`pwd:${email}`);
+      if (storedHash) {
+        const password = body.password || "";
+        if (!password || !(await verifyPwd(password, storedHash))) return json({ error: "auth" }, 403);
+      }
 
       let userData = await env.USER_PREFS.get(`referral:user:${email}`);
       if (userData) {
@@ -1141,6 +1632,12 @@ export default {
       try { body = await request.json(); } catch { return json({ error: "Invalid" }, 400); }
       const email = (body.email || "").trim().toLowerCase();
       if (!email) return json({ error: "invalid_email" }, 400);
+      // 身份驗證:同 /get-referral,不可洩漏別人 stats
+      const storedHash = await env.USER_PREFS.get(`pwd:${email}`);
+      if (storedHash) {
+        const password = body.password || "";
+        if (!password || !(await verifyPwd(password, storedHash))) return json({ error: "auth" }, 403);
+      }
 
       let userRaw = await env.USER_PREFS.get(`referral:user:${email}`);
       let user;
@@ -1349,6 +1846,18 @@ async function runLifecycleSweep(env) {
             sent.d45 = (sent.d45 || 0) + 1;
           }
         }
+
+        // Premium 但未綁 LINE → 寄一次提醒(任何 ≥ 3 天的舊用戶都會吃到,但 KV flag 防止重寄)。
+        // 用戶 2026-05-25 指令:Premium 沒綁 LINE 就寄信通知。
+        if (days >= 3) {
+          const plan = (await env.USER_PREFS.get(`plan:${email}`)) || "free";
+          const linked = await env.USER_PREFS.get(`line:${email}`);
+          if (plan === "premium" && !linked && !(await env.USER_PREFS.get(`lc_line_reminder_sent:${email}`))) {
+            await sendLineBindReminderEmail(email, env.BREVO_API_KEY, env);
+            await env.USER_PREFS.put(`lc_line_reminder_sent:${email}`, String(Date.now()));
+            sent.line_reminder = (sent.line_reminder || 0) + 1;
+          }
+        }
       } catch (e) {
         errors++;
         console.log("lifecycle sweep error for", email, String(e));
@@ -1390,6 +1899,13 @@ async function verifyStripeSignature(payload, sigHeader, secret) {
   const parts = Object.fromEntries(sigHeader.split(",").map(p => p.split("=")));
   const timestamp = parts["t"];
   const signature = parts["v1"];
+  if (!timestamp || !signature) return false;
+  // Replay protection: timestamp 必須在 ±5 分鐘內(Stripe 官方建議閾值,
+  // 攔截攻擊者重送舊 webhook 觸發重複付款處理)
+  const ts = parseInt(timestamp, 10);
+  if (!Number.isFinite(ts)) return false;
+  const now = Math.floor(Date.now() / 1000);
+  if (Math.abs(now - ts) > 300) return false;
   const signed = `${timestamp}.${payload}`;
   const key = await crypto.subtle.importKey(
     "raw", new TextEncoder().encode(secret),
@@ -1397,7 +1913,11 @@ async function verifyStripeSignature(payload, sigHeader, secret) {
   );
   const mac = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(signed));
   const expected = Array.from(new Uint8Array(mac)).map(b => b.toString(16).padStart(2, "0")).join("");
-  return expected === signature;
+  // Timing-safe comparison(避免 timing attack 推斷 secret)
+  if (expected.length !== signature.length) return false;
+  let diff = 0;
+  for (let i = 0; i < expected.length; i++) diff |= expected.charCodeAt(i) ^ signature.charCodeAt(i);
+  return diff === 0;
 }
 
 function getTaiwanDate() {
@@ -1895,7 +2415,7 @@ async function sendLifecycleEmail(email, apiKey, subject, html) {
 // D1:設股票偏好 —— 沒設就會收到通用版日報,失去個人化價值
 async function sendD1Email(email, apiKey, env) {
   const subject = "✋ 把你的持股告訴 MarketDaily,日報才會真的個人化";
-  const cta = `https://marketdaily.ai/preferences.html?utm_source=lifecycle&utm_campaign=d1_preferences&email=${encodeURIComponent(email)}`;
+  const cta = `https://marketdaily.ai/dashboard?focus=stocks&utm_source=lifecycle&utm_campaign=d1_preferences&email=${encodeURIComponent(email)}`;
   const body = `
     <p style="font-size:17px;font-weight:800;color:#1a1a1a;margin:0 0 14px;">嗨!歡迎來到第二天 👋</p>
     <p style="font-size:15px;color:#444;line-height:1.8;margin:0 0 18px;">
@@ -2142,6 +2662,43 @@ async function sendD45Email(email, apiKey, env) {
   return sendLifecycleEmail(email, apiKey, subject, html);
 }
 
+// Premium 但沒綁 LINE → 提醒這個 plan 還有「即時 LINE 推播」沒啟用,引導去 dashboard 綁定。
+async function sendLineBindReminderEmail(email, apiKey, env) {
+  const subject = "⚡ 你的 Premium 還沒啟用 LINE 即時推播";
+  const bindLink = `https://marketdaily.ai/dashboard?utm_source=lifecycle&utm_campaign=line_reminder&email=${encodeURIComponent(email)}`;
+  const body = `
+    <p style="font-size:17px;font-weight:800;color:#1a1a1a;margin:0 0 14px;">嗨!想跟你說一件事 👋</p>
+    <p style="font-size:15px;color:#444;line-height:1.8;margin:0 0 20px;">
+      你已經是 <strong>Premium 訂閱者</strong>,但目前還沒把 LINE 綁定 MarketDaily。<br>
+      Premium 最重要的功能之一是<strong>「重大新聞即時推播」</strong>—— 你持股有什麼大事,我們會在第一時間用 LINE 通知你,而不是等到隔天早上日報。
+    </p>
+    <div style="background:rgba(6,199,85,0.08);border:1px solid rgba(6,199,85,0.30);border-radius:14px;padding:20px 22px;margin-bottom:22px;">
+      <p style="margin:0 0 10px;font-size:13px;color:#047857;font-weight:800;letter-spacing:1px;">📲 綁定 LINE 之後,你會收到:</p>
+      <ul style="margin:0;padding-left:20px;font-size:14px;color:#1a1a1a;line-height:1.85;">
+        <li>🚨 持股利空 / 利多即時推播(盤中也會)</li>
+        <li>💬 LINE Bot 雙向對話 — 直接問 AI「我的 NVDA 現在怎樣?」</li>
+        <li>⚡ 30 秒內回應 — 不必開電腦、不必滑 PTT</li>
+      </ul>
+    </div>
+    <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="margin-bottom:18px;">
+      <tr>
+        <td align="center">
+          <a href="${bindLink}" style="display:block;padding:17px 24px;background:linear-gradient(135deg,#06C755,#10b981);color:#fff;font-size:17px;font-weight:800;text-decoration:none;border-radius:12px;">前往 Dashboard 綁定 LINE →</a>
+        </td>
+      </tr>
+    </table>
+    <p style="font-size:13px;color:#666;line-height:1.7;margin:0;text-align:center;">
+      綁定後立即生效,以後重大消息直接 LINE 通知你 ⚡
+    </p>`;
+  const html = lifecycleShell({
+    badge: "Premium · LINE 提醒",
+    headerTitle: "⚡ 啟用即時 LINE 推播",
+    headerSub: "你的 Premium 功能還沒用滿",
+    bodyHtml: body,
+  });
+  return sendLifecycleEmail(email, apiKey, subject, html);
+}
+
 // === Reactive Content helpers ===
 
 // 命中條件:白名單關鍵字。earnings 必須同時出現大型股票名 — 避免一般 earnings 新聞炸量。
@@ -2348,21 +2905,29 @@ async function geminiHotTake(env, title, desc) {
 
 // LINE push 給主編個人帳號 — secret 不全就跳過,不阻塞
 async function sendLineAdminPush(env, message) {
-  const token = env.LINE_CHANNEL_ACCESS_TOKEN;
   const adminId = env.ADMIN_LINE_USER_ID;
-  if (!token || !adminId) {
-    console.log("LINE admin push skipped (missing LINE_CHANNEL_ACCESS_TOKEN or ADMIN_LINE_USER_ID)");
+  if (!adminId) {
+    console.log("LINE admin push skipped (missing ADMIN_LINE_USER_ID)");
     return { ok: false, skipped: true };
   }
+  const body = JSON.stringify({
+    to: adminId,
+    messages: [{ type: "text", text: message.slice(0, 4900) }],
+  });
+  const tryOnce = (t) => fetch("https://api.line.me/v2/bot/message/push", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "Authorization": "Bearer " + t },
+    body,
+  });
   try {
-    const res = await fetch("https://api.line.me/v2/bot/message/push", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
-      body: JSON.stringify({
-        to: adminId,
-        messages: [{ type: "text", text: message.slice(0, 4900) }],
-      }),
-    });
+    let token = await lineToken(env);
+    if (!token) return { ok: false, error: "no_token" };
+    let res = await tryOnce(token);
+    if (res.status === 401) {
+      await env.USER_PREFS.delete("alert:linetoken");
+      const fresh = await lineToken(env, { force: true });
+      if (fresh && fresh !== token) res = await tryOnce(fresh);
+    }
     return { ok: res.ok, status: res.status };
   } catch (e) { return { ok: false, error: String(e) }; }
 }
@@ -2373,13 +2938,20 @@ async function sendLineBroadcast(env, message, live) {
     console.log("[mock] LINE broadcast:", message.slice(0, 100));
     return { ok: true, mocked: true };
   }
-  const token = env.LINE_CHANNEL_ACCESS_TOKEN;
-  if (!token) return { ok: false, error: "missing_token" };
-  const res = await fetch("https://api.line.me/v2/bot/message/broadcast", {
+  const body = JSON.stringify({ messages: [{ type: "text", text: message.slice(0, 4900) }] });
+  const tryOnce = (t) => fetch("https://api.line.me/v2/bot/message/broadcast", {
     method: "POST",
-    headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
-    body: JSON.stringify({ messages: [{ type: "text", text: message.slice(0, 4900) }] }),
+    headers: { "Content-Type": "application/json", "Authorization": "Bearer " + t },
+    body,
   });
+  let token = await lineToken(env);
+  if (!token) return { ok: false, error: "missing_token" };
+  let res = await tryOnce(token);
+  if (res.status === 401) {
+    await env.USER_PREFS.delete("alert:linetoken");
+    const fresh = await lineToken(env, { force: true });
+    if (fresh && fresh !== token) res = await tryOnce(fresh);
+  }
   return { ok: res.ok, status: res.status };
 }
 
@@ -2424,23 +2996,77 @@ async function verifyLineSignature(bodyText, sigHeader, secret) {
   const mac = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(bodyText));
   let expected = "";
   for (const b of new Uint8Array(mac)) expected += String.fromCharCode(b);
-  return btoa(expected) === sigHeader;
+  const expectedB64 = btoa(expected);
+  // Timing-safe comparison(同 Stripe webhook,避免 timing attack 推斷 channel secret)
+  if (expectedB64.length !== sigHeader.length) return false;
+  let diff = 0;
+  for (let i = 0; i < expectedB64.length; i++) diff |= expectedB64.charCodeAt(i) ^ sigHeader.charCodeAt(i);
+  return diff === 0;
+}
+
+// LINE Messaging API token:KV cache(alert:linetoken,跟 alert-worker 共用)
+// → static env LINE_CHANNEL_ACCESS_TOKEN → 動態 OAuth(client_credentials)。
+// force=true 跳過 cache 和 static,lineReply 收 401 時呼叫。
+async function lineToken(env, { force = false } = {}) {
+  if (!force) {
+    const cached = await env.USER_PREFS.get("alert:linetoken");
+    if (cached) return cached;
+    if (env.LINE_CHANNEL_ACCESS_TOKEN) return env.LINE_CHANNEL_ACCESS_TOKEN;
+  }
+  if (!env.LINE_CHANNEL_ID || !env.LINE_CHANNEL_SECRET) return null;
+  const res = await fetch("https://api.line.me/v2/oauth/accessToken", {
+    method: "POST",
+    headers: { "content-type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      grant_type: "client_credentials",
+      client_id: env.LINE_CHANNEL_ID,
+      client_secret: env.LINE_CHANNEL_SECRET,
+    }),
+  });
+  if (!res.ok) return null;
+  const data = await res.json();
+  if (!data.access_token) return null;
+  await env.USER_PREFS.put("alert:linetoken", data.access_token, { expirationTtl: 24 * 24 * 3600 });
+  return data.access_token;
 }
 
 async function lineReply(env, replyToken, text) {
   const msg = (text || "").slice(0, 4900);
   if (!msg) return;
-  return fetch("https://api.line.me/v2/bot/message/reply", {
+  const tryOnce = (t) => fetch("https://api.line.me/v2/bot/message/reply", {
     method: "POST",
-    headers: {
-      Authorization: `Bearer ${env.LINE_CHANNEL_ACCESS_TOKEN}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      replyToken,
-      messages: [{ type: "text", text: msg }],
-    }),
+    headers: { Authorization: `Bearer ${t}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ replyToken, messages: [{ type: "text", text: msg }] }),
   });
+  let token = await lineToken(env);
+  if (!token) {
+    console.log("lineReply: no token available");
+    return;
+  }
+  let res = await tryOnce(token);
+  if (res.status === 401) {
+    await env.USER_PREFS.delete("alert:linetoken");
+    const fresh = await lineToken(env, { force: true });
+    if (fresh && fresh !== token) {
+      res = await tryOnce(fresh);
+    }
+  }
+  if (!res.ok) {
+    console.log(`lineReply failed status=${res.status}`);
+    // 主動告 admin:lineReply 壞掉沒有人會發現(用戶看不到回覆,以為 AI 沒理他),
+    // 5/25 才被用戶察覺,加同小時節流(共用 alert-worker 的 admin_alert KV 命名)。
+    try {
+      if (env.ADMIN_LINE_USER_ID && res.status !== 401) {
+        const hourKey = `admin_alert:${new Date().toISOString().slice(0, 13)}`;
+        if (!(await env.USER_PREFS.get(hourKey))) {
+          await sendLineAdminPush(env,
+            `🚨 lineReply 失敗 status=${res.status}\nuser 訊息沒收到 AI 回覆,請查 wrangler tail.\n— stripe-webhook`);
+          await env.USER_PREFS.put(hourKey, "1", { expirationTtl: 3700 });
+        }
+      }
+    } catch {}
+  }
+  return res;
 }
 
 async function processLineEvents(events, env) {
@@ -2526,6 +3152,48 @@ async function handleLineQuery(env, userId, text, replyToken) {
   // 只保留最近 10 輪,避免 token 暴漲
   if (history.length > 20) history = history.slice(-20);
 
+  // 反 anchoring:當用戶在問「剛剛/這個/那則/你傳的」這類指代詞時,
+  // 如果 history 中先前 assistant 曾錯誤回答「我沒推過/沒看到/沒傳過」,
+  // 直接把這些被污染的 assistant 回應從 history 移除,避免新一輪 follow 舊立場。
+  const refersToPush = /剛(剛|才)|你.{0,4}(傳|推).{0,4}(消息|新聞|那則)|這(個|則|條).{0,4}(消息|新聞|要)|那則|剛才的|剛推的|傳給我/.test(text);
+  if (refersToPush) {
+    const beforeLen = history.length;
+    history = history.filter(m => {
+      if (m.role !== "assistant") return true;
+      const bad = /(沒|未).{0,5}(傳|推|主動推|看到|收到).{0,12}(消息|新聞|那則|這個|推播)|我.{0,6}沒.{0,4}推過|我.{0,4}沒.{0,4}主動推|沒有.{0,5}傳.{0,5}消息|搞不清楚.{0,5}這個|找不到.{0,5}你.{0,5}(說|指)的/.test(m.content);
+      return !bad;
+    });
+    if (history.length !== beforeLen) {
+      console.log(`[handleLineQuery] anti-anchor: dropped ${beforeLen - history.length} polluted assistant turns for ${email}`);
+    }
+  }
+
+  // 結構化的近期主動推播清單(per-user, 24h, 最多 8 則),
+  // alert-worker push 時寫進 alerthistory:${userId},這邊讀來注入 system prompt,
+  // 不再依賴 chat history(history 可能被擠掉,或部署前推的 push 根本沒寫進去)。
+  let recentAlertsContext = "";
+  try {
+    const alertHistRaw = await env.USER_PREFS.get(`alerthistory:${userId}`);
+    if (alertHistRaw) {
+      const list = JSON.parse(alertHistRaw);
+      if (Array.isArray(list) && list.length) {
+        const lines = list.slice(-5).reverse().map((a, i) => {
+          let timeStr = "";
+          try {
+            timeStr = a.ts ? new Date(a.ts).toLocaleString("zh-TW",
+              { timeZone: "Asia/Taipei", month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "";
+          } catch {}
+          const num = i + 1;
+          return `${num}. [${timeStr}] ${a.ticker || "?"} — ${a.title || ""}\n   為什麼跟用戶有關:${a.reason || "(無)"}\n   原文:${a.url || ""}`;
+        });
+        recentAlertsContext =
+          "\n\n**過去 24 小時內你主動推播給「這位用戶」的重大消息(最新在前):**\n" +
+          lines.join("\n\n") +
+          "\n\n→ 當用戶說「這個」「剛剛你傳的」「剛剛那則」「你推給我的消息」時,**幾乎都是指上面第 1 則(最新)**;若用戶在訊息中引用了標題的關鍵字(如「谷歌」「Berkshire」),對照清單找出他指的那則,直接基於該則新聞分析。**絕對不要說「我沒推過」「我沒看到」**,這份清單就是你推過的所有訊息。";
+      }
+    }
+  } catch {}
+
   const system = `你是 MarketDaily 的 AI 投資助手,透過 LINE 跟用戶對話。MarketDaily 是給台灣投資人的每日財經 AI 日報平台。
 
 LINE 對話規則:
@@ -2537,7 +3205,12 @@ LINE 對話規則:
 - 提到台股一律用公司名稱(可附代號,如「台積電 2330」),不要只報代號。
 - 與投資、財經、用戶持股無關的閒聊,簡短禮貌帶過,引導回投資主題。
 
-這位用戶目前在 MarketDaily 追蹤的持股:${holdings}`;
+**重要:處理「主動推播」的上下文**
+- 對話歷史中以 \`[系統主動推播]\` 開頭的 assistant 訊息,**是你主動推給用戶的「重大消息」LINE 提醒**(不是用戶問你的回覆)。
+- 當用戶說「這個」「剛剛你傳的」「剛剛那則消息」「剛剛推的」「你說的這個新聞」等指代詞,**幾乎都是指最近那則 [系統主動推播]**,要往前翻歷史找到它,直接基於那條新聞回答,**不要說「我沒看到你說的是什麼」或「我沒傳過消息」**。
+- 找不到指代對象時(歷史裡真的沒有 push),才禮貌地請用戶補上具體股票或新聞標題。
+
+這位用戶目前在 MarketDaily 追蹤的持股:${holdings}${recentAlertsContext}`;
 
   let aiRes;
   try {
