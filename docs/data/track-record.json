@@ -1,19 +1,19 @@
 {
   "stats": {
-    "generated_at": "2026-05-25T15:17:48",
+    "generated_at": "2026-05-27T11:50:37",
     "days_covered": 2,
     "total_records": 18,
-    "judged_records": 12,
-    "a_count": 12,
-    "a_wins": 11,
-    "a_rate": 91.7,
+    "judged_records": 18,
+    "a_count": 18,
+    "a_wins": 15,
+    "a_rate": 83.3,
     "c_count": 0,
     "c_wins": 0,
     "c_rate": 0.0,
     "public_only": {
-      "a_count": 12,
-      "a_wins": 11,
-      "a_rate": 91.7,
+      "a_count": 18,
+      "a_wins": 15,
+      "a_rate": 83.3,
       "c_count": 0,
       "c_wins": 0,
       "c_rate": 0.0
@@ -31,7 +31,7 @@
       "reason": "受惠於軟銀大漲帶動的 AI 樂觀情緒，ADR 上漲 1.38%，表現強勁，抱緊處理。",
       "type": "A",
       "source": "stock-card",
-      "outcome": null
+      "outcome": "win"
     },
     {
       "date": "2026-05-22",
@@ -43,7 +43,7 @@
       "reason": "今天微漲 0.14% 幾乎平盤，SpaceX 測試發射臨時喊卡雖然不直接影響特斯拉，但市場情緒稍受干擾，建議先抱著觀望，不急著加碼。",
       "type": "A",
       "source": "action-board",
-      "outcome": null
+      "outcome": "win"
     },
     {
       "date": "2026-05-22",
@@ -55,7 +55,7 @@
       "reason": "剛公布完財報，股價出現短線獲利了結的賣壓而下跌 1.77%，但整體 AI 趨勢完全沒變，建議手上有票的朋友繼續抱緊，不用急著賣。",
       "type": "A",
       "source": "action-board",
-      "outcome": null
+      "outcome": "win"
     },
     {
       "date": "2026-05-22",
@@ -67,7 +67,7 @@
       "reason": "雖然今天微幅下跌 0.47%，但傳出與 Anthropic 洽談 AI 晶片合作，這對自研晶片生態是長期利多，小拉回反而是不錯的進場機會。",
       "type": "A",
       "source": "action-board",
-      "outcome": null
+      "outcome": "loss"
     },
     {
       "date": "2026-05-22",
@@ -79,7 +79,7 @@
       "reason": "社群廣告業務穩定，股價微幅收紅，表現抗跌，繼續持有。",
       "type": "A",
       "source": "stock-card",
-      "outcome": null
+      "outcome": "win"
     },
     {
       "date": "2026-05-22",
@@ -91,7 +91,7 @@
       "reason": "今天逆勢上漲 0.91%，表現比其他科技巨頭穩健。資金在科技板塊輪動時，蘋果往往是避風港，適合想穩健布局的投資人分批買進。",
       "type": "A",
       "source": "action-board",
-      "outcome": null
+      "outcome": "loss"
     },
     {
       "date": "2026-05-21",
