@@ -858,6 +858,17 @@ footer {
   footer { flex-direction: column; align-items: center; text-align: center; padding: 24px; }
   .footer-note { text-align: center; }
 }
+
+/* === 手機版導覽列修正(pills 不換行、縮小、放不下水平滑動)=== */
+@media (max-width: 600px) {
+  nav { padding: 0 14px; gap: 10px; }
+  .nav-logo { font-size: 15px; gap: 7px; flex-shrink: 0; }
+  .nav-logo-icon { width: 26px; height: 26px; }
+  .nav-right { gap: 6px; flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+  .nav-right::-webkit-scrollbar { display: none; }
+  .nav-back, .lang-btn { white-space: nowrap; flex-shrink: 0; font-size: 12px; padding: 6px 11px; line-height: 1.2; }
+}
+
 </style>
 </head>
 <body>
