@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light dark">
+<meta name="supported-color-schemes" content="light dark">
+<title>財經日報 2026-05-22</title>
+<style>
+:root { color-scheme: light dark; supported-color-schemes: light dark; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", sans-serif; background: #f2f2f7; color: #1d1d1f; }
+.wrapper { max-width: 620px; margin: 0 auto; background: #fff; }
+
+.header { background: #ffffff; color: #1d1d1f; padding: 26px 24px 20px; border-bottom: 3px solid #6366f1; }
+.header-meta { font-size: 11px; color: #6b7280; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 6px; }
+.header-tagline { font-size: 12px; color: #6b7280; margin-top: 4px; }
+
+.tldr { background: #fff9f0; border-left: 3px solid #ff9500; margin: 18px 20px 0; padding: 13px 15px; border-radius: 0 10px 10px 0; }
+.tldr-title { font-size: 11px; font-weight: 700; color: #c25e00; margin-bottom: 8px; letter-spacing: 0.8px; text-transform: uppercase; }
+.tldr ul { list-style: none; }
+.tldr ul li { font-size: 14px; color: #3a3a3c; padding: 3px 0 3px 14px; position: relative; line-height: 1.6; }
+.tldr ul li::before { content: "→"; position: absolute; left: 0; color: #ff9500; font-weight: 600; font-size: 12px; }
+
+.section-label { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #8e8e93; padding: 20px 20px 9px; }
+
+.market-summary { padding: 0 20px 14px; font-size: 14px; color: #3a3a3c; line-height: 1.75; }
+
+.news-card { margin: 0 20px 10px; padding: 13px 15px; border: 1px solid #e5e5ea; border-radius: 10px; background: #fff; }
+.news-tag { display: inline-block; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 20px; margin-bottom: 7px; letter-spacing: 0.3px; }
+.news-tag.verified { background: #e3f9e5; color: #1a6b30; }
+.news-tag.single { background: #fff4e0; color: #8a4500; }
+.news-headline { font-size: 14px; font-weight: 700; color: #1d1d1f; line-height: 1.45; margin-bottom: 7px; }
+.news-why { font-size: 13px; color: #48484a; line-height: 1.55; background: #f2f2f7; padding: 7px 10px; border-radius: 8px; }
+.read-more { display: inline-block; margin-top: 8px; font-size: 12px; font-weight: 600; color: #0066cc; text-decoration: none; }
+.read-more:hover { text-decoration: underline; }
+
+.news-impact { margin: 9px 0 0; }
+.impact-label { display: inline-block; font-size: 10px; font-weight: 700; color: #8e8e93; letter-spacing: 0.5px; margin-right: 6px; }
+.impact-stock { display: inline-block; font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 20px; margin: 3px 4px 0 0; white-space: nowrap; }
+.impact-stock.up { background: #dcfce7; color: #166534; }
+.impact-stock.down { background: #ffe4e6; color: #9f1239; }
+
+.stock-card { display: flex; align-items: flex-start; gap: 10px; margin: 0 20px 8px; padding: 11px 13px; border-radius: 10px; background: #f2f2f7; border: 1px solid #e5e5ea; }
+.ticker { font-size: 13px; font-weight: 800; color: #0a0a0a; min-width: 56px; padding-top: 2px; font-family: "SF Mono", ui-monospace, monospace; }
+.stock-move { font-size: 14px; font-weight: 700; min-width: 76px; padding-top: 2px; }
+.stock-move.up { color: #30d158; }
+.stock-move.down { color: #ff3b30; }
+.stock-comment { font-size: 13px; color: #48484a; line-height: 1.55; flex: 1; }
+
+.macro-list { padding: 0 20px 14px; }
+.macro-item { font-size: 14px; color: #3a3a3c; padding: 6px 0; border-bottom: 1px solid #f2f2f7; line-height: 1.65; }
+
+.verdict { margin: 0 20px 12px; padding: 15px; border-radius: 12px; }
+.verdict.bullish { background: #f0fdf4; border: 1px solid #bbf7d0; }
+.verdict.bearish { background: #fff1f2; border: 1px solid #fecdd3; }
+.verdict.neutral { background: #f2f2f7; border: 1px solid #e5e5ea; }
+.verdict-emoji { font-size: 24px; margin-bottom: 8px; }
+.verdict-text { font-size: 14px; color: #3a3a3c; line-height: 1.75; }
+
+.watch-list { margin: 0 20px 22px; padding: 13px 15px; background: #f2f2f7; border-radius: 10px; }
+.watch-title { font-size: 10px; font-weight: 700; color: #8e8e93; margin-bottom: 8px; letter-spacing: 1.2px; text-transform: uppercase; }
+.watch-item { font-size: 13px; color: #3a3a3c; padding: 5px 0; border-bottom: 1px solid #e5e5ea; }
+.watch-item:last-child { border-bottom: none; }
+
+.indicator-bar { display: flex; gap: 8px; margin: 0 20px 14px; flex-wrap: wrap; }
+.indicator-item { flex: 0 0 calc(20% - 7px); min-width: 88px; padding: 11px 10px; background: #f2f2f7; border: 1px solid #e5e5ea; border-radius: 10px; text-align: center; }
+.indicator-label { font-size: 9px; font-weight: 700; color: #8e8e93; letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 4px; }
+.indicator-value { font-size: 16px; font-weight: 800; color: #1d1d1f; }
+.indicator-sub { font-size: 10px; color: #8e8e93; margin-top: 2px; }
+.indicator-fear { color: #ff3b30; }
+.indicator-greed { color: #30d158; }
+.indicator-neutral { color: #ff9500; }
+
+.second-order { margin: 0 20px 14px; padding: 13px 15px; background: #f0f0ff; border-left: 3px solid #5e5ce6; border-radius: 0 10px 10px 0; font-size: 13px; color: #3a3a3c; line-height: 1.75; }
+
+.crypto-bar { display: flex; gap: 8px; margin: 0 20px 14px; }
+.crypto-item { flex: 1; padding: 12px; background: #f2f2f7; border: 1px solid #e5e5ea; border-radius: 10px; text-align: center; }
+.crypto-name { font-size: 10px; font-weight: 700; color: #8e8e93; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px; }
+.crypto-price { font-size: 17px; font-weight: 800; }
+.crypto-price.up { color: #30d158; }
+.crypto-price.down { color: #ff3b30; }
+.crypto-change { font-size: 11px; color: #8e8e93; margin-top: 2px; }
+
+.sector-bar { padding: 0 20px 14px; }
+.sector-item { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid #f2f2f7; }
+.sector-name { font-size: 13px; font-weight: 600; color: #1d1d1f; min-width: 110px; }
+.sector-move { font-size: 13px; font-weight: 700; min-width: 68px; }
+.sector-move.up { color: #30d158; }
+.sector-move.down { color: #ff3b30; }
+.sector-comment { font-size: 12px; color: #8e8e93; flex: 1; }
+
+.earnings-list { padding: 0 20px 14px; }
+.earnings-item { display: flex; align-items: baseline; gap: 10px; padding: 7px 0; border-bottom: 1px solid #f2f2f7; }
+.earnings-ticker { font-size: 13px; font-weight: 800; color: #0a0a0a; min-width: 52px; font-family: "SF Mono", ui-monospace, monospace; }
+.earnings-date { font-size: 12px; color: #8e8e93; min-width: 80px; }
+.earnings-note { font-size: 13px; color: #48484a; flex: 1; }
+
+.stock-news-item { margin: 0 20px 10px; padding: 13px 15px; border: 1px solid #e0e0ff; border-radius: 10px; background: #f8f8ff; display: flex; gap: 12px; align-items: flex-start; }
+.stock-news-ticker { font-size: 12px; font-weight: 800; color: #5e5ce6; min-width: 52px; padding-top: 2px; font-family: "SF Mono", ui-monospace, monospace; }
+.stock-news-content { flex: 1; }
+.stock-news-headline { font-size: 14px; font-weight: 600; color: #1d1d1f; line-height: 1.4; margin-bottom: 6px; }
+.stock-news-impact { font-size: 13px; color: #48484a; background: #ebebff; padding: 6px 10px; border-radius: 8px; line-height: 1.55; }
+.stock-news-empty { margin: 0 20px 14px; font-size: 13px; color: #aeaeb2; padding: 8px 0; }
+
+.signal-header { margin: 14px 20px 8px; padding: 14px 16px; background: #eef0ff; border: 1px solid #c7d2fe; border-radius: 12px; }
+.signal-header-title { font-size: 11px; font-weight: 700; color: #4338ca; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 3px; }
+.signal-header-subtitle { font-size: 11px; color: #6366f1; }
+.signal-grid { padding: 0 20px 4px; }
+.signal-card { padding: 13px 14px; border-radius: 12px; border: 1px solid; margin-bottom: 10px; }
+.signal-card.buy { background: #f0fdf4; border-color: #bbf7d0; }
+.signal-card.hold { background: #fffbeb; border-color: #fde68a; }
+.signal-card.sell { background: #fff1f2; border-color: #fecdd3; }
+.signal-card.wait { background: #f8fafc; border-color: #e2e8f0; }
+.signal-card-top { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+.signal-day-move { font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 6px; white-space: nowrap; }
+.signal-day-move.up { background: #dcfce7; color: #166534; }
+.signal-day-move.down { background: #ffe4e6; color: #9f1239; }
+.signal-ticker { font-size: 14px; font-weight: 800; color: #0a0a0a; font-family: "SF Mono", ui-monospace, monospace; }
+.signal-score-block { display: flex; align-items: baseline; gap: 1px; margin-left: auto; }
+.signal-score { font-size: 20px; font-weight: 900; color: #1d1d1f; line-height: 1; }
+.signal-score-label { font-size: 11px; color: #8e8e93; }
+.signal-bias { font-size: 10px; font-weight: 800; padding: 3px 10px; border-radius: 20px; letter-spacing: 0.5px; white-space: nowrap; }
+.signal-bias.bullish { background: #dcfce7; color: #166534; }
+.signal-bias.neutral { background: #fef3c7; color: #92400e; }
+.signal-bias.bearish { background: #ffe4e6; color: #9f1239; }
+.signal-body { }
+.signal-reason { font-size: 13px; color: #3a3a3c; line-height: 1.55; margin-bottom: 9px; }
+.signal-battle-plan { background: rgba(0,0,0,0.03); border-radius: 8px; padding: 9px 12px; margin-bottom: 9px; }
+.signal-watch { font-size: 12px; color: #4b5563; line-height: 1.55; margin-bottom: 9px; background: rgba(99,102,241,0.07); padding: 7px 11px; border-radius: 8px; }
+.battle-row { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.battle-label { font-size: 10px; font-weight: 700; color: #8e8e93; letter-spacing: 0.5px; min-width: 52px; }
+.battle-val { font-size: 13px; font-weight: 700; color: #1d1d1f; }
+.battle-val.up { color: #30d158; }
+.battle-val.down { color: #ff3b30; }
+.signal-meta { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.signal-badge { font-size: 11px; font-weight: 800; padding: 3px 10px; border-radius: 20px; white-space: nowrap; }
+.signal-badge.buy { background: #dcfce7; color: #166534; }
+.signal-badge.hold { background: #fef3c7; color: #92400e; }
+.signal-badge.sell { background: #ffe4e6; color: #9f1239; }
+.signal-badge.wait { background: #f1f5f9; color: #475569; }
+.signal-confidence { font-size: 11px; color: #6b7280; }
+.signal-horizon { font-size: 11px; color: #6b7280; background: #f3f4f6; padding: 2px 8px; border-radius: 20px; }
+.signal-disclaimer { margin: 4px 20px 14px; font-size: 10px; color: #aeaeb2; text-align: center; line-height: 1.6; }
+
+.action-board { margin: 16px 20px 6px; }
+.action-board-title { font-size: 14px; font-weight: 900; color: #1d1d1f; margin-bottom: 11px; }
+.action-item { border-radius: 12px; padding: 12px 14px; margin-bottom: 8px; border: 1px solid; }
+.action-item.buy { background: #f0fdf4; border-color: #bbf7d0; }
+.action-item.hold { background: #fffbeb; border-color: #fde68a; }
+.action-item.sell { background: #fff1f2; border-color: #fecdd3; }
+.action-item.wait { background: #f8fafc; border-color: #e2e8f0; }
+.action-main { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 6px; }
+.action-name { font-size: 14px; font-weight: 800; color: #1d1d1f; }
+.action-move { font-size: 11px; font-weight: 800; padding: 2px 7px; border-radius: 6px; white-space: nowrap; }
+.action-move.up { background: #dcfce7; color: #166534; }
+.action-move.down { background: #ffe4e6; color: #9f1239; }
+.action-verdict { margin-left: auto; font-size: 13px; font-weight: 900; padding: 5px 13px; border-radius: 20px; white-space: nowrap; }
+.action-verdict.buy { background: #16a34a; color: #ffffff; }
+.action-verdict.hold { background: #f59e0b; color: #ffffff; }
+.action-verdict.sell { background: #e11d48; color: #ffffff; }
+.action-verdict.wait { background: #94a3b8; color: #ffffff; }
+.action-reason { font-size: 13px; color: #48484a; line-height: 1.6; }
+.action-legend { font-size: 11px; color: #8e8e93; line-height: 1.8; margin-top: 9px; padding: 10px 13px; background: #f2f2f7; border-radius: 10px; }
+
+.rookie-pick { margin: 0 20px 10px; padding: 14px 16px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; }
+.rookie-top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 7px; }
+.rookie-name { font-size: 15px; font-weight: 800; color: #1d1d1f; }
+.rookie-verdict { margin-left: auto; font-size: 12px; font-weight: 900; padding: 4px 12px; border-radius: 20px; background: #16a34a; color: #ffffff; white-space: nowrap; }
+.rookie-why { font-size: 13px; color: #3a3a3c; line-height: 1.65; margin-bottom: 8px; }
+.rookie-tip { font-size: 12px; color: #6b7280; line-height: 1.6; background: rgba(255,255,255,0.7); padding: 8px 11px; border-radius: 8px; }
+
+.mood-box { margin: 0 20px 14px; padding: 14px 16px; background: #f0f6ff; border: 1px solid #c7d8fe; border-radius: 12px; }
+.mood-emoji { font-size: 30px; line-height: 1; margin-bottom: 6px; }
+.mood-text { font-size: 14px; color: #1d1d1f; line-height: 1.65; font-weight: 600; }
+
+.rookie-guide { margin: 0 20px 14px; }
+.rg-block { background: #f8fafc; border: 1px solid #e5e7eb; border-radius: 12px; padding: 14px 16px; margin-bottom: 10px; }
+.rg-head { font-size: 13px; font-weight: 800; color: #1d1d1f; margin-bottom: 9px; }
+.rg-step { font-size: 13px; color: #3a3a3c; line-height: 1.7; padding: 4px 0; }
+.rg-term { font-size: 12px; color: #48484a; line-height: 1.65; padding: 3px 0; }
+.rg-disclaimer { font-size: 10px; color: #aeaeb2; text-align: center; line-height: 1.5; padding: 2px 8px; }
+
+.footer { background: #0a0a0a; color: rgba(255,255,255,0.28); text-align: center; padding: 18px 20px; font-size: 11px; line-height: 2; }
+</style>
+</head>
+<body>
+<div class="wrapper">
+  <div class="header">
+    <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="margin-bottom:18px;">
+      <tr>
+        <td width="50" valign="middle" style="padding-right:14px;">
+          <img src="https://marketdaily.ai/logo-icon.svg" width="46" height="46" alt="MD" style="display:block;border-radius:12px;">
+        </td>
+        <td valign="middle">
+          <div style="font-size:20px;font-weight:800;color:#312e81;letter-spacing:-0.5px;line-height:1.2;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">MarketDaily</div>
+          <div style="font-size:10px;color:#6366f1;letter-spacing:3px;text-transform:uppercase;margin-top:3px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">AI 財經日報</div>
+        </td>
+      </tr>
+    </table>
+    <div class="header-meta">2026-05-22</div>
+    <div class="header-tagline">AI 精選 · 假訊息過濾 · 美股 + 台股</div>
+  </div>
+  <div class="tldr">
+<div class="tldr-title">☕ 30 秒看完今天重點</div>
+<ul>
+  <li>你的持股輝達（NVDA）今天微幅回檔 1.77%，但別慌，這只是財報公布後的正常震盪。</li>
+  <li>微軟（MSFT）傳出正與 Anthropic 洽談 AI 晶片合作，雖然今天股價微跌 0.47%，但長線依舊看好。</li>
+  <li>台股今天大漲 2.18%，聯發科（2454）更是直接亮起漲停板，帶動整體科技股氣勢如虹。</li>
+  <li>市場整體氣氛偏向樂觀（貪婪指數 65），美股三大指數漲跌互現，道瓊表現最穩健上漲 0.55%。</li>
+</ul>
+</div>
+
+
+<div class="action-board"><div class="action-board-title">📋 一眼看懂：你的股票今天買還是賣</div><div class="action-item hold"><div class="action-main"><span class="action-name"><span style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-weight:800;">輝達 Nvidia</span><span style="font-family:'SF Mono',ui-monospace,monospace;font-size:10px;color:#8e8e93;margin-left:5px;font-weight:700;">NVDA</span></span><span class="action-move down">▼ -1.77%</span><span class="action-verdict hold">🟡 抱著別動</span></div><div class="action-reason">剛公布完財報，股價出現短線獲利了結的賣壓而下跌 1.77%，但整體 AI 趨勢完全沒變，建議手上有票的朋友繼續抱緊，不用急著賣。</div></div><div class="action-item buy"><div class="action-main"><span class="action-name"><span style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-weight:800;">蘋果 Apple</span><span style="font-family:'SF Mono',ui-monospace,monospace;font-size:10px;color:#8e8e93;margin-left:5px;font-weight:700;">AAPL</span></span><span class="action-move up">▲ +0.91%</span><span class="action-verdict buy">🟢 可以買進</span></div><div class="action-reason">今天逆勢上漲 0.91%，表現比其他科技巨頭穩健。資金在科技板塊輪動時，蘋果往往是避風港，適合想穩健布局的投資人分批買進。</div></div><div class="action-item buy"><div class="action-main"><span class="action-name"><span style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-weight:800;">微軟 Microsoft</span><span style="font-family:'SF Mono',ui-monospace,monospace;font-size:10px;color:#8e8e93;margin-left:5px;font-weight:700;">MSFT</span></span><span class="action-move down">▼ -0.47%</span><span class="action-verdict buy">🟢 可以買進</span></div><div class="action-reason">雖然今天微幅下跌 0.47%，但傳出與 Anthropic 洽談 AI 晶片合作，這對自研晶片生態是長期利多，小拉回反而是不錯的進場機會。</div></div><div class="action-item hold"><div class="action-main"><span class="action-name"><span style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-weight:800;">特斯拉 Tesla</span><span style="font-family:'SF Mono',ui-monospace,monospace;font-size:10px;color:#8e8e93;margin-left:5px;font-weight:700;">TSLA</span></span><span class="action-move up">▲ +0.14%</span><span class="action-verdict hold">🟡 抱著別動</span></div><div class="action-reason">今天微漲 0.14% 幾乎平盤，SpaceX 測試發射臨時喊卡雖然不直接影響特斯拉，但市場情緒稍受干擾，建議先抱著觀望，不急著加碼。</div></div><div class="action-legend">🟢 買進＝現在可考慮進場 ｜ 🟡 持有＝抱著別動 ｜ 🔴 賣出＝建議獲利了結或停損（認賠出場） ｜ ⚪ 觀望＝先別出手</div></div>
+<div class="signal-header">
+  <div class="signal-header-title">⚡ 詳細進出場計畫</div>
+  <div class="signal-header-subtitle">上面每支股票的買賣價位拆解 · 1-2 週視角</div>
+</div>
+<div class="signal-grid">
+
+<div class="signal-card hold">
+  <div class="signal-card-top">
+    <span class="signal-ticker"><span style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-weight:800;">輝達 Nvidia</span><span style="font-family:'SF Mono',ui-monospace,monospace;font-size:10px;color:#8e8e93;margin-left:5px;font-weight:700;">NVDA</span></span>
+    <span class="signal-day-move down">▼ -1.77%</span>
+    <div class="signal-score-block"><span class="signal-score">7</span><span class="signal-score-label">/ 10</span></div>
+    <span class="signal-bias bullish">📈 BULLISH</span>
+  </div>
+  <div class="signal-body">
+    <div class="signal-reason">剛公布完財報，股價出現短線獲利了結的賣壓而下跌 1.77%，但整體 AI 趨勢完全沒變，建議手上有票的朋友繼續抱緊，不用急著賣。</div>
+    <div class="signal-battle-plan">
+      <div class="battle-row"><span class="battle-label">建議買價</span><span class="battle-val">$210–$215</span></div>
+      <div class="battle-row"><span class="battle-label">賺錢目標</span><span class="battle-val up">$240</span></div>
+      <div class="battle-row"><span class="battle-label">止損賣價</span><span class="battle-val down">$198</span></div>
+    </div>
+    <div class="signal-watch">👀 觀察重點：財報利多消化後，能否在 $215 附近止跌築底。</div>
+    <div class="signal-meta">
+      <span class="signal-badge hold">🟡 續抱持有</span>
+      <span class="signal-confidence">信心 85%</span>
+      <span class="signal-horizon">⏱ 短線1-2週</span>
+    </div>
+  </div>
+</div>
+
+<div class="signal-card buy">
+  <div class="signal-card-top">
+    <span class="signal-ticker"><span style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-weight:800;">蘋果 Apple</span><span style="font-family:'SF Mono',ui-monospace,monospace;font-size:10px;color:#8e8e93;margin-left:5px;font-weight:700;">AAPL</span></span>
+    <span class="signal-day-move up">▲ +0.91%</span>
+    <div class="signal-score-block"><span class="signal-score">8</span><span class="signal-score-label">/ 10</span></div>
+    <span class="signal-bias bullish">📈 BULLISH</span>
+  </div>
+  <div class="signal-body">
+    <div class="signal-reason">今天逆勢上漲 0.91%，表現比其他科技巨頭穩健。資金在科技板塊輪動時，蘋果往往是避風港，適合想穩健布局的投資人分批買進。</div>
+    <div class="signal-battle-plan">
+      <div class="battle-row"><span class="battle-label">建議買價</span><span class="battle-val">$300–$303</span></div>
+      <div class="battle-row"><span class="battle-label">賺錢目標</span><span class="battle-val up">$325</span></div>
+      <div class="battle-row"><span class="battle-label">止損賣價</span><span class="battle-val down">$288</span></div>
+    </div>
+    <div class="signal-watch">👀 觀察重點：股價能否順利站穩 $305 關卡並挑戰歷史新高。</div>
+    <div class="signal-meta">
+      <span class="signal-badge buy">🟢 建議買入</span>
+      <span class="signal-confidence">信心 80%</span>
+      <span class="signal-horizon">⏱ 短線1-2週</span>
+    </div>
+  </div>
+</div>
+
+<div class="signal-card buy">
+  <div class="signal-card-top">
+    <span class="signal-ticker"><span style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-weight:800;">微軟 Microsoft</span><span style="font-family:'SF Mono',ui-monospace,monospace;font-size:10px;color:#8e8e93;margin-left:5px;font-weight:700;">MSFT</span></span>
+    <span class="signal-day-move down">▼ -0.47%</span>
+    <div class="signal-score-block"><span class="signal-score">8</span><span class="signal-score-label">/ 10</span></div>
+    <span class="signal-bias bullish">📈 BULLISH</span>
+  </div>
+  <div class="signal-body">
+    <div class="signal-reason">雖然今天微幅下跌 0.47%，但傳出與 Anthropic 洽談 AI 晶片合作，這對自研晶片生態是長期利多，小拉回反而是不錯的進場機會。</div>
+    <div class="signal-battle-plan">
+      <div class="battle-row"><span class="battle-label">建議買價</span><span class="battle-val">$415–$418</span></div>
+      <div class="battle-row"><span class="battle-label">賺錢目標</span><span class="battle-val up">$445</span></div>
+      <div class="battle-row"><span class="battle-label">止損賣價</span><span class="battle-val down">$400</span></div>
+    </div>
+    <div class="signal-watch">👀 觀察重點：與 Anthropic 的晶片合作細節是否能在近期正式敲定。</div>
+    <div class="signal-meta">
+      <span class="signal-badge buy">🟢 建議買入</span>
+      <span class="signal-confidence">信心 90%</span>
+      <span class="signal-horizon">⏱ 短線1-2週</span>
+    </div>
+  </div>
+</div>
+
+<div class="signal-card hold">
+  <div class="signal-card-top">
+    <span class="signal-ticker"><span style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-weight:800;">特斯拉 Tesla</span><span style="font-family:'SF Mono',ui-monospace,monospace;font-size:10px;color:#8e8e93;margin-left:5px;font-weight:700;">TSLA</span></span>
+    <span class="signal-day-move up">▲ +0.14%</span>
+    <div class="signal-score-block"><span class="signal-score">5</span><span class="signal-score-label">/ 10</span></div>
+    <span class="signal-bias neutral">😐 NEUTRAL</span>
+  </div>
+  <div class="signal-body">
+    <div class="signal-reason">今天微漲 0.14% 幾乎平盤，SpaceX 測試發射臨時喊卡雖然不直接影響特斯拉，但市場情緒稍受干擾，建議先抱著觀望，不急著加碼。</div>
+    <div class="signal-battle-plan">
+      <div class="battle-row"><span class="battle-label">建議買價</span><span class="battle-val">$405–$412</span></div>
+      <div class="battle-row"><span class="battle-label">賺錢目標</span><span class="battle-val up">$440</span></div>
+      <div class="battle-row"><span class="battle-label">止損賣價</span><span class="battle-val down">$390</span></div>
+    </div>
+    <div class="signal-watch">👀 觀察重點：SpaceX 週五重新挑戰發射的結果，以及 $410 支撐力道。</div>
+    <div class="signal-meta">
+      <span class="signal-badge hold">🟡 續抱持有</span>
+      <span class="signal-confidence">信心 70%</span>
+      <span class="signal-horizon">⏱ 短線1-2週</span>
+    </div>
+  </div>
+</div>
+
+</div>
+<div class="signal-disclaimer">⚠️ AI 分析僅供參考，不構成投資建議</div>
+
+<div class="section-label">🌱 新手推薦：現在適合入手的股票</div>
+
+<div class="rookie-pick">
+  <div class="rookie-top">
+    <span class="rookie-name"><span style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-weight:800;">蘋果 Apple</span><span style="font-family:'SF Mono',ui-monospace,monospace;font-size:10px;color:#8e8e93;margin-left:5px;font-weight:700;">AAPL</span></span>
+    <span class="rookie-verdict">🟢 適合新手入手</span>
+  </div>
+  <div class="rookie-why">蘋果是全球品牌價值最高的科技龍頭，手握龐大現金流，抗風險能力極強。今天股價穩健上漲 0.91%，非常適合新手作為長期存股的第一步。</div>
+  <div class="rookie-tip">💡 新手提醒：先小額試單、別一次重押；想更穩健可定期定額買指數型 ETF（台股 0050、美股 VOO）</div>
+</div>
+
+<div class="rookie-pick">
+  <div class="rookie-top">
+    <span class="rookie-name"><span style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-weight:800;">微軟 Microsoft</span><span style="font-family:'SF Mono',ui-monospace,monospace;font-size:10px;color:#8e8e93;margin-left:5px;font-weight:700;">MSFT</span></span>
+    <span class="rookie-verdict">🟢 適合新手入手</span>
+  </div>
+  <div class="rookie-why">微軟在雲端與 AI 領域地位無庸置疑，今天股價微幅拉回 0.47%，剛好提供了一個不錯的低接買點，長期營運成長非常穩定。</div>
+  <div class="rookie-tip">💡 新手提醒：先小額試單、別一次重押；想更穩健可定期定額買指數型 ETF（台股 0050、美股 VOO）</div>
+</div>
+
+
+<div class="section-label">🌡️ 今天市場氣氛</div>
+<div class="mood-box">
+  <div class="mood-emoji">😊 樂觀</div>
+  <div class="mood-text">恐貪指數來到 65 分的「貪婪」區間，VIX 恐慌指數也處於 16.72 的平靜狀態。市場氣氛偏向樂觀，新手可以分批慢慢買進，但切忌追高。</div>
+</div>
+
+
+<div class="section-label">₿ 加密貨幣</div>
+<div class="crypto-bar">
+  <div class="crypto-item">
+    <div class="crypto-name">BTC</div>
+    <div class="crypto-price down">$77,394</div>
+    <div class="crypto-change">-0.20%</div>
+  </div>
+  <div class="crypto-item">
+    <div class="crypto-name">ETH</div>
+    <div class="crypto-price down">$2,128</div>
+    <div class="crypto-change">-0.16%</div>
+  </div>
+</div>
+
+<div class="section-label">📈 大盤怎麼了</div>
+<div class="market-summary">今天美股三大指數漲跌互現，道瓊表現最亮眼上漲 0.55%，整體維持高檔震盪。台股加權指數則在科技股帶領下，今天大漲 2.18% 表現極為強勢。</div>
+
+
+
+<div class="section-label">🔥 今天最重要的 5 件事</div>
+
+<div class="news-card">
+  <div class="news-tag verified">✅ 多源確認</div>
+  <div class="news-headline">微軟與 Anthropic 洽談 AI 晶片合作</div>
+  <div class="news-why">💡 為什麼重要：微軟在投資 Anthropic 50 億美元後，正進一步洽談讓其使用微軟自研的 Maia AI 晶片。這顯示微軟正積極擺脫對輝達晶片的單一依賴，建立自己的 AI 晶片生態系，對微軟長期毛利率有正面幫助。</div>
+  <div class="news-impact">
+    <span class="impact-label">📊 影響個股</span>
+    <span class="impact-stock up">▲ 微軟 MSFT 看漲</span>
+    <span class="impact-stock down">▼ 輝達 NVDA 看跌</span>
+  </div>
+  <a class="read-more" href="https://www.cnbc.com/2026/05/21/anthropic-microsoft-maia-200-ai-chip.html" target="_blank">閱讀原文 →</a>
+</div>
+
+<div class="news-card">
+  <div class="news-tag single">⚠️ 單一來源</div>
+  <div class="news-headline">SpaceX 星艦測試發射因故延期至週五</div>
+  <div class="news-why">💡 為什麼重要：SpaceX 臨時取消了巨型星艦火箭的測試飛行，並計畫於週五重新嘗試。由於 SpaceX 正在籌備 IPO，這次測試對太空產業與馬斯克旗下企業的市場信心有重大影響，也間接牽動特斯拉的市場情緒。</div>
+  <div class="news-impact">
+    <span class="impact-label">📊 影響個股</span>
+    <span class="impact-stock up">▲ 特斯拉 TSLA 看漲</span>
+  </div>
+  <a class="read-more" href="https://www.cnbc.com/2026/05/21/spacex-plans-12th-test-flight-of-massive-starship-rocket-as-ipo-looms.html" target="_blank">閱讀原文 →</a>
+</div>
+
+<div class="news-card">
+  <div class="news-tag verified">✅ 多源確認</div>
+  <div class="news-headline">美伊和平談判有進展但仍具挑戰</div>
+  <div class="news-why">💡 為什麼重要：美國與伊朗釋出和平談判進展訊號，但雙方在濃縮鈾與霍爾木茲海峽通行費上仍有分歧。地緣政治局勢稍有緩和，這讓原油價格與市場避險情緒得到喘息，對整體金融市場是穩定因素。</div>
+  <div class="news-impact">
+    <span class="impact-label">📊 影響個股</span>
+    <span class="impact-stock up">▲ 摩根大通 JPM 看漲</span>
+  </div>
+  <a class="read-more" href="https://www.cnbc.com/2026/05/22/iran-war-strait-of-hormuz-tolls-trump.html" target="_blank">閱讀原文 →</a>
+</div>
+
+<div class="news-card">
+  <div class="news-tag single">⚠️ 單一來源</div>
+  <div class="news-headline">禮來新一代減肥藥通過關鍵肥胖臨床試驗</div>
+  <div class="news-why">💡 為什麼重要：禮來（Eli Lilly）宣布其新一代減肥藥 Retatrutide 成功通過了關鍵的肥胖臨床試驗，這將鞏固其在減肥藥市場的領先地位。這項消息吸引了大量生技資金，也對醫療保健板塊（XLV）帶來支撐。</div>
+  <div class="news-impact">
+    <span class="impact-label">📊 影響個股</span>
+    <span class="impact-stock up">▲ 禮來 LLY 看漲</span>
+  </div>
+  <a class="read-more" href="https://www.cnbc.com/2026/05/21/eli-lilly-weight-loss-drug-retatrutide-clears-obesity-trial.html" target="_blank">閱讀原文 →</a>
+</div>
+
+<div class="news-card">
+  <div class="news-tag verified">✅ 多源確認</div>
+  <div class="news-headline">軟銀因 AI 樂觀情緒兩天市值暴增 610 億</div>
+  <div class="news-why">💡 為什麼重要：受惠於投資人對 AI 產業的狂熱，軟銀集團股價在兩天內飆升，市值大增超過 610 億美元。這顯示全球資金對於 AI 基礎設施與應用的投資熱情依然極度高漲，對 AI 晶片製造商台積電也是間接利多。</div>
+  <div class="news-impact">
+    <span class="impact-label">📊 影響個股</span>
+    <span class="impact-stock up">▲ 台積電 ADR TSM 看漲</span>
+  </div>
+  <a class="read-more" href="https://www.cnbc.com/2026/05/22/softbank-extends-scorching-rally-surging-over-12percent-as-investors-crowd-into-ai-trade.html" target="_blank">閱讀原文 →</a>
+</div>
+
+
+
+<div class="section-label">🔍 持倉深度追蹤</div>
+
+<div class="stock-news-item">
+  <span class="stock-news-ticker"><span style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-weight:800;">微軟 Microsoft</span><span style="font-family:'SF Mono',ui-monospace,monospace;font-size:10px;color:#8e8e93;margin-left:5px;font-weight:700;">MSFT</span></span>
+  <div class="stock-news-content">
+    <div class="stock-news-headline">微軟與 Anthropic 洽談 AI 晶片合作</div>
+    <div class="stock-news-impact">📊 影響分析：微軟推動自研晶片 Maia 進入 Anthropic 生態，有助於降低對輝達的依賴並提升長期毛利率，建議繼續買入並長期持有。</div>
+    <a class="read-more" href="https://www.cnbc.com/2026/05/21/anthropic-microsoft-maia-200-ai-chip.html" target="_blank">閱讀原文 →</a>
+  </div>
+</div>
+
+
+<div class="section-label">🏢 你的美股今天怎樣</div>
+
+<div class="stock-card">
+  <span class="ticker"><span style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-weight:800;">蘋果 Apple</span><span style="font-family:'SF Mono',ui-monospace,monospace;font-size:10px;color:#8e8e93;margin-left:5px;font-weight:700;">AAPL</span></span>
+  <span class="stock-move up">▲ +0.91%</span>
+  <div class="stock-comment">受惠於市場資金流入避險，股價穩健上漲，不用擔心，繼續抱著就好。</div>
+</div>
+
+<div class="stock-card">
+  <span class="ticker"><span style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-weight:800;">微軟 Microsoft</span><span style="font-family:'SF Mono',ui-monospace,monospace;font-size:10px;color:#8e8e93;margin-left:5px;font-weight:700;">MSFT</span></span>
+  <span class="stock-move down">▼ -0.47%</span>
+  <div class="stock-comment">雖然與 Anthropic 洽談晶片合作，但股價微幅拉回，屬於正常波動，免驚。</div>
+</div>
+
+<div class="stock-card">
+  <span class="ticker"><span style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-weight:800;">谷歌 Alphabet</span><span style="font-family:'SF Mono',ui-monospace,monospace;font-size:10px;color:#8e8e93;margin-left:5px;font-weight:700;">GOOGL</span></span>
+  <span class="stock-move down">▼ -0.32%</span>
+  <div class="stock-comment">科技股板塊微調，股價小幅修正，整體 AI 競爭力仍在，建議續抱。</div>
+</div>
+
+<div class="stock-card">
+  <span class="ticker"><span style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-weight:800;">Meta</span><span style="font-family:'SF Mono',ui-monospace,monospace;font-size:10px;color:#8e8e93;margin-left:5px;font-weight:700;">META</span></span>
+  <span class="stock-move up">▲ +0.38%</span>
+  <div class="stock-comment">社群廣告業務穩定，股價微幅收紅，表現抗跌，繼續持有。</div>
+</div>
+
+<div class="stock-card">
+  <span class="ticker"><span style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-weight:800;">輝達 Nvidia</span><span style="font-family:'SF Mono',ui-monospace,monospace;font-size:10px;color:#8e8e93;margin-left:5px;font-weight:700;">NVDA</span></span>
+  <span class="stock-move down">▼ -1.77%</span>
+  <div class="stock-comment">財報公布後出現短線獲利了結賣壓，股價下跌，但基本面無虞，切勿慌張賣出。</div>
+</div>
+
+<div class="stock-card">
+  <span class="ticker"><span style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-weight:800;">特斯拉 Tesla</span><span style="font-family:'SF Mono',ui-monospace,monospace;font-size:10px;color:#8e8e93;margin-left:5px;font-weight:700;">TSLA</span></span>
+  <span class="stock-move up">▲ +0.14%</span>
+  <div class="stock-comment">SpaceX 發射延期使股價波動變小，今天幾乎平盤收尾，建議先觀望。</div>
+</div>
+
+<div class="stock-card">
+  <span class="ticker"><span style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-weight:800;">超微 AMD</span><span style="font-family:'SF Mono',ui-monospace,monospace;font-size:10px;color:#8e8e93;margin-left:5px;font-weight:700;">AMD</span></span>
+  <span class="stock-move up">▲ +0.45%</span>
+  <div class="stock-comment">在晶片板塊中表現相對抗跌，小幅上漲，長線 AI 需求仍會帶動其發展，續抱。</div>
+</div>
+
+<div class="stock-card">
+  <span class="ticker"><span style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-weight:800;">台積電 ADR TSMC</span><span style="font-family:'SF Mono',ui-monospace,monospace;font-size:10px;color:#8e8e93;margin-left:5px;font-weight:700;">TSM</span></span>
+  <span class="stock-move up">▲ +1.38%</span>
+  <div class="stock-comment">受惠於軟銀大漲帶動的 AI 樂觀情緒，ADR 上漲 1.38%，表現強勁，抱緊處理。</div>
+</div>
+
+
+<div class="section-label">📅 即將公布財報</div>
+<div class="earnings-list">
+
+  <div class="earnings-item">
+    <span class="earnings-ticker"><span style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-weight:800;">輝達 Nvidia</span><span style="font-family:'SF Mono',ui-monospace,monospace;font-size:10px;color:#8e8e93;margin-left:5px;font-weight:700;">NVDA</span></span>
+    <span class="earnings-date">2026-05-21</span>
+    <span class="earnings-note">財報已公布，市場正在消化獲利了結賣壓。</span>
+  </div>
+
+  <div class="earnings-item">
+    <span class="earnings-ticker"><span style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-weight:800;">台積電 ADR TSMC</span><span style="font-family:'SF Mono',ui-monospace,monospace;font-size:10px;color:#8e8e93;margin-left:5px;font-weight:700;">TSM</span></span>
+    <span class="earnings-date">2026-07-16</span>
+    <span class="earnings-note">市場預期先進製程與封裝產能持續滿載。</span>
+  </div>
+
+  <div class="earnings-item">
+    <span class="earnings-ticker"><span style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-weight:800;">特斯拉 Tesla</span><span style="font-family:'SF Mono',ui-monospace,monospace;font-size:10px;color:#8e8e93;margin-left:5px;font-weight:700;">TSLA</span></span>
+    <span class="earnings-date">2026-07-23</span>
+    <span class="earnings-note">市場關注新車款進度與自動駕駛（FSD）營收。</span>
+  </div>
+
+</div>
+
+<div class="section-label">🎯 今天的結論</div>
+<div class="verdict bullish">
+  <div class="verdict-emoji">📈 偏多</div>
+  <div class="verdict-text">今天市場整體氣氛偏向樂觀，台股大漲、美股高檔震盪。雖然輝達財報後出現短線修正，但這只是健康的籌碼整理，普通投資人不用自己嚇自己，績優科技股拉回反而是分批布局的好時機。</div>
+</div>
+<div class="watch-list">
+  <div class="watch-title">📌 本週還要注意</div>
+  <div class="watch-item">2026-05-22 · SpaceX 星艦重新挑戰發射</div>
+  <div class="watch-item">2026-05-22 · 美國最新經濟數據公布</div>
+</div>
+<div class="section-label">🎒 新手專區</div>
+<div class="rookie-guide">
+  <div class="rg-block">
+    <div class="rg-head">🚀 還沒開始投資？三步驟上手</div>
+    <div class="rg-step"><b>1. 開證券戶</b>：手機下載券商 App（台股如國泰、永豐；美股如 Firstrade、IBKR），線上開戶大約 10 分鐘。</div>
+    <div class="rg-step"><b>2. 從小額開始</b>：第一次別投太多，用「賠掉也不影響生活」的金額練手感就好。</div>
+    <div class="rg-step"><b>3. 定期定額</b>：設定每月固定買一點（例如每月 3000 元買 0050），不用猜時機，長期最穩。</div>
+  </div>
+  <div class="rg-block">
+    <div class="rg-head">📖 看不懂的名詞？</div>
+    <div class="rg-term"><b>停損</b>：股價跌到你設定的價位就賣出，避免賠更多。</div>
+    <div class="rg-term"><b>目標價</b>：預期股價會漲到的價位，到了可以考慮獲利了結（賣出賺價差）。</div>
+    <div class="rg-term"><b>ETF</b>：一籃子股票的組合（如 0050 ＝ 台灣前 50 大公司），買一張等於分散投資很多檔，新手最穩。</div>
+    <div class="rg-term"><b>定期定額</b>：固定時間投入固定金額，漲跌都買，攤平成本、不用猜高低點。</div>
+    <div class="rg-term"><b>藍籌股</b>：規模大、體質穩、大家都認識的公司股票（如蘋果、台積電）。</div>
+    <div class="rg-term"><b>VIX 恐慌指數</b>：市場越害怕數字越高；20 以下算平靜，30 以上代表市場很緊張。</div>
+  </div>
+  <div class="rg-disclaimer">本專區為一般教學資訊，不構成投資建議；投資有風險，請評估自身狀況。</div>
+</div>
+
+  <div style="margin:20px 20px 4px;background:#f0f0ff;border:1px solid #c7d2fe;border-radius:12px;padding:18px 20px;text-align:center;">
+    <p style="font-size:13px;font-weight:800;color:#4338ca;margin:0 0 6px;">📊 客製化你的每日日報</p>
+    <p style="font-size:12px;color:#6b7280;line-height:1.7;margin:0 0 14px;">前往個人專區選擇你追蹤的美股 / 台股，<br>AI 每天只幫你分析你在乎的持倉動態。</p>
+    <a href="https://marketdaily.ai/dashboard.html" style="display:inline-block;background:#6366f1;color:#fff;font-size:13px;font-weight:700;padding:10px 24px;border-radius:8px;text-decoration:none;">⚙️ 前往設定我的股票偏好 →</a>
+  </div>
+
+  <div class="footer">
+    財經日報 · AI 精選 · 假訊息過濾<br>
+    ✅ 多源確認 = 2個以上白名單媒體報導 &nbsp;|&nbsp; ⚠️ 單一來源 = 請自行查證<br>
+    本報告為 AI 生成，僅供參考，不構成投資建議<br><br>
+    <a href="https://marketdaily.ai" style="color:#6366f1;text-decoration:none;font-weight:700;">🌐 marketdaily.ai</a> &nbsp;·&nbsp;
+    <a href="https://marketdaily.ai/dashboard.html" style="color:#a5b4fc;text-decoration:none;">⚙️ 我的專區</a>
+  </div>
+</div>
+</body>
+</html>

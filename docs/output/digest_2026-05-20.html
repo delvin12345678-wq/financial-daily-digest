@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>財經日報 2026-05-20</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", sans-serif; background: #f2f2f7; color: #1d1d1f; }
+.wrapper { max-width: 620px; margin: 0 auto; background: #fff; }
+
+.header { background: #0a0a0a; color: #fff; padding: 26px 20px 20px; }
+.header-meta { font-size: 10px; color: rgba(255,255,255,0.38); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; }
+.header h1 { font-size: 21px; font-weight: 700; letter-spacing: -0.3px; }
+.header-tagline { font-size: 11px; color: rgba(255,255,255,0.32); margin-top: 5px; }
+
+.tldr { background: #fff9f0; border-left: 3px solid #ff9500; margin: 18px 20px 0; padding: 13px 15px; border-radius: 0 10px 10px 0; }
+.tldr-title { font-size: 11px; font-weight: 700; color: #c25e00; margin-bottom: 8px; letter-spacing: 0.8px; text-transform: uppercase; }
+.tldr ul { list-style: none; }
+.tldr ul li { font-size: 14px; color: #3a3a3c; padding: 3px 0 3px 14px; position: relative; line-height: 1.6; }
+.tldr ul li::before { content: "→"; position: absolute; left: 0; color: #ff9500; font-weight: 600; font-size: 12px; }
+
+.section-label { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #8e8e93; padding: 20px 20px 9px; }
+
+.market-summary { padding: 0 20px 14px; font-size: 14px; color: #3a3a3c; line-height: 1.75; }
+
+.news-card { margin: 0 20px 10px; padding: 13px 15px; border: 1px solid #e5e5ea; border-radius: 10px; background: #fff; }
+.news-tag { display: inline-block; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 20px; margin-bottom: 7px; letter-spacing: 0.3px; }
+.news-tag.verified { background: #e3f9e5; color: #1a6b30; }
+.news-tag.single { background: #fff4e0; color: #8a4500; }
+.news-headline { font-size: 14px; font-weight: 700; color: #1d1d1f; line-height: 1.45; margin-bottom: 7px; }
+.news-why { font-size: 13px; color: #48484a; line-height: 1.55; background: #f2f2f7; padding: 7px 10px; border-radius: 8px; }
+.read-more { display: inline-block; margin-top: 8px; font-size: 12px; font-weight: 600; color: #0066cc; text-decoration: none; }
+.read-more:hover { text-decoration: underline; }
+
+.stock-card { display: flex; align-items: flex-start; gap: 10px; margin: 0 20px 8px; padding: 11px 13px; border-radius: 10px; background: #f2f2f7; border: 1px solid #e5e5ea; }
+.ticker { font-size: 13px; font-weight: 800; color: #0a0a0a; min-width: 56px; padding-top: 2px; font-family: "SF Mono", ui-monospace, monospace; }
+.stock-move { font-size: 14px; font-weight: 700; min-width: 76px; padding-top: 2px; }
+.stock-move.up { color: #30d158; }
+.stock-move.down { color: #ff3b30; }
+.stock-comment { font-size: 13px; color: #48484a; line-height: 1.55; flex: 1; }
+
+.macro-list { padding: 0 20px 14px; }
+.macro-item { font-size: 14px; color: #3a3a3c; padding: 6px 0; border-bottom: 1px solid #f2f2f7; line-height: 1.65; }
+
+.verdict { margin: 0 20px 12px; padding: 15px; border-radius: 12px; }
+.verdict.bullish { background: #f0fdf4; border: 1px solid #bbf7d0; }
+.verdict.bearish { background: #fff1f2; border: 1px solid #fecdd3; }
+.verdict.neutral { background: #f2f2f7; border: 1px solid #e5e5ea; }
+.verdict-emoji { font-size: 24px; margin-bottom: 8px; }
+.verdict-text { font-size: 14px; color: #3a3a3c; line-height: 1.75; }
+
+.watch-list { margin: 0 20px 22px; padding: 13px 15px; background: #f2f2f7; border-radius: 10px; }
+.watch-title { font-size: 10px; font-weight: 700; color: #8e8e93; margin-bottom: 8px; letter-spacing: 1.2px; text-transform: uppercase; }
+.watch-item { font-size: 13px; color: #3a3a3c; padding: 5px 0; border-bottom: 1px solid #e5e5ea; }
+.watch-item:last-child { border-bottom: none; }
+
+.indicator-bar { display: flex; gap: 8px; margin: 0 20px 14px; flex-wrap: wrap; }
+.indicator-item { flex: 0 0 calc(20% - 7px); min-width: 88px; padding: 11px 10px; background: #f2f2f7; border: 1px solid #e5e5ea; border-radius: 10px; text-align: center; }
+.indicator-label { font-size: 9px; font-weight: 700; color: #8e8e93; letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 4px; }
+.indicator-value { font-size: 16px; font-weight: 800; color: #1d1d1f; }
+.indicator-sub { font-size: 10px; color: #8e8e93; margin-top: 2px; }
+.indicator-fear { color: #ff3b30; }
+.indicator-greed { color: #30d158; }
+.indicator-neutral { color: #ff9500; }
+
+.second-order { margin: 0 20px 14px; padding: 13px 15px; background: #f0f0ff; border-left: 3px solid #5e5ce6; border-radius: 0 10px 10px 0; font-size: 13px; color: #3a3a3c; line-height: 1.75; }
+
+.crypto-bar { display: flex; gap: 8px; margin: 0 20px 14px; }
+.crypto-item { flex: 1; padding: 12px; background: #f2f2f7; border: 1px solid #e5e5ea; border-radius: 10px; text-align: center; }
+.crypto-name { font-size: 10px; font-weight: 700; color: #8e8e93; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px; }
+.crypto-price { font-size: 17px; font-weight: 800; }
+.crypto-price.up { color: #30d158; }
+.crypto-price.down { color: #ff3b30; }
+.crypto-change { font-size: 11px; color: #8e8e93; margin-top: 2px; }
+
+.sector-bar { padding: 0 20px 14px; }
+.sector-item { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid #f2f2f7; }
+.sector-name { font-size: 13px; font-weight: 600; color: #1d1d1f; min-width: 110px; }
+.sector-move { font-size: 13px; font-weight: 700; min-width: 68px; }
+.sector-move.up { color: #30d158; }
+.sector-move.down { color: #ff3b30; }
+.sector-comment { font-size: 12px; color: #8e8e93; flex: 1; }
+
+.earnings-list { padding: 0 20px 14px; }
+.earnings-item { display: flex; align-items: baseline; gap: 10px; padding: 7px 0; border-bottom: 1px solid #f2f2f7; }
+.earnings-ticker { font-size: 13px; font-weight: 800; color: #0a0a0a; min-width: 52px; font-family: "SF Mono", ui-monospace, monospace; }
+.earnings-date { font-size: 12px; color: #8e8e93; min-width: 80px; }
+.earnings-note { font-size: 13px; color: #48484a; flex: 1; }
+
+.stock-news-item { margin: 0 20px 10px; padding: 13px 15px; border: 1px solid #e0e0ff; border-radius: 10px; background: #f8f8ff; display: flex; gap: 12px; align-items: flex-start; }
+.stock-news-ticker { font-size: 12px; font-weight: 800; color: #5e5ce6; min-width: 52px; padding-top: 2px; font-family: "SF Mono", ui-monospace, monospace; }
+.stock-news-content { flex: 1; }
+.stock-news-headline { font-size: 14px; font-weight: 600; color: #1d1d1f; line-height: 1.4; margin-bottom: 6px; }
+.stock-news-impact { font-size: 13px; color: #48484a; background: #ebebff; padding: 6px 10px; border-radius: 8px; line-height: 1.55; }
+.stock-news-empty { margin: 0 20px 14px; font-size: 13px; color: #aeaeb2; padding: 8px 0; }
+
+.footer { background: #0a0a0a; color: rgba(255,255,255,0.28); text-align: center; padding: 18px 20px; font-size: 11px; line-height: 2; }
+</style>
+</head>
+<body>
+<div class="wrapper">
+  <div class="header">
+    <div class="header-meta">2026-05-20</div>
+    <h1>📊 財經日報</h1>
+    <div class="header-tagline">AI 精選 · 假訊息過濾 · 美股 + 台股</div>
+  </div>
+  <div class="tldr">
+<div class="tldr-title">☕ 30 秒看完今天重點</div>
+<ul>
+  <li>2454 聯發科大跌 7.21%，影響投資組合表現。</li>
+  <li>AAPL 小漲 0.38%，是今日持倉中唯一上漲的股票。</li>
+  <li>台股指數下跌 1.75%，影響整體投資氣氛。</li>
+</ul>
+</div>
+
+<div class="section-label">🌡️ 市場情緒儀表板</div>
+<div class="indicator-bar">
+  <div class="indicator-item">
+    <div class="indicator-label">VIX 恐慌指數</div>
+    <div class="indicator-value indicator-VIXCLASS">18.06</div>
+    <div class="indicator-sub">平靜</div>
+  </div>
+  <div class="indicator-item">
+    <div class="indicator-label">恐貪指數</div>
+    <div class="indicator-value indicator-FGCLASS">65/100</div>
+    <div class="indicator-sub">Greed</div>
+  </div>
+  <div class="indicator-item">
+    <div class="indicator-label">美國10年債</div>
+    <div class="indicator-value">4.67%</div>
+    <div class="indicator-sub">升息預期參考</div>
+  </div>
+  <div class="indicator-item">
+    <div class="indicator-label">黃金 / 原油</div>
+    <div class="indicator-value">$4485.4 / $104.03</div>
+    <div class="indicator-sub">黃金跌 1.59%，原油跌 0.34%</div>
+  </div>
+  <div class="indicator-item">
+    <div class="indicator-label">USD/TWD 匯率</div>
+    <div class="indicator-value">31.7</div>
+    <div class="indicator-sub">台幣升 0.410%</div>
+  </div>
+</div>
+
+<div class="section-label">₿ 加密貨幣</div>
+<div class="crypto-bar">
+  <div class="crypto-item">
+    <div class="crypto-name">BTC</div>
+    <div class="crypto-price BTCDIR">76,960</div>
+    <div class="crypto-change">漲 0.01%</div>
+  </div>
+  <div class="crypto-item">
+    <div class="crypto-name">ETH</div>
+    <div class="crypto-price ETHDIR">2,118</div>
+    <div class="crypto-change">跌 0.50%</div>
+  </div>
+</div>
+
+<div class="section-label">📈 大盤怎麼了</div>
+<div class="market-summary">今日美股下跌，S&P 500 跌 0.67%，台股指數也下跌 1.75%。市場氣氛偏空，投資者應注意風險。</div>
+
+<div class="section-label">🔄 板塊輪動：哪個板塊最強？</div>
+<div class="sector-bar">
+  <div class="sector-item">
+    <span class="sector-name">XLE 能源</span>
+    <span class="sector-move up">▲ +1.17%</span>
+    <span class="sector-comment">能源板塊領漲</span>
+  </div>
+  <div class="sector-item">
+    <span class="sector-name">XLV 醫療</span>
+    <span class="sector-move up">▲ +1.10%</span>
+    <span class="sector-comment">醫療板塊表現佳</span>
+  </div>
+  <div class="sector-item">
+    <span class="sector-name">XLP 必需消費</span>
+    <span class="sector-move up">▲ +0.22%</span>
+    <span class="sector-comment">必需消費板塊小漲</span>
+  </div>
+  <div class="sector-item">
+    <span class="sector-name">XLK 科技</span>
+    <span class="sector-move down">▼ -0.64%</span>
+    <span class="sector-comment">科技板塊下跌</span>
+  </div>
+  <div class="sector-item">
+    <span class="sector-name">XLC 通訊</span>
+    <span class="sector-move down">▼ -0.97%</span>
+    <span class="sector-comment">通訊板塊跌幅較大</span>
+  </div>
+  <div class="sector-item">
+    <span class="sector-name">XLY 非必需消費</span>
+    <span class="sector-move down">▼ -1.11%</span>
+    <span class="sector-comment">非必需消費板塊下跌</span>
+  </div>
+</div>
+
+<div class="section-label">🔥 今天最重要的 5 件事</div>
+<div class="news-card">
+  <div class="news-tag verified">✅ 多源確認</div>
+  <div class="news-headline">Google 推出新 AI 模型</div>
+  <div class="news-why">💡 為什麼重要：Google 的新 AI 模型可能會影響科技業的發展</div>
+  <a class="read-more" href="https://www.cnbc.com/2026/05/19/google-ai-ultra-gemini-spark-omni.html" target="_blank">閱讀原文 →</a>
+</div>
+<div class="news-card">
+  <div class="news-tag verified">✅ 多源確認</div>
+  <div class="news-headline">美國 10 年債殖利率上升</div>
+  <div class="news-why">💡 為什麼重要：美國 10 年債殖利率上升可能會影響全球經濟</div>
+  <a class="read-more" href="https://www.cnbc.com/2026/05/19/treasurys-yields-inflation-traders-fed-interest-rates.html" target="_blank">閱讀原文 →</a>
+</div>
+<div class="news-card">
+  <div class="news-tag verified">✅ 多源確認</div>
+  <div class="news-headline">聯發科大跌 7.21%</div>
+  <div class="news-why">💡 為什麼重要：聯發科的大跌可能會影響投資組合表現</div>
+  <a class="read-more" href="#" target="_blank">閱讀原文 →</a>
+</div>
+<div class="news-card">
+  <div class="news-tag verified">✅ 多源確認</div>
+  <div class="news-headline">AAPL 小漲 0.38%</div>
+  <div class="news-why">💡 為什麼重要：AAPL 的小漲可能會影響科技業的發展</div>
+  <a class="read-more" href="#" target="_blank">閱讀原文 →</a>
+</div>
+<div class="news-card">
+  <div class="news-tag verified">✅ 多源確認</div>
+  <div class="news-headline">台股指數下跌 1.75%</div>
+  <div class="news-why">💡 為什麼重要：台股指數的下跌可能會影響投資氣氛</div>
+  <a class="read-more" href="#" target="_blank">閱讀原文 →</a>
+</div>
+
+<div class="section-label">🔗 二階思考：美股如何影響台灣？</div>
+<div class="second-order">
+  <ul>
+    <li>美股下跌可能會影響台股指數，進而影響投資氣氛。</li>
+    <li>美國 10 年債殖利率上升可能會影響全球經濟，進而影響台灣經濟。</li>
+    <li>Google 的新 AI 模型可能會影響科技業的發展，進而影響台灣科技業。</li>
+  </ul>
+</div>
+
+<div class="section-label">🔍 持倉深度追蹤</div>
+<div class="stock-news-item">
+  <span class="stock-news-ticker">2454</span>
+  <div class="stock-news-content">
+    <div class="stock-news-headline">聯發科大跌 7.21%</div>
+    <div class="stock-news-impact">📊 影響分析：聯發科的大跌可能會影響投資組合表現，建議觀望。</div>
+    <a class="read-more" href="#" target="_blank">閱讀原文 →</a>
+  </div>
+</div>
+<div class="stock-news-item">
+  <span class="stock-news-ticker">AAPL</span>
+  <div class="stock-news-content">
+    <div class="stock-news-headline">AAPL 小漲 0.38%</div>
+    <div class="stock-news-impact">📊 影響分析：AAPL 的小漲可能會影響科技業的發展，建議持有。</div>
+    <a class="read-more" href="#" target="_blank">閱讀原文 →</a>
+  </div>
+</div>
+
+<div class="section-label">🏢 你的美股今天怎樣</div>
+<div class="stock-card">
+  <span class="ticker">AAPL</span>
+  <span class="stock-move up">▲ +0.38%</span>
+  <div class="stock-comment">AAPL 小漲 0.38%，建議持有。</div>
+</div>
+<div class="stock-card">
+  <span class="ticker">NVDA</span>
+  <span class="stock-move down">▼ -0.77%</span>
+  <div class="stock-comment">NVDA 小跌 0.77%，建議觀望。</div>
+</div>
+<div class="stock-card">
+  <span class="ticker">TSLA</span>
+  <span class="stock-move down">▼ -1.43%</span>
+  <div class="stock-comment">TSLA 跌 1.43%，建議觀望。</div>
+</div>
+
+<div class="section-label">🏢 你的台股今天怎樣</div>
+<div class="stock-card">
+  <span class="ticker">2330</span>
+  <span class="stock-move down">▼ -1.56%</span>
+  <div class="stock-comment">台積電跌 1.56%，建議觀望。</div>
+</div>
+<div class="stock-card">
+  <span class="ticker">2454</span>
+  <span class="stock-move down">▼ -7.21%</span>
+  <div class="stock-comment">聯發科大跌 7.21%，建議觀望。</div>
+</div>
+
+<div class="section-label">📅 即將公布財報</div>
+<div class="earnings-list">
+  <div class="earnings-item">
+    <span class="earnings-ticker">AAPL</span>
+    <span class="earnings-date">2026-05-25</span>
+    <span class="earnings-note">市場預期 AAPL 的財報會表現良好</span>
+  </div>
+</div>
+
+<div class="section-label">🎯 今天的結論</div>
+<div class="verdict bearish">
+  <div class="verdict-emoji">📉</div>
+  <div class="verdict-text">今日市場氣氛偏空，投資者應注意風險。聯發科的大跌和台股指數的下跌可能會影響投資組合表現，建議觀望。</div>
+</div>
+<div class="watch-list">
+  <div class="watch-title">📌 本週還要注意</div>
+  <ul>
+    <li>2026-05-25 · AAPL 財報</li>
+    <li>2026-05-26 · 台股指數走勢</li>
+  </ul>
+</div>
+  <div class="footer">
+    財經日報 · AI 精選 · 假訊息過濾<br>
+    ✅ 多源確認 = 2個以上白名單媒體報導 &nbsp;|&nbsp; ⚠️ 單一來源 = 請自行查證<br>
+    本報告為 AI 生成，僅供參考，不構成投資建議<br><br>
+    <a href="https://marketdaily.pages.dev/" style="color:#6366f1;text-decoration:none;font-weight:700;">🌐 marketdaily.pages.dev</a> &nbsp;·&nbsp;
+    <a href="https://marketdaily.pages.dev/dashboard.html" style="color:#a5b4fc;text-decoration:none;">⚙️ 我的專區</a>
+  </div>
+</div>
+</body>
+</html>

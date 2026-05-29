@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light dark">
+<meta name="supported-color-schemes" content="light dark">
+<title>財經日報 2026-05-21</title>
+<style>
+:root { color-scheme: light dark; supported-color-schemes: light dark; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", sans-serif; background: #f2f2f7; color: #1d1d1f; }
+.wrapper { max-width: 620px; margin: 0 auto; background: #fff; }
+
+.header { background: #ffffff; color: #1d1d1f; padding: 26px 24px 20px; border-bottom: 3px solid #6366f1; }
+.header-meta { font-size: 11px; color: #6b7280; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 6px; }
+.header-tagline { font-size: 12px; color: #6b7280; margin-top: 4px; }
+
+.tldr { background: #fff9f0; border-left: 3px solid #ff9500; margin: 18px 20px 0; padding: 13px 15px; border-radius: 0 10px 10px 0; }
+.tldr-title { font-size: 11px; font-weight: 700; color: #c25e00; margin-bottom: 8px; letter-spacing: 0.8px; text-transform: uppercase; }
+.tldr ul { list-style: none; }
+.tldr ul li { font-size: 14px; color: #3a3a3c; padding: 3px 0 3px 14px; position: relative; line-height: 1.6; }
+.tldr ul li::before { content: "→"; position: absolute; left: 0; color: #ff9500; font-weight: 600; font-size: 12px; }
+
+.section-label { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #8e8e93; padding: 20px 20px 9px; }
+
+.market-summary { padding: 0 20px 14px; font-size: 14px; color: #3a3a3c; line-height: 1.75; }
+
+.news-card { margin: 0 20px 10px; padding: 13px 15px; border: 1px solid #e5e5ea; border-radius: 10px; background: #fff; }
+.news-tag { display: inline-block; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 20px; margin-bottom: 7px; letter-spacing: 0.3px; }
+.news-tag.verified { background: #e3f9e5; color: #1a6b30; }
+.news-tag.single { background: #fff4e0; color: #8a4500; }
+.news-headline { font-size: 14px; font-weight: 700; color: #1d1d1f; line-height: 1.45; margin-bottom: 7px; }
+.news-why { font-size: 13px; color: #48484a; line-height: 1.55; background: #f2f2f7; padding: 7px 10px; border-radius: 8px; }
+.read-more { display: inline-block; margin-top: 8px; font-size: 12px; font-weight: 600; color: #0066cc; text-decoration: none; }
+.read-more:hover { text-decoration: underline; }
+
+.stock-card { display: flex; align-items: flex-start; gap: 10px; margin: 0 20px 8px; padding: 11px 13px; border-radius: 10px; background: #f2f2f7; border: 1px solid #e5e5ea; }
+.ticker { font-size: 13px; font-weight: 800; color: #0a0a0a; min-width: 56px; padding-top: 2px; font-family: "SF Mono", ui-monospace, monospace; }
+.stock-move { font-size: 14px; font-weight: 700; min-width: 76px; padding-top: 2px; }
+.stock-move.up { color: #30d158; }
+.stock-move.down { color: #ff3b30; }
+.stock-comment { font-size: 13px; color: #48484a; line-height: 1.55; flex: 1; }
+
+.macro-list { padding: 0 20px 14px; }
+.macro-item { font-size: 14px; color: #3a3a3c; padding: 6px 0; border-bottom: 1px solid #f2f2f7; line-height: 1.65; }
+
+.verdict { margin: 0 20px 12px; padding: 15px; border-radius: 12px; }
+.verdict.bullish { background: #f0fdf4; border: 1px solid #bbf7d0; }
+.verdict.bearish { background: #fff1f2; border: 1px solid #fecdd3; }
+.verdict.neutral { background: #f2f2f7; border: 1px solid #e5e5ea; }
+.verdict-emoji { font-size: 24px; margin-bottom: 8px; }
+.verdict-text { font-size: 14px; color: #3a3a3c; line-height: 1.75; }
+
+.watch-list { margin: 0 20px 22px; padding: 13px 15px; background: #f2f2f7; border-radius: 10px; }
+.watch-title { font-size: 10px; font-weight: 700; color: #8e8e93; margin-bottom: 8px; letter-spacing: 1.2px; text-transform: uppercase; }
+.watch-item { font-size: 13px; color: #3a3a3c; padding: 5px 0; border-bottom: 1px solid #e5e5ea; }
+.watch-item:last-child { border-bottom: none; }
+
+.indicator-bar { display: flex; gap: 8px; margin: 0 20px 14px; flex-wrap: wrap; }
+.indicator-item { flex: 0 0 calc(20% - 7px); min-width: 88px; padding: 11px 10px; background: #f2f2f7; border: 1px solid #e5e5ea; border-radius: 10px; text-align: center; }
+.indicator-label { font-size: 9px; font-weight: 700; color: #8e8e93; letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 4px; }
+.indicator-value { font-size: 16px; font-weight: 800; color: #1d1d1f; }
+.indicator-sub { font-size: 10px; color: #8e8e93; margin-top: 2px; }
+.indicator-fear { color: #ff3b30; }
+.indicator-greed { color: #30d158; }
+.indicator-neutral { color: #ff9500; }
+
+.second-order { margin: 0 20px 14px; padding: 13px 15px; background: #f0f0ff; border-left: 3px solid #5e5ce6; border-radius: 0 10px 10px 0; font-size: 13px; color: #3a3a3c; line-height: 1.75; }
+
+.crypto-bar { display: flex; gap: 8px; margin: 0 20px 14px; }
+.crypto-item { flex: 1; padding: 12px; background: #f2f2f7; border: 1px solid #e5e5ea; border-radius: 10px; text-align: center; }
+.crypto-name { font-size: 10px; font-weight: 700; color: #8e8e93; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px; }
+.crypto-price { font-size: 17px; font-weight: 800; }
+.crypto-price.up { color: #30d158; }
+.crypto-price.down { color: #ff3b30; }
+.crypto-change { font-size: 11px; color: #8e8e93; margin-top: 2px; }
+
+.sector-bar { padding: 0 20px 14px; }
+.sector-item { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid #f2f2f7; }
+.sector-name { font-size: 13px; font-weight: 600; color: #1d1d1f; min-width: 110px; }
+.sector-move { font-size: 13px; font-weight: 700; min-width: 68px; }
+.sector-move.up { color: #30d158; }
+.sector-move.down { color: #ff3b30; }
+.sector-comment { font-size: 12px; color: #8e8e93; flex: 1; }
+
+.earnings-list { padding: 0 20px 14px; }
+.earnings-item { display: flex; align-items: baseline; gap: 10px; padding: 7px 0; border-bottom: 1px solid #f2f2f7; }
+.earnings-ticker { font-size: 13px; font-weight: 800; color: #0a0a0a; min-width: 52px; font-family: "SF Mono", ui-monospace, monospace; }
+.earnings-date { font-size: 12px; color: #8e8e93; min-width: 80px; }
+.earnings-note { font-size: 13px; color: #48484a; flex: 1; }
+
+.stock-news-item { margin: 0 20px 10px; padding: 13px 15px; border: 1px solid #e0e0ff; border-radius: 10px; background: #f8f8ff; display: flex; gap: 12px; align-items: flex-start; }
+.stock-news-ticker { font-size: 12px; font-weight: 800; color: #5e5ce6; min-width: 52px; padding-top: 2px; font-family: "SF Mono", ui-monospace, monospace; }
+.stock-news-content { flex: 1; }
+.stock-news-headline { font-size: 14px; font-weight: 600; color: #1d1d1f; line-height: 1.4; margin-bottom: 6px; }
+.stock-news-impact { font-size: 13px; color: #48484a; background: #ebebff; padding: 6px 10px; border-radius: 8px; line-height: 1.55; }
+.stock-news-empty { margin: 0 20px 14px; font-size: 13px; color: #aeaeb2; padding: 8px 0; }
+
+.signal-header { margin: 14px 20px 8px; padding: 14px 16px; background: #eef0ff; border: 1px solid #c7d2fe; border-radius: 12px; }
+.signal-header-title { font-size: 11px; font-weight: 700; color: #4338ca; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 3px; }
+.signal-header-subtitle { font-size: 11px; color: #6366f1; }
+.signal-grid { padding: 0 20px 4px; }
+.signal-card { padding: 13px 14px; border-radius: 12px; border: 1px solid; margin-bottom: 10px; }
+.signal-card.buy { background: #f0fdf4; border-color: #bbf7d0; }
+.signal-card.hold { background: #fffbeb; border-color: #fde68a; }
+.signal-card.sell { background: #fff1f2; border-color: #fecdd3; }
+.signal-card.wait { background: #f8fafc; border-color: #e2e8f0; }
+.signal-card-top { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+.signal-ticker { font-size: 14px; font-weight: 800; color: #0a0a0a; font-family: "SF Mono", ui-monospace, monospace; }
+.signal-score-block { display: flex; align-items: baseline; gap: 1px; margin-left: auto; }
+.signal-score { font-size: 20px; font-weight: 900; color: #1d1d1f; line-height: 1; }
+.signal-score-label { font-size: 11px; color: #8e8e93; }
+.signal-bias { font-size: 10px; font-weight: 800; padding: 3px 10px; border-radius: 20px; letter-spacing: 0.5px; white-space: nowrap; }
+.signal-bias.bullish { background: #dcfce7; color: #166534; }
+.signal-bias.neutral { background: #fef3c7; color: #92400e; }
+.signal-bias.bearish { background: #ffe4e6; color: #9f1239; }
+.signal-body { }
+.signal-reason { font-size: 13px; color: #3a3a3c; line-height: 1.55; margin-bottom: 9px; }
+.signal-battle-plan { background: rgba(0,0,0,0.03); border-radius: 8px; padding: 9px 12px; margin-bottom: 9px; }
+.battle-row { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.battle-label { font-size: 10px; font-weight: 700; color: #8e8e93; letter-spacing: 0.5px; min-width: 52px; }
+.battle-val { font-size: 13px; font-weight: 700; color: #1d1d1f; }
+.battle-val.up { color: #30d158; }
+.battle-val.down { color: #ff3b30; }
+.signal-meta { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.signal-badge { font-size: 11px; font-weight: 800; padding: 3px 10px; border-radius: 20px; white-space: nowrap; }
+.signal-badge.buy { background: #dcfce7; color: #166534; }
+.signal-badge.hold { background: #fef3c7; color: #92400e; }
+.signal-badge.sell { background: #ffe4e6; color: #9f1239; }
+.signal-badge.wait { background: #f1f5f9; color: #475569; }
+.signal-confidence { font-size: 11px; color: #6b7280; }
+.signal-horizon { font-size: 11px; color: #6b7280; background: #f3f4f6; padding: 2px 8px; border-radius: 20px; }
+.signal-disclaimer { margin: 4px 20px 14px; font-size: 10px; color: #aeaeb2; text-align: center; line-height: 1.6; }
+
+.footer { background: #0a0a0a; color: rgba(255,255,255,0.28); text-align: center; padding: 18px 20px; font-size: 11px; line-height: 2; }
+</style>
+</head>
+<body>
+<div class="wrapper">
+  <div class="header">
+    <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="margin-bottom:18px;">
+      <tr>
+        <td width="50" valign="middle" style="padding-right:14px;">
+          <img src="https://marketdaily.pages.dev/logo-icon.svg" width="46" height="46" alt="MD" style="display:block;border-radius:12px;">
+        </td>
+        <td valign="middle">
+          <div style="font-size:20px;font-weight:800;color:#312e81;letter-spacing:-0.5px;line-height:1.2;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">MarketDaily</div>
+          <div style="font-size:10px;color:#6366f1;letter-spacing:3px;text-transform:uppercase;margin-top:3px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">AI 財經日報</div>
+        </td>
+      </tr>
+    </table>
+    <div class="header-meta">2026-05-21</div>
+    <div class="header-tagline">AI 精選 · 假訊息過濾 · 美股 + 台股</div>
+  </div>
+  <div class="tldr">
+<div class="tldr-title">☕ 30 秒看完今天重點</div>
+<ul>
+  <li>你手上的量子計算概念股 IONQ 今天大漲 8.32%，QBTS 也漲了 6.10%，表現超亮眼！</li>
+  <li>特斯拉 TSLA 漲了 3.25%，非必需消費板塊今天也表現不錯，看來市場對消費力道還是有信心。</li>
+  <li>台積電 2330 小跌 0.91%，雖然大盤漲，但權值股表現有點分歧。</li>
+  <li>Nvidia 承認中國 AI 晶片市場可能要讓給華為，這對 NVDA 未來在中國的佈局會是個挑戰。</li>
+</ul>
+</div>
+
+
+<div class="signal-header">
+  <div class="signal-header-title">⚡ AI 操作建議</div>
+  <div class="signal-header-subtitle">1-2 週視角</div>
+</div>
+<div class="signal-grid">
+<div class="signal-card buy">
+  <div class="signal-card-top">
+    <span class="signal-ticker">IONQ</span>
+    <div class="signal-score-block"><span class="signal-score">9</span><span class="signal-score-label">/ 10</span></div>
+    <span class="signal-bias bullish">📈 BULLISH</span>
+  </div>
+  <div class="signal-body">
+    <div class="signal-reason">量子計算概念股今天表現強勁，IONQ 大漲 8.32%，顯示市場對其未來潛力有高度期待。</div>
+    <div class="signal-battle-plan">
+      <div class="battle-row"><span class="battle-label">進場區間</span><span class="battle-val">$50–$52</span></div>
+      <div class="battle-row"><span class="battle-label">目標價</span><span class="battle-val up">$58</span></div>
+      <div class="battle-row"><span class="battle-label">停損位</span><span class="battle-val down">$48</span></div>
+    </div>
+    <div class="signal-meta">
+      <span class="signal-badge buy">🟢 買入</span>
+      <span class="signal-confidence">信心 85%</span>
+      <span class="signal-horizon">⏱ 短線1-2週</span>
+    </div>
+  </div>
+</div>
+<div class="signal-card buy">
+  <div class="signal-card-top">
+    <span class="signal-ticker">QBTS</span>
+    <div class="signal-score-block"><span class="signal-score">8</span><span class="signal-score-label">/ 10</span></div>
+    <span class="signal-bias bullish">📈 BULLISH</span>
+  </div>
+  <div class="signal-body">
+    <div class="signal-reason">QBTS 作為量子計算相關概念股，今日跟隨板塊強勢上漲 6.10%，動能充足。</div>
+    <div class="signal-battle-plan">
+      <div class="battle-row"><span class="battle-label">進場區間</span><span class="battle-val">$18–$19</span></div>
+      <div class="battle-row"><span class="battle-label">目標價</span><span class="battle-val up">$22</span></div>
+      <div class="battle-row"><span class="battle-label">停損位</span><span class="battle-val down">$17</span></div>
+    </div>
+    <div class="signal-meta">
+      <span class="signal-badge buy">🟢 買入</span>
+      <span class="signal-confidence">信心 80%</span>
+      <span class="signal-horizon">⏱ 短線1-2週</span>
+    </div>
+  </div>
+</div>
+<div class="signal-card buy">
+  <div class="signal-card-top">
+    <span class="signal-ticker">QUBT</span>
+    <div class="signal-score-block"><span class="signal-score">7</span><span class="signal-score-label">/ 10</span></div>
+    <span class="signal-bias bullish">📈 BULLISH</span>
+  </div>
+  <div class="signal-body">
+    <div class="signal-reason">QUBT 今日上漲 3.69%，顯示市場對量子計算領域的熱情持續，可考慮順勢操作。</div>
+    <div class="signal-battle-plan">
+      <div class="battle-row"><span class="battle-label">進場區間</span><span class="battle-val">$9.0–$9.5</span></div>
+      <div class="battle-row"><span class="battle-label">目標價</span><span class="battle-val up">$10.5</span></div>
+      <div class="battle-row"><span class="battle-label">停損位</span><span class="battle-val down">$8.8</span></div>
+    </div>
+    <div class="signal-meta">
+      <span class="signal-badge buy">🟢 買入</span>
+      <span class="signal-confidence">信心 75%</span>
+      <span class="signal-horizon">⏱ 短線1-2週</span>
+    </div>
+  </div>
+</div>
+<div class="signal-card hold">
+  <div class="signal-card-top">
+    <span class="signal-ticker">2454</span>
+    <div class="signal-score-block"><span class="signal-score">6</span><span class="signal-score-label">/ 10</span></div>
+    <span class="signal-bias bullish">📈 BULLISH</span>
+  </div>
+  <div class="signal-body">
+    <div class="signal-reason">聯發科今天漲了 2.38%，在台股大盤上漲的帶動下表現不錯，可繼續持有。</div>
+    <div class="signal-battle-plan">
+      <div class="battle-row"><span class="battle-label">進場區間</span><span class="battle-val">$3180–$3220</span></div>
+      <div class="battle-row"><span class="battle-label">目標價</span><span class="battle-val up">$3350</span></div>
+      <div class="battle-row"><span class="battle-label">停損位</span><span class="battle-val down">$3100</span></div>
+    </div>
+    <div class="signal-meta">
+      <span class="signal-badge hold">🟡 持有</span>
+      <span class="signal-confidence">信心 70%</span>
+      <span class="signal-horizon">⏱ 短線1-2週</span>
+    </div>
+  </div>
+</div>
+<div class="signal-card hold">
+  <div class="signal-card-top">
+    <span class="signal-ticker">2379</span>
+    <div class="signal-score-block"><span class="signal-score">6</span><span class="signal-score-label">/ 10</span></div>
+    <span class="signal-bias bullish">📈 BULLISH</span>
+  </div>
+  <div class="signal-body">
+    <div class="signal-reason">瑞昱今天上漲 2.16%，半導體類股在台股表現不錯，可以持續觀察。</div>
+    <div class="signal-battle-plan">
+      <div class="battle-row"><span class="battle-label">進場區間</span><span class="battle-val">$560–$565</span></div>
+      <div class="battle-row"><span class="battle-label">目標價</span><span class="battle-val up">$580</span></div>
+      <div class="battle-row"><span class="battle-label">停損位</span><span class="battle-val down">$550</span></div>
+    </div>
+    <div class="signal-meta">
+      <span class="signal-badge hold">🟡 持有</span>
+      <span class="signal-confidence">信心 65%</span>
+      <span class="signal-horizon">⏱ 短線1-2週</span>
+    </div>
+  </div>
+</div>
+</div>
+<div class="signal-disclaimer">⚠️ AI 分析僅供參考，不構成投資建議</div>
+
+<div class="section-label">🌡️ 市場情緒儀表板</div>
+<div class="indicator-bar">
+  <div class="indicator-item">
+    <div class="indicator-label">VIX 恐慌指數</div>
+    <div class="indicator-value neutral">17.77</div>
+    <div class="indicator-sub">平靜</div>
+  </div>
+  <div class="indicator-item">
+    <div class="indicator-label">恐貪指數</div>
+    <div class="indicator-value greed">65/100</div>
+    <div class="indicator-sub">Greed</div>
+  </div>
+  <div class="indicator-item">
+    <div class="indicator-label">美國10年債</div>
+    <div class="indicator-value">4.57%</div>
+    <div class="indicator-sub">升息預期參考</div>
+  </div>
+  <div class="indicator-item">
+    <div class="indicator-label">黃金 / 原油</div>
+    <div class="indicator-value">$4516.3 / $100.8</div>
+    <div class="indicator-sub">-0.42% / +2.58%</div>
+  </div>
+  <div class="indicator-item">
+    <div class="indicator-label">USD/TWD 匯率</div>
+    <div class="indicator-value">31.54</div>
+    <div class="indicator-sub">台幣升值</div>
+  </div>
+</div>
+
+<div class="section-label">₿ 加密貨幣</div>
+<div class="crypto-bar">
+  <div class="crypto-item">
+    <div class="crypto-name">BTC</div>
+    <div class="crypto-price down">$77,250</div>
+    <div class="crypto-change">-0.29%</div>
+  </div>
+  <div class="crypto-item">
+    <div class="crypto-name">ETH</div>
+    <div class="crypto-price down">$2,116</div>
+    <div class="crypto-change">-0.53%</div>
+  </div>
+</div>
+
+<div class="section-label">📈 大盤怎麼了</div>
+<div class="market-summary">今天美股三大指數都上漲超過 1%，S&P500 和 NASDAQ 漲幅都超過 1%，市場情緒偏向樂觀。台股加權指數也大漲 3.37%，表現非常強勁，但你的台積電卻小跌，有點可惜。</div>
+
+<div class="section-label">🔄 板塊輪動：哪個板塊最強？</div>
+<div class="sector-bar">
+  <div class="sector-item">
+    <span class="sector-name">XLY 非必需消費</span>
+    <span class="sector-move up">▲ +2.53%</span>
+    <span class="sector-comment">消費者信心回升，帶動非必需消費類股上漲。</span>
+  </div>
+  <div class="sector-item">
+    <span class="sector-name">XLK 科技</span>
+    <span class="sector-move up">▲ +2.25%</span>
+    <span class="sector-comment">科技股持續受到市場追捧，是今天上漲主力。</span>
+  </div>
+  <div class="sector-item">
+    <span class="sector-name">XLI 工業</span>
+    <span class="sector-move up">▲ +1.18%</span>
+    <span class="sector-comment">經濟復甦預期下，工業類股也跟著走強。</span>
+  </div>
+  <div class="sector-item">
+    <span class="sector-name">XLV 醫療</span>
+    <span class="sector-move down">▼ -0.13%</span>
+    <span class="sector-comment">醫療板塊今天小幅下跌，表現相對平淡。</span>
+  </div>
+  <div class="sector-item">
+    <span class="sector-name">XLP 必需消費</span>
+    <span class="sector-move down">▼ -0.66%</span>
+    <span class="sector-comment">必需消費類股下跌，可能受 Walmart 財報影響。</span>
+  </div>
+  <div class="sector-item">
+    <span class="sector-name">XLE 能源</span>
+    <span class="sector-move down">▼ -2.43%</span>
+    <span class="sector-comment">能源股今天跌幅較大，油價上漲未能提振板塊。</span>
+  </div>
+</div>
+
+<div class="section-label">🔥 今天最重要的 5 件事</div>
+<div class="news-card">
+  <div class="news-tag verified">✅ 多源確認</div>
+  <div class="news-headline">Walmart 財報不佳，高油價影響消費者</div>
+  <div class="news-why">💡 為什麼重要：Walmart 的財報預警顯示，高油價可能正在影響一般民眾的消費能力，這可能會對其他零售和必需消費品公司造成壓力，需要注意消費板塊的後續表現。</div>
+  <a class="read-more" href="https://www.cnbc.com/2026/05/21/walmart-wmt-earnings-q1-2027.html" target="_blank">閱讀原文 →</a>
+</div>
+<div class="news-card">
+  <div class="news-tag verified">✅ 多源確認</div>
+  <div class="news-headline">Nvidia 承認中國 AI 晶片市場讓給華為</div>
+  <div class="news-why">💡 為什麼重要：Nvidia 在中國 AI 晶片市場的策略轉變，可能意味著其在該區域的營收成長將面臨挑戰，這對 NVDA 未來的全球佈局和營收預期會有影響，值得長期關注。</div>
+  <a class="read-more" href="https://www.cnbc.com/2026/05/21/nvidia-jensen-huang-china-ai-chip-market-huawei.html" target="_blank">閱讀原文 →</a>
+</div>
+<div class="news-card">
+  <div class="news-tag verified">✅ 多源確認</div>
+  <div class="news-headline">禮來新一代減肥藥試驗成功</div>
+  <div class="news-why">💡 為什麼重要：Eli Lilly 的減肥藥新進展，顯示生技製藥領域的創新潛力，這類新藥的成功可能為相關藥廠帶來巨大的市場機會和營收增長。</div>
+  <a class="read-more" href="https://www.cnbc.com/2026/05/21/eli-lilly-weight-loss-drug-retatrutide-clears-obesity-trial.html" target="_blank">閱讀原文 →</a>
+</div>
+<div class="news-card">
+  <div class="news-tag verified">✅ 多源確認</div>
+  <div class="news-headline">伊朗審查美國和平提案，川普願等待</div>
+  <div class="news-why">💡 為什麼重要：地緣政治緊張局勢的緩和跡象，可能對全球市場情緒產生正面影響，特別是能源價格和避險資產的走勢。</div>
+  <a class="read-more" href="https://www.cnbc.com/2026/05/21/iran-war-us-peace-talks-trump-hormuz.html" target="_blank">閱讀原文 →</a>
+</div>
+<div class="news-card">
+  <div class="news-tag verified">✅ 多源確認</div>
+  <div class="news-headline">Ubisoft 股價大跌，預警年度虧損</div>
+  <div class="news-why">💡 為什麼重要：遊戲產業的營運狀況可能不如預期，Ubisoft 的虧損預警會讓投資人重新評估遊戲類股的風險，對其他遊戲開發商也可能造成壓力。</div>
+  <a class="read-more" href="https://www.cnbc.com/2026/05/21/ubisoft-fy-earnings-profit-loss-assassins-creed.html" target="_blank">閱讀原文 →</a>
+</div>
+
+<div class="section-label">🔗 二階思考：美股如何影響台灣？</div>
+<div class="second-order">
+<ul>
+  <li>Nvidia 承認中國 AI 晶片市場可能讓給華為，雖然短期對 NVDA 股價影響不大，但長期來看，若中國市場份額流失，可能會間接影響台灣相關供應鏈如台積電（2330）的先進製程訂單，需要持續觀察。</li>
+  <li>量子計算概念股 IONQ、QBTS、QUBT 今天大漲，顯示市場對新興科技的熱情。雖然台灣直接相關的純量子計算公司不多，但這股熱潮可能帶動半導體先進技術的研發投入，對聯發科（2454）和瑞昱（2379）等晶片設計公司長期而言是潛在利多。</li>
+</ul>
+</div>
+
+
+<div class="section-label">🔍 持倉深度追蹤</div>
+<div class="stock-news-item">
+  <span class="stock-news-ticker">NVDA</span>
+  <div class="stock-news-content">
+    <div class="stock-news-headline">Nvidia 承認中國 AI 晶片市場讓給華為</div>
+    <div class="stock-news-impact">📊 影響分析：這對 NVDA 長期在中國的營收成長會是個挑戰，建議觀望，注意後續市場份額變化。</div>
+    <a class="read-more" href="https://www.cnbc.com/2026/05/21/nvidia-jensen-huang-china-ai-chip-market-huawei.html" target="_blank">閱讀原文 →</a>
+  </div>
+</div>
+<div class="stock-news-empty">今日無持倉相關重大新聞</div>
+
+<div class="section-label">🏢 你的美股今天怎樣</div>
+<div class="stock-card">
+  <span class="ticker">NVDA</span>
+  <span class="stock-move up">▲+1.30%</span>
+  <div class="stock-comment">今天小漲，但 Nvidia 承認中國 AI 晶片市場可能讓給華為，長期來看對營收有潛在壓力，建議觀望。</div>
+</div>
+<div class="stock-card">
+  <span class="ticker">TSLA</span>
+  <span class="stock-move up">▲+3.25%</span>
+  <div class="stock-comment">今天漲勢很強，可能是受整體市場樂觀情緒和非必需消費板塊上漲帶動，可以繼續持有。</div>
+</div>
+<div class="stock-card">
+  <span class="ticker">AAPL</span>
+  <span class="stock-move up">▲+1.10%</span>
+  <div class="stock-comment">表現穩健，跟隨大盤上漲，沒有特別利空消息，建議繼續持有。</div>
+</div>
+<div class="stock-card">
+  <span class="ticker">MSFT</span>
+  <span class="stock-move up">▲+0.87%</span>
+  <div class="stock-comment">微軟今天小漲，科技巨頭表現穩健，可以繼續持有。</div>
+</div>
+<div class="stock-card">
+  <span class="ticker">NFLX</span>
+  <span class="stock-move down">▼-1.39%</span>
+  <div class="stock-comment">今天小跌，可能受市場對串流媒體競爭加劇的擔憂影響，建議觀望。</div>
+</div>
+<div class="stock-card">
+  <span class="ticker">QUBT</span>
+  <span class="stock-move up">▲+3.69%</span>
+  <div class="stock-comment">量子計算概念股今天表現亮眼，QUBT 也跟著大漲，顯示市場對其前景看好，可以考慮加倉。</div>
+</div>
+<div class="stock-card">
+  <span class="ticker">QBTS</span>
+  <span class="stock-move up">▲+6.10%</span>
+  <div class="stock-comment">量子計算概念股今天大漲，QBTS 漲幅驚人，顯示市場資金追捧，可以考慮加倉。</div>
+</div>
+<div class="stock-card">
+  <span class="ticker">QCOM</span>
+  <span class="stock-move up">▲+3.53%</span>
+  <div class="stock-comment">高通今天漲幅不錯，可能是受整體科技股上漲帶動，建議繼續持有。</div>
+</div>
+<div class="stock-card">
+  <span class="ticker">IONQ</span>
+  <span class="stock-move up">▲+8.32%</span>
+  <div class="stock-comment">量子計算概念股今天表現最亮眼的就是 IONQ，大漲超過 8%，顯示市場對其前景非常看好，可以考慮加倉。</div>
+</div>
+<div class="stock-card">
+  <span class="ticker">META</span>
+  <span class="stock-move up">▲+0.41%</span>
+  <div class="stock-comment">Meta 今天小漲，表現相對平穩，可以繼續持有。</div>
+</div>
+
+<div class="section-label">🏢 你的台股今天怎樣</div>
+<div class="stock-card">
+  <span class="ticker">2330</span>
+  <span class="stock-move down">▼-0.91%</span>
+  <div class="stock-comment">台積電今天小跌，雖然大盤漲勢強勁，但權值股表現分歧，建議觀望。</div>
+</div>
+<div class="stock-card">
+  <span class="ticker">2454</span>
+  <span class="stock-move up">▲+2.38%</span>
+  <div class="stock-comment">聯發科今天表現不錯，跟隨台股大盤上漲，可以繼續持有。</div>
+</div>
+<div class="stock-card">
+  <span class="ticker">2882</span>
+  <span class="stock-move up">▲+0.13%</span>
+  <div class="stock-comment">國泰金今天小漲，金融股相對穩健，可以繼續持有。</div>
+</div>
+<div class="stock-card">
+  <span class="ticker">2379</span>
+  <span class="stock-move up">▲+2.16%</span>
+  <div class="stock-comment">瑞昱今天上漲，半導體類股在台股表現不錯，可以持續觀察。</div>
+</div>
+<div class="stock-card">
+  <span class="ticker">3481</span>
+  <span class="stock-move down">▼-1.34%</span>
+  <div class="stock-comment">群創今天小跌，面板產業近期波動較大，建議觀望，注意停損。</div>
+</div>
+
+<div class="section-label">📅 即將公布財報</div>
+<div class="earnings-list">
+  <div class="earnings-item">
+    <span class="earnings-ticker">今日數據不足</span>
+    <span class="earnings-date"></span>
+    <span class="earnings-note"></span>
+  </div>
+</div>
+
+<div class="section-label">🎯 今天的結論</div>
+<div class="verdict bullish">
+  <div class="verdict-emoji">📈 偏多</div>
+  <div class="verdict-text">今天市場情緒整體偏多，美股三大指數和台股都表現強勁，特別是你的量子計算概念股漲勢驚人。不過，Nvidia 在中國市場的挑戰和 Walmart 的財報預警，還是提醒我們要留意個別公司的風險。</div>
+</div>
+<div class="watch-list">
+  <div class="watch-title">📌 本週還要注意</div>
+  <div class="watch-item">後續 Walmart 財報對其他零售股的影響</div>
+  <div class="watch-item">Nvidia 在中國市場策略的進一步發展</div>
+  <div class="watch-item">地緣政治局勢的潛在變化</div>
+</div>
+
+  <div style="margin:20px 20px 4px;background:#f0f0ff;border:1px solid #c7d2fe;border-radius:12px;padding:18px 20px;text-align:center;">
+    <p style="font-size:13px;font-weight:800;color:#4338ca;margin:0 0 6px;">📊 客製化你的每日日報</p>
+    <p style="font-size:12px;color:#6b7280;line-height:1.7;margin:0 0 14px;">前往個人專區選擇你追蹤的美股 / 台股，<br>AI 每天只幫你分析你在乎的持倉動態。</p>
+    <a href="https://marketdaily.pages.dev/dashboard.html" style="display:inline-block;background:#6366f1;color:#fff;font-size:13px;font-weight:700;padding:10px 24px;border-radius:8px;text-decoration:none;">⚙️ 前往設定我的股票偏好 →</a>
+  </div>
+
+  <div class="footer">
+    財經日報 · AI 精選 · 假訊息過濾<br>
+    ✅ 多源確認 = 2個以上白名單媒體報導 &nbsp;|&nbsp; ⚠️ 單一來源 = 請自行查證<br>
+    本報告為 AI 生成，僅供參考，不構成投資建議<br><br>
+    <a href="https://marketdaily.pages.dev" style="color:#6366f1;text-decoration:none;font-weight:700;">🌐 marketdaily.pages.dev</a> &nbsp;·&nbsp;
+    <a href="https://marketdaily.pages.dev/dashboard.html" style="color:#a5b4fc;text-decoration:none;">⚙️ 我的專區</a>
+  </div>
+</div>
+</body>
+</html>
