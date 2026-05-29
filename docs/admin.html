@@ -767,6 +767,7 @@ async function doLogin() {
     localStorage.removeItem("md-admin-email-saved");
   }
   localStorage.setItem("md-admin-email", email);
+  sessionStorage.setItem("md-admin-pwd", pw);
   bootAdmin(email);
 }
 
@@ -824,7 +825,7 @@ async function loadFromWorker() {
   try {
     const res = await fetch(WORKER_URL + "/admin/get-config", {
       method: "POST", headers: {"Content-Type":"application/json"},
-      body: JSON.stringify({email: localStorage.getItem("md-admin-email")})
+      body: JSON.stringify({email: localStorage.getItem("md-admin-email"), password: sessionStorage.getItem("md-admin-pwd") || ""})
     });
     const d = await res.json();
     if (d.config) {
@@ -842,7 +843,7 @@ async function saveAll() {
   try {
     const res = await fetch(WORKER_URL + "/admin/save-config", {
       method: "POST", headers: {"Content-Type":"application/json"},
-      body: JSON.stringify({email: localStorage.getItem("md-admin-email"), config: cfg})
+      body: JSON.stringify({email: localStorage.getItem("md-admin-email"), password: sessionStorage.getItem("md-admin-pwd") || "", config: cfg})
     });
     const d = await res.json();
     if (d.ok) toast("已儲存至 Cloudflare KV ✓ — Python 下次執行自動生效");
@@ -942,7 +943,7 @@ async function fetchAdminStats() {
   try {
     const res = await fetch(WORKER_URL + "/admin-stats", {
       method: "POST", headers: {"Content-Type":"application/json"},
-      body: JSON.stringify({email: localStorage.getItem("md-admin-email")})
+      body: JSON.stringify({email: localStorage.getItem("md-admin-email"), password: sessionStorage.getItem("md-admin-pwd") || ""})
     });
     const d = await res.json();
     if (d.totalSubscribers != null)
@@ -955,7 +956,7 @@ async function loadSubscribers() {
   try {
     const res = await fetch(WORKER_URL + "/admin-stats", {
       method: "POST", headers: {"Content-Type":"application/json"},
-      body: JSON.stringify({email: localStorage.getItem("md-admin-email")})
+      body: JSON.stringify({email: localStorage.getItem("md-admin-email"), password: sessionStorage.getItem("md-admin-pwd") || ""})
     });
     const d = await res.json();
     const subs = d.subscribers || [];
@@ -1007,7 +1008,7 @@ async function applyPlan(btn) {
   try {
     const res = await fetch(WORKER_URL + "/admin/set-plan", {
       method: "POST", headers: {"Content-Type":"application/json"},
-      body: JSON.stringify({ email: localStorage.getItem("md-admin-email"), target, plan })
+      body: JSON.stringify({ email: localStorage.getItem("md-admin-email"), password: sessionStorage.getItem("md-admin-pwd") || "", target, plan })
     });
     const d = await res.json();
     if (d.ok) {

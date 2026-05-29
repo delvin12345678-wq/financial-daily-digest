@@ -1566,14 +1566,15 @@ async function unbindLine() {
 
 async function loadAdminStats() {
   try {
-    const res = await fetch(WORKER_URL + "/admin-stats", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: localStorage.getItem("md-email") }) });
+    const res = await fetch(WORKER_URL + "/admin-stats", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: localStorage.getItem("md-email"), password: (sessionStorage.getItem("md-pwd") || localStorage.getItem("md-saved-pwd") || "") }) });
     if (res.ok) { const data = await res.json(); document.getElementById("admin-total").textContent = data.total ?? "—"; document.getElementById("admin-free").textContent = data.free ?? "—"; document.getElementById("admin-paid").textContent = data.paid ?? "—"; }
   } catch {}
 }
 
 async function loadPreferences(email) {
   try {
-    const res = await fetch(WORKER_URL + "/get-preferences", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email }) });
+    const pwd = sessionStorage.getItem("md-pwd") || localStorage.getItem("md-saved-pwd") || "";
+    const res = await fetch(WORKER_URL + "/get-preferences", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email, password: pwd }) });
     const data = await res.json();
     userPlan = data.plan || "free";
     userCap = data.cap == null ? Infinity : data.cap;
@@ -2183,7 +2184,8 @@ function setSaveStatus(state, text) {
 
 function curPayload() {
   const email = localStorage.getItem("md-email") || "";
-  return JSON.stringify({ email, us_stocks: selected.us.map(s=>s.sym), tw_stocks: selected.tw.map(s=>s.sym) });
+  const password = sessionStorage.getItem("md-pwd") || localStorage.getItem("md-saved-pwd") || "";
+  return JSON.stringify({ email, password, us_stocks: selected.us.map(s=>s.sym), tw_stocks: selected.tw.map(s=>s.sym) });
 }
 
 // 去抖動:連續選股只在停手 0.65 秒後送一次。
@@ -2227,10 +2229,11 @@ let _refLink = "";
 
 async function loadReferral(email) {
   try {
+    const pwd = sessionStorage.getItem("md-pwd") || localStorage.getItem("md-saved-pwd") || "";
     const res = await fetch(WORKER_URL + "/referral-stats", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email })
+      body: JSON.stringify({ email, password: pwd })
     });
     if (!res.ok) return;
     const data = await res.json();
