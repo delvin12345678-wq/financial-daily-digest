@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>找不到頁面 · MarketDaily</title>
+<meta name="robots" content="noindex,nofollow">
+<link rel="icon" type="image/svg+xml" href="/logo-icon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #060611; --text: #f1f5f9; --text2: rgba(255,255,255,0.55);
+    --primary: #6366f1; --primary-light: #818cf8; --violet: #8b5cf6;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+  }
+  body::before {
+    content: ''; position: fixed; inset: 0;
+    background-image:
+      linear-gradient(rgba(99,102,241,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(99,102,241,0.04) 1px, transparent 1px);
+    background-size: 72px 72px; pointer-events: none; z-index: 0;
+  }
+  body::after {
+    content: ''; position: fixed;
+    top: 10%; left: 50%; width: 700px; height: 700px;
+    background: radial-gradient(circle, rgba(139,92,246,0.18) 0%, transparent 60%);
+    transform: translateX(-50%); filter: blur(80px); pointer-events: none; z-index: 0;
+  }
+  .wrap { position: relative; z-index: 1; max-width: 480px; text-align: center; }
+  .big {
+    font-size: clamp(96px, 16vw, 160px); font-weight: 900;
+    line-height: 1; letter-spacing: -6px; margin-bottom: 16px;
+    background: linear-gradient(120deg, #818cf8, #c4b5fd, #f0abfc);
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  h1 { font-size: 22px; font-weight: 800; margin-bottom: 12px; letter-spacing: -0.4px; }
+  p { font-size: 14px; color: var(--text2); line-height: 1.7; margin-bottom: 28px; }
+  .links { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+  a {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 11px 20px; border-radius: 12px;
+    text-decoration: none; font-size: 14px; font-weight: 700;
+    transition: all 0.2s;
+  }
+  a.primary {
+    background: linear-gradient(135deg, var(--primary), var(--violet)); color: #fff;
+    box-shadow: 0 8px 24px rgba(99,102,241,0.4);
+  }
+  a.primary:hover { transform: translateY(-2px); box-shadow: 0 12px 32px rgba(99,102,241,0.55); }
+  a.ghost {
+    background: rgba(255,255,255,0.04); color: var(--text2);
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+  a.ghost:hover { color: var(--text); border-color: rgba(99,102,241,0.35); background: rgba(99,102,241,0.08); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="big">404</div>
+  <h1>這頁不見了</h1>
+  <p>你想找的頁面可能已被搬移或刪除。<br>從下面這些常用入口繼續吧:</p>
+  <div class="links">
+    <a class="primary" href="/">首頁</a>
+    <a class="ghost" href="/pricing">定價</a>
+    <a class="ghost" href="/dashboard">我的專區</a>
+    <a class="ghost" href="/track-record">📊 戰績</a>
+  </div>
+</div>
+</body>
+</html>

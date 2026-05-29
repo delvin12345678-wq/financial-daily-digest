@@ -1,0 +1,28 @@
+{
+  "name": "MarketDaily — AI 財經日報",
+  "short_name": "MarketDaily",
+  "description": "每日 AI 精選美股台股日報，個人化推送，假訊息過濾",
+  "start_url": "/dashboard.html",
+  "display": "standalone",
+  "background_color": "#060611",
+  "theme_color": "#6366f1",
+  "orientation": "portrait-primary",
+  "icons": [
+    { "src": "/logo-icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "/logo-icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ],
+  "categories": ["finance", "news"],
+  "lang": "zh-TW",
+  "shortcuts": [
+    {
+      "name": "我的日報",
+      "url": "/dashboard.html",
+      "description": "查看今日財經日報"
+    },
+    {
+      "name": "股票偏好",
+      "url": "/dashboard?focus=stocks",
+      "description": "設定我追蹤的股票"
+    }
+  ]
+}

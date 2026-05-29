@@ -1,0 +1,26 @@
+User-agent: *
+Allow: /
+# 禁止索引 admin / 私人後台 / 不公開頁面
+Disallow: /admin
+Disallow: /admin.html
+Disallow: /admin-reactive
+Disallow: /admin-reactive.html
+Disallow: /analytics
+Disallow: /analytics.html
+Disallow: /dashboard
+Disallow: /dashboard.html
+Disallow: /preferences
+Disallow: /preferences.html
+Disallow: /agents
+Disallow: /agents.html
+Disallow: /demo-dark
+Disallow: /demo-dark.html
+Disallow: /demo-white
+Disallow: /demo-white.html
+Disallow: /demo-sidebar
+Disallow: /demo-sidebar.html
+Disallow: /success
+Disallow: /success.html
+Disallow: /output/
+
+Sitemap: https://marketdaily.ai/sitemap.xml

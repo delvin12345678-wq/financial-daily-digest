@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MarketDaily vs ChatGPT — 為什麼不能用免費 AI 就好？</title>
+<meta name="description" content="ChatGPT 是工具，MarketDaily 是服務。每天早上 7 點主動送到信箱，比 ChatGPT Plus 便宜一半，只做一件事 —— 讓你不用再決定今天該問 AI 什麼。">
+<meta name="theme-color" content="#6366f1">
+<link rel="icon" type="image/svg+xml" href="/logo-icon.svg">
+<link rel="apple-touch-icon" href="/logo-icon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+<!-- Open Graph -->
+<meta property="og:title" content="MarketDaily vs ChatGPT — 為什麼不能用免費 AI 就好？">
+<meta property="og:description" content="ChatGPT 等你問。MarketDaily 不用問。每天 07:00 自動送到信箱，比 ChatGPT Plus 便宜一半。">
+<meta property="og:image" content="https://marketdaily.ai/social/01_launch.jpg">
+<meta property="og:url" content="https://marketdaily.ai/vs-chatgpt">
+<meta property="og:type" content="website">
+
+<style>
+:root {
+  --bg: #060611;
+  --surface: rgba(255,255,255,0.03);
+  --primary: #6366f1;
+  --primary-light: #818cf8;
+  --primary-dim: rgba(99,102,241,0.12);
+  --primary-border: rgba(99,102,241,0.28);
+  --violet: #8b5cf6;
+  --sky: #38bdf8;
+  --emerald: #10b981;
+  --rose: #f43f5e;
+  --amber: #f59e0b;
+  --text: #f1f5f9;
+  --text-muted: rgba(255,255,255,0.48);
+  --text-dim: rgba(255,255,255,0.28);
+  --border: rgba(255,255,255,0.07);
+  --border-hover: rgba(99,102,241,0.38);
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:focus-visible { outline: 2px solid #818cf8; outline-offset: 2px; border-radius: 4px; }
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image:
+    linear-gradient(rgba(99,102,241,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(99,102,241,0.04) 1px, transparent 1px);
+  background-size: 72px 72px;
+  pointer-events: none; z-index: 0;
+}
+
+/* Glow orbs */
+body::after {
+  content: '';
+  position: fixed;
+  top: 10%; left: 50%;
+  width: 700px; height: 700px;
+  background: radial-gradient(circle, rgba(139,92,246,0.18) 0%, transparent 60%);
+  transform: translateX(-50%);
+  filter: blur(80px);
+  pointer-events: none; z-index: 0;
+}
+
+/* ── NAV ── */
+nav {
+  position: sticky; top: 0; z-index: 100;
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 0 40px; height: 62px;
+  background: rgba(6,6,17,0.75);
+  backdrop-filter: blur(28px) saturate(1.8);
+  -webkit-backdrop-filter: blur(28px) saturate(1.8);
+  border-bottom: 1px solid var(--border);
+}
+.logo {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 17px; font-weight: 800; letter-spacing: -0.5px;
+  text-decoration: none; color: var(--text);
+}
+.logo-icon {
+  width: 30px; height: 30px;
+  background: linear-gradient(135deg, var(--primary), var(--violet));
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; flex-shrink: 0;
+}
+.logo em { color: var(--primary-light); font-style: normal; }
+.nav-right { display: flex; align-items: center; gap: 8px; }
+.lang-btn {
+  background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+  color: var(--text-muted); font-size: 12px; font-weight: 700; font-family: inherit;
+  padding: 6px 14px; border-radius: 20px;
+  cursor: pointer; transition: all 0.2s; letter-spacing: 0.4px;
+  text-decoration: none; display: inline-flex; align-items: center;
+  white-space: nowrap; flex-shrink: 0;
+}
+.lang-btn:hover { background: var(--primary-dim); border-color: var(--primary-border); color: var(--text); }
+
+/* ── HERO ── */
+.hero {
+  position: relative; z-index: 1;
+  max-width: 920px; margin: 0 auto;
+  padding: 96px 24px 64px;
+  text-align: center;
+}
+.hero-pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--primary-dim);
+  border: 1px solid var(--primary-border);
+  color: var(--primary-light);
+  font-size: 12px; font-weight: 700; letter-spacing: 0.4px;
+  padding: 7px 14px; border-radius: 999px;
+  margin-bottom: 28px;
+}
+.hero h1 {
+  font-size: clamp(36px, 6vw, 64px);
+  line-height: 1.05;
+  font-weight: 900;
+  letter-spacing: -2px;
+  margin-bottom: 22px;
+}
+.hero h1 .gradient {
+  background: linear-gradient(120deg, #818cf8, #c4b5fd, #f0abfc);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.hero h1 .strike {
+  text-decoration: line-through;
+  text-decoration-color: var(--rose);
+  text-decoration-thickness: 4px;
+  color: var(--text-muted);
+}
+.hero-sub {
+  font-size: clamp(16px, 2vw, 19px);
+  color: var(--text-muted);
+  max-width: 640px; margin: 0 auto 36px;
+  line-height: 1.55;
+}
+.hero-cta {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: linear-gradient(135deg, var(--primary), var(--violet));
+  color: #fff;
+  padding: 16px 32px;
+  border-radius: 14px;
+  font-size: 16px; font-weight: 800;
+  text-decoration: none;
+  box-shadow: 0 14px 40px rgba(99,102,241,0.4);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.hero-cta:hover { transform: translateY(-2px); box-shadow: 0 18px 50px rgba(99,102,241,0.55); }
+.hero-meta {
+  margin-top: 18px;
+  font-size: 13px; color: var(--text-dim);
+}
+.hero-meta strong { color: var(--primary-light); }
+
+/* ── SECTION ── */
+section {
+  position: relative; z-index: 1;
+  max-width: 1100px; margin: 0 auto;
+  padding: 72px 24px;
+}
+.section-eyebrow {
+  display: inline-block;
+  font-size: 11px; font-weight: 800; letter-spacing: 2px;
+  color: var(--primary-light);
+  background: var(--primary-dim);
+  padding: 5px 12px; border-radius: 999px;
+  margin-bottom: 16px;
+}
+.section-head { text-align: center; margin-bottom: 48px; }
+.section-head h2 {
+  font-size: clamp(28px, 4vw, 42px);
+  font-weight: 800; letter-spacing: -1.2px;
+  margin-bottom: 14px;
+}
+.section-head p {
+  font-size: 16px; color: var(--text-muted);
+  max-width: 620px; margin: 0 auto;
+}
+
+/* ── COMPARISON TABLE ── */
+.comp-wrap {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  backdrop-filter: blur(20px);
+}
+.comp-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.comp-table th, .comp-table td {
+  padding: 18px 22px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  font-size: 15px;
+  vertical-align: middle;
+}
+.comp-table th {
+  font-size: 13px; font-weight: 700; letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  background: rgba(255,255,255,0.02);
+}
+.comp-table tr:last-child td { border-bottom: none; }
+.comp-table .col-axis { color: var(--text-muted); font-weight: 600; }
+.comp-table .col-md {
+  background: rgba(99,102,241,0.06);
+  border-left: 2px solid var(--primary);
+  border-right: 2px solid var(--primary);
+}
+.comp-table .col-md.head {
+  background: linear-gradient(135deg, var(--primary), var(--violet));
+  color: #fff;
+  border: none;
+}
+.comp-check { color: var(--emerald); font-weight: 800; font-size: 18px; }
+.comp-x { color: var(--rose); font-weight: 800; font-size: 18px; }
+.comp-meh { color: var(--amber); font-weight: 700; font-size: 14px; }
+
+@media (max-width: 720px) {
+  .comp-table th, .comp-table td { padding: 12px 10px; font-size: 13px; }
+  .comp-table .hide-mobile { display: none; }
+}
+
+/* ── ANGLE CARDS ── */
+.angles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 18px;
+}
+.angle-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 26px 24px;
+  transition: border-color 0.2s, transform 0.2s;
+}
+.angle-card:hover {
+  border-color: var(--border-hover);
+  transform: translateY(-3px);
+}
+.angle-num {
+  font-size: 13px; font-weight: 800; letter-spacing: 1px;
+  color: var(--primary-light);
+  margin-bottom: 10px;
+}
+.angle-card h3 {
+  font-size: 19px; font-weight: 800;
+  margin-bottom: 10px; letter-spacing: -0.4px;
+  line-height: 1.25;
+}
+.angle-card p {
+  font-size: 14px;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+/* ── FAQ ── */
+.faq-list { max-width: 760px; margin: 0 auto; }
+.faq-item {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+.faq-q {
+  width: 100%;
+  background: none;
+  border: none;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 16px; font-weight: 700;
+  padding: 18px 22px;
+  display: flex; justify-content: space-between; align-items: center;
+  cursor: pointer;
+  text-align: left;
+}
+.faq-chev {
+  color: var(--primary-light); font-size: 14px;
+  transition: transform 0.25s;
+}
+.faq-item.open .faq-chev { transform: rotate(180deg); }
+.faq-a {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.32s ease, padding 0.2s;
+  padding: 0 22px;
+}
+.faq-item.open .faq-a {
+  max-height: 280px;
+  padding: 0 22px 20px;
+}
+.faq-a p {
+  font-size: 14px; color: var(--text-muted); line-height: 1.7;
+}
+.faq-a strong { color: var(--text); }
+
+/* ── FINAL CTA ── */
+.final-cta {
+  position: relative; z-index: 1;
+  max-width: 920px; margin: 0 auto;
+  padding: 80px 24px 120px;
+  text-align: center;
+}
+.final-cta .box {
+  background: linear-gradient(135deg, rgba(99,102,241,0.15), rgba(139,92,246,0.1));
+  border: 1px solid var(--primary-border);
+  border-radius: var(--radius-lg);
+  padding: 60px 32px;
+  backdrop-filter: blur(20px);
+}
+.final-cta h2 {
+  font-size: clamp(26px, 4vw, 36px);
+  font-weight: 800; letter-spacing: -1px;
+  margin-bottom: 14px;
+}
+.final-cta p {
+  font-size: 16px; color: var(--text-muted);
+  margin-bottom: 30px;
+  max-width: 480px;
+  margin-left: auto; margin-right: auto;
+}
+
+/* ── FOOTER ── */
+footer {
+  position: relative; z-index: 1;
+  text-align: center;
+  padding: 36px 24px;
+  border-top: 1px solid var(--border);
+  color: var(--text-dim);
+  font-size: 13px;
+}
+footer a { color: var(--text-muted); text-decoration: none; margin: 0 10px; }
+footer a:hover { color: var(--primary-light); }
+
+@media (max-width: 720px) {
+  nav { padding: 0 18px; }
+  .hero { padding: 64px 18px 40px; }
+  section { padding: 48px 18px; }
+  .final-cta { padding: 56px 18px 80px; }
+  .final-cta .box { padding: 40px 22px; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="logo" href="index.html">
+    <div class="logo-icon">
+      <svg width="16" height="16" viewBox="0 0 22 22" xmlns="http://www.w3.org/2000/svg">
+        <rect x="1" y="14" width="4" height="7" rx="1.5" fill="white" fill-opacity="0.55"/>
+        <rect x="7" y="9" width="4" height="12" rx="1.5" fill="white" fill-opacity="0.78"/>
+        <rect x="13" y="4" width="4" height="17" rx="1.5" fill="white"/>
+        <circle cx="20" cy="3" r="2" fill="#fde68a"/>
+      </svg>
+    </div>
+    Market<em>Daily</em>
+  </a>
+  <div class="nav-right">
+    <a href="track-record.html" class="lang-btn" data-i18n="nav_record">📊 戰績</a>
+    <a href="vs.html" class="lang-btn" data-i18n="nav_vs">vs 對手</a>
+    <a href="pricing.html" class="lang-btn" data-i18n="nav_pricing">定價</a>
+    <a href="dashboard.html" class="lang-btn" data-i18n="nav_dash">我的專區</a>
+    <button class="lang-btn" onclick="toggleLang()" id="lang-btn">EN</button>
+  </div>
+</nav>
+
+<!-- HERO -->
+<header class="hero">
+  <div class="hero-pill">⚡ <span data-i18n="hero_pill">為什麼不能直接用 ChatGPT？</span></div>
+  <h1 data-i18n-html="hero_h1">
+    <span class="strike">ChatGPT</span><br>
+    <span class="gradient">是工具。<br>MarketDaily 是服務。</span>
+  </h1>
+  <p class="hero-sub" data-i18n="hero_sub">
+    ChatGPT 等你問。MarketDaily 不用問 —— 每天早上 07:00，AI 已經幫你掃完財經新聞、挑出影響你部位的那幾則、附上進出場觀察，直接送到信箱。比 ChatGPT Plus 便宜一半，只做一件事。
+  </p>
+  <a href="/" class="hero-cta" data-i18n="hero_cta">免費試讀第一週 →</a>
+  <div class="hero-meta">
+    <span data-i18n-html="hero_meta">還在<strong>早期試讀</strong>階段,正在邀請真實投資人加入。免費版不需信用卡,隨時取消。</span>
+  </div>
+</header>
+
+<!-- COMPARISON TABLE -->
+<section>
+  <div class="section-head">
+    <div class="section-eyebrow" data-i18n="comp_eyebrow">逐項對比</div>
+    <h2 data-i18n="comp_title">同樣的錢，給你不一樣的東西</h2>
+    <p data-i18n="comp_sub">ChatGPT Plus US$20/月 ≈ NT$640。MarketDaily Premium NT$299 起，只專心做一件事。</p>
+  </div>
+  <div class="comp-wrap">
+    <table class="comp-table">
+      <thead>
+        <tr>
+          <th class="col-axis" data-i18n="comp_axis">差別在哪</th>
+          <th class="hide-mobile" data-i18n="comp_col_chatgpt">ChatGPT Plus</th>
+          <th class="col-md head" data-i18n="comp_col_md">MarketDaily Premium</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="col-axis" data-i18n="comp_r1_axis">早上 7 點主動推播</td>
+          <td class="hide-mobile"><span class="comp-x">✕</span> <span data-i18n="comp_r1_a">不會主動</span></td>
+          <td class="col-md"><span class="comp-check">✓</span> <span data-i18n="comp_r1_b">每日定時送到信箱</span></td>
+        </tr>
+        <tr>
+          <td class="col-axis" data-i18n="comp_r2_axis">記得你的持股</td>
+          <td class="hide-mobile"><span class="comp-x">✕</span> <span data-i18n="comp_r2_a">每次都要重貼</span></td>
+          <td class="col-md"><span class="comp-check">✓</span> <span data-i18n="comp_r2_b">綁定你的偏好，自動篩相關新聞</span></td>
+        </tr>
+        <tr>
+          <td class="col-axis" data-i18n="comp_r3_axis">即時推播持股利空</td>
+          <td class="hide-mobile"><span class="comp-x">✕</span> <span data-i18n="comp_r3_a">不會半夜戳你</span></td>
+          <td class="col-md"><span class="comp-check">✓</span> <span data-i18n="comp_r3_b">LINE 即時推播 + 雙向對話</span></td>
+        </tr>
+        <tr>
+          <td class="col-axis" data-i18n="comp_r4_axis">即時新聞數據</td>
+          <td class="hide-mobile"><span class="comp-meh">△</span> <span data-i18n="comp_r4_a">有 cutoff，要自己 prompt</span></td>
+          <td class="col-md"><span class="comp-check">✓</span> <span data-i18n="comp_r4_b">5 分鐘前的 Reuters / Bloomberg</span></td>
+        </tr>
+        <tr>
+          <td class="col-axis" data-i18n="comp_r5_axis">明確進出場建議</td>
+          <td class="hide-mobile"><span class="comp-meh">△</span> <span data-i18n="comp_r5_a">長篇分析要自己整理</span></td>
+          <td class="col-md"><span class="comp-check">✓</span> <span data-i18n="comp_r5_b">每股直接給 買/賣/持有 + 信心 %</span></td>
+        </tr>
+        <tr>
+          <td class="col-axis" data-i18n="comp_r6_axis">每週戰績公開</td>
+          <td class="hide-mobile"><span class="comp-x">✕</span> <span data-i18n="comp_r6_a">沒有 track record</span></td>
+          <td class="col-md"><span class="comp-check">✓</span> <a href="/track-record.html" style="color:#818cf8;text-decoration:none;"><span class="comp-check">✓</span> <span data-i18n="comp_r6_b">公開戰績頁可查</span></a></td>
+        </tr>
+        <tr>
+          <td class="col-axis" data-i18n="comp_r7_axis">需要 prompt engineering</td>
+          <td class="hide-mobile"><span class="comp-meh">△</span> <span data-i18n="comp_r7_a">會問才有用</span></td>
+          <td class="col-md"><span class="comp-check">✓</span> <span data-i18n="comp_r7_b">不用學，30 秒看完</span></td>
+        </tr>
+        <tr>
+          <td class="col-axis" data-i18n="comp_r8_axis">月費（台幣）</td>
+          <td class="hide-mobile">≈ NT$640</td>
+          <td class="col-md" style="font-weight:800;"><span style="color:#818cf8;">NT$299</span> <span data-i18n="comp_r8_note" style="color:var(--text-muted);font-weight:400;font-size:13px;">起 / 便宜一半</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ANGLE CARDS — the 6 real reasons -->
+<section>
+  <div class="section-head">
+    <div class="section-eyebrow" data-i18n="why_eyebrow">6 個你該選 MarketDaily 的理由</div>
+    <h2 data-i18n="why_title">會用 ChatGPT 不代表會做功課</h2>
+    <p data-i18n="why_sub">這就是為什麼早期試讀的投資人即使有 ChatGPT，還是選擇我們。</p>
+  </div>
+  <div class="angles">
+    <div class="angle-card">
+      <div class="angle-num">01</div>
+      <h3 data-i18n="a1_t">紀律比資訊重要</h3>
+      <p data-i18n="a1_d">你早上起床第一件事不會是打開 ChatGPT 貼 8 支持股問「今天該注意什麼」。但你會打開信箱。我們把這件「該做永遠不會做」的事自動化。</p>
+    </div>
+    <div class="angle-card">
+      <div class="angle-num">02</div>
+      <h3 data-i18n="a2_t">不用 prompt engineering</h3>
+      <p data-i18n="a2_d">ChatGPT 是「會問才有用」。我們幫你把問題、框架、優先級全想好了，30 秒看完直接行動。</p>
+    </div>
+    <div class="angle-card">
+      <div class="angle-num">03</div>
+      <h3 data-i18n="a3_t">記得你抱什麼</h3>
+      <p data-i18n="a3_d">ChatGPT 每次都要你重貼持股清單。我們綁你的偏好，新聞自動篩過、針對你的部位寫。</p>
+    </div>
+    <div class="angle-card">
+      <div class="angle-num">04</div>
+      <h3 data-i18n="a4_t">即時推播 + LINE 對話</h3>
+      <p data-i18n="a4_d">Premium 在持股出大事的當下推 LINE。免費版每天 07:00 定時送。ChatGPT 永遠等你問。</p>
+    </div>
+    <div class="angle-card">
+      <div class="angle-num">05</div>
+      <h3 data-i18n="a5_t">每週公開戰績</h3>
+      <p data-i18n="a5_d">ChatGPT 沒有 track record。我們有 — 上週 AI 講過什麼、後來對不對，<a href="/track-record.html" style="color:#818cf8;text-decoration:underline;">隨時可查</a>。</p>
+    </div>
+    <div class="angle-card">
+      <div class="angle-num">06</div>
+      <h3 data-i18n="a6_t">便宜一半，更專心</h3>
+      <p data-i18n="a6_d">ChatGPT Plus NT$640/月做萬能助理；MarketDaily NT$299 起當你的專科主治。萬能樣樣不夠深，專科只做一件事但做透。</p>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section>
+  <div class="section-head">
+    <div class="section-eyebrow" data-i18n="faq_eyebrow">常見疑慮</div>
+    <h2 data-i18n="faq_title">你心裡在想的，我們先回答</h2>
+  </div>
+  <div class="faq-list">
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFaq(this)">
+        <span data-i18n="faq_q1">那免費版到底夠不夠用？</span>
+        <span class="faq-chev">▾</span>
+      </button>
+      <div class="faq-a"><p data-i18n-html="faq_a1">夠用。免費版每天 07:00 送 AI 財經日報,<strong>已含個人化</strong>(綁你的持股篩新聞,免費上限 5 檔)、30 秒精華摘要、頭條摘要、市場情緒。<strong>Premium 加碼</strong>:無限追蹤股票數、LINE 即時推播(持股利空當下)、LINE Bot 雙向對話。先免費用一週覺得對胃口再升級。</p></div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFaq(this)">
+        <span data-i18n="faq_q2">那我問 ChatGPT「幫我每天 7 點分析我的持股」不就好？</span>
+        <span class="faq-chev">▾</span>
+      </button>
+      <div class="faq-a"><p data-i18n-html="faq_a2">ChatGPT <strong>不會主動執行</strong>。它沒有排程能力，沒辦法在你睡覺時自己上工。就算你架了個自動化（cron + API key + prompt + 抓新聞 + 寄信...），<strong>你就是在親手做我們做的事</strong>，只是更貴更難維護。</p></div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFaq(this)">
+        <span data-i18n="faq_q3">你們的 AI 也會幻覺嗎？</span>
+        <span class="faq-chev">▾</span>
+      </button>
+      <div class="faq-a"><p data-i18n-html="faq_a3">會 —— 任何 AI 都會。所以我們做了三件事 ChatGPT 不會幫你做：<strong>(1)</strong> 新聞只用 Reuters / Bloomberg / FT / 經濟日報等主流驗證來源 <strong>(2)</strong> 多家交叉比對才下標 <strong>(3)</strong> 每週公開戰績頁，看得到 AI 上週講對講錯。透明 &gt; 否認。</p></div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFaq(this)">
+        <span data-i18n="faq_q4">取消會不會很難？</span>
+        <span class="faq-chev">▾</span>
+      </button>
+      <div class="faq-a"><p data-i18n-html="faq_a4">任何一封日報底部點「取消訂閱」立即生效，不用聯繫客服、不用解釋原因、不用扣留挽留優惠折磨你。我們對自己有信心 —— 留不下你是我們的問題。</p></div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFaq(this)">
+        <span data-i18n="faq_q5">既然 ChatGPT 那麼弱，為什麼還有那麼多人用？</span>
+        <span class="faq-chev">▾</span>
+      </button>
+      <div class="faq-a"><p data-i18n-html="faq_a5">因為 ChatGPT <strong>真的很強</strong> —— 寫程式、寫文案、學新領域、翻譯。但「每天早上幫你看財經新聞 + 知道你部位 + 給建議」不是它最強的場景。<strong>我們不打它最強的地方，只打它打不到的地方。</strong>你完全可以兩個都訂 —— 99% 用戶就是這樣。</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- FINAL CTA -->
+<div class="final-cta">
+  <div class="box">
+    <h2 data-i18n="cta_h">把「今天該問 AI 什麼」這個決定外包出去</h2>
+    <p data-i18n="cta_p">每天早上 7 點，30 秒。免費版不需信用卡，付費版隨時取消。</p>
+    <a href="/" class="hero-cta" data-i18n="cta_btn">開始免費試讀 →</a>
+  </div>
+</div>
+
+<footer>
+  <a href="/" data-i18n="foot_home">首頁</a> ·
+  <a href="/dashboard.html" data-i18n="foot_dash">我的專區</a> ·
+  <a href="/track-record.html" data-i18n="foot_track">戰績</a> ·
+  <a href="/privacy.html" data-i18n="foot_priv">隱私</a> ·
+  <a href="/terms.html" data-i18n="foot_terms">條款</a><br>
+  <span style="display:inline-block;margin-top:14px;">© 2026 MarketDaily · marketdailyhq@gmail.com</span>
+</footer>
+
+<script>
+/* === i18n === */
+const TR = {
+  zh: {
+    nav_home: "回首頁",
+    nav_record: "📊 戰績",
+    nav_vs: "vs 對手",
+    nav_pricing: "定價",
+    nav_dash: "我的專區",
+    hero_pill: "為什麼不能直接用 ChatGPT？",
+    hero_h1: '<span class="strike">ChatGPT</span><br><span class="gradient">是工具。<br>MarketDaily 是服務。</span>',
+    hero_sub: "ChatGPT 等你問。MarketDaily 不用問 —— 每天早上 07:00，AI 已經幫你掃完財經新聞、挑出影響你部位的那幾則、附上進出場觀察，直接送到信箱。比 ChatGPT Plus 便宜一半，只做一件事。",
+    hero_cta: "免費試讀第一週 →",
+    hero_meta: '還在<strong>早期試讀</strong>階段,正在邀請真實投資人加入。免費版不需信用卡,隨時取消。',
+    comp_eyebrow: "逐項對比",
+    comp_title: "同樣的錢，給你不一樣的東西",
+    comp_sub: "ChatGPT Plus US$20/月 ≈ NT$640。MarketDaily Premium NT$299 起，只專心做一件事。",
+    comp_axis: "差別在哪", comp_col_chatgpt: "ChatGPT Plus", comp_col_md: "MarketDaily Premium",
+    comp_r1_axis: "早上 7 點主動推播", comp_r1_a: "不會主動", comp_r1_b: "每日定時送到信箱",
+    comp_r2_axis: "記得你的持股", comp_r2_a: "每次都要重貼", comp_r2_b: "綁定你的偏好，自動篩相關新聞",
+    comp_r3_axis: "即時推播持股利空", comp_r3_a: "不會半夜戳你", comp_r3_b: "LINE 即時推播 + 雙向對話",
+    comp_r4_axis: "即時新聞數據", comp_r4_a: "有 cutoff，要自己 prompt", comp_r4_b: "5 分鐘前的 Reuters / Bloomberg",
+    comp_r5_axis: "明確進出場建議", comp_r5_a: "長篇分析要自己整理", comp_r5_b: "每股直接給 買/賣/持有 + 信心 %",
+    comp_r6_axis: "每週戰績公開", comp_r6_a: "沒有 track record", comp_r6_b: "公開戰績頁可查",
+    comp_r7_axis: "需要 prompt engineering", comp_r7_a: "會問才有用", comp_r7_b: "不用學，30 秒看完",
+    comp_r8_axis: "月費（台幣）", comp_r8_note: "起 / 便宜一半",
+    why_eyebrow: "6 個你該選 MarketDaily 的理由",
+    why_title: "會用 ChatGPT 不代表會做功課",
+    why_sub: "這就是為什麼早期試讀的投資人即使有 ChatGPT，還是選擇我們。",
+    a1_t: "紀律比資訊重要", a1_d: "你早上起床第一件事不會是打開 ChatGPT 貼 8 支持股問「今天該注意什麼」。但你會打開信箱。我們把這件「該做永遠不會做」的事自動化。",
+    a2_t: "不用 prompt engineering", a2_d: "ChatGPT 是「會問才有用」。我們幫你把問題、框架、優先級全想好了，30 秒看完直接行動。",
+    a3_t: "記得你抱什麼", a3_d: "ChatGPT 每次都要你重貼持股清單。我們綁你的偏好，新聞自動篩過、針對你的部位寫。",
+    a4_t: "即時推播 + LINE 對話", a4_d: "Premium 在持股出大事的當下推 LINE。免費版每天 07:00 定時送。ChatGPT 永遠等你問。",
+    a5_t: "每週公開戰績", a5_d: '<span>ChatGPT 沒有 track record。我們有 — 上週 AI 講過什麼、後來對不對，<a href="/track-record.html" style="color:#818cf8;text-decoration:underline;">隨時可查</a>。</span>',
+    a6_t: "便宜一半，更專心", a6_d: "ChatGPT Plus NT$640/月做萬能助理；MarketDaily NT$299 起當你的專科主治。萬能樣樣不夠深，專科只做一件事但做透。",
+    faq_eyebrow: "常見疑慮", faq_title: "你心裡在想的，我們先回答",
+    faq_q1: "那免費版到底夠不夠用？",
+    faq_a1: '夠用。免費版每天 07:00 送 AI 財經日報,<strong>已含個人化</strong>(綁你的持股篩新聞,免費上限 5 檔)、30 秒精華摘要、頭條摘要、市場情緒。<strong>Premium 加碼</strong>:無限追蹤股票數、LINE 即時推播(持股利空當下)、LINE Bot 雙向對話。先免費用一週覺得對胃口再升級。',
+    faq_q2: "那我問 ChatGPT「幫我每天 7 點分析我的持股」不就好？",
+    faq_a2: 'ChatGPT <strong>不會主動執行</strong>。它沒有排程能力，沒辦法在你睡覺時自己上工。就算你架了個自動化（cron + API key + prompt + 抓新聞 + 寄信...），<strong>你就是在親手做我們做的事</strong>，只是更貴更難維護。',
+    faq_q3: "你們的 AI 也會幻覺嗎？",
+    faq_a3: '會 —— 任何 AI 都會。所以我們做了三件事 ChatGPT 不會幫你做：<strong>(1)</strong> 新聞只用 Reuters / Bloomberg / FT / 經濟日報等主流驗證來源 <strong>(2)</strong> 多家交叉比對才下標 <strong>(3)</strong> 每週公開戰績頁，看得到 AI 上週講對講錯。透明 &gt; 否認。',
+    faq_q4: "取消會不會很難？",
+    faq_a4: '任何一封日報底部點「取消訂閱」立即生效，不用聯繫客服、不用解釋原因、不用扣留挽留優惠折磨你。我們對自己有信心 —— 留不下你是我們的問題。',
+    faq_q5: "既然 ChatGPT 那麼弱，為什麼還有那麼多人用？",
+    faq_a5: '因為 ChatGPT <strong>真的很強</strong> —— 寫程式、寫文案、學新領域、翻譯。但「每天早上幫你看財經新聞 + 知道你部位 + 給建議」不是它最強的場景。<strong>我們不打它最強的地方，只打它打不到的地方。</strong>你完全可以兩個都訂 —— 99% 用戶就是這樣。',
+    cta_h: "把「今天該問 AI 什麼」這個決定外包出去",
+    cta_p: "每天早上 7 點，30 秒。免費版不需信用卡，付費版隨時取消。",
+    cta_btn: "開始免費試讀 →",
+    foot_home: "首頁", foot_dash: "我的專區", foot_track: "戰績", foot_priv: "隱私", foot_terms: "條款"
+  },
+  en: {
+    nav_home: "Home",
+    nav_record: "📊 Record",
+    nav_vs: "vs Rivals",
+    nav_pricing: "Pricing",
+    nav_dash: "My Account",
+    hero_pill: "Why not just use ChatGPT?",
+    hero_h1: '<span class="strike">ChatGPT</span><br><span class="gradient">is a tool.<br>MarketDaily is a service.</span>',
+    hero_sub: "ChatGPT waits for you to ask. MarketDaily doesn't — every morning at 07:00 AM, AI has already scanned the news, picked the items affecting your positions, and dropped them in your inbox with action notes. Half the price of ChatGPT Plus, focused on one job.",
+    hero_cta: "Start free trial →",
+    hero_meta: "We're in <strong>early access</strong> — onboarding real investors right now. Free plan, no credit card, cancel anytime.",
+    comp_eyebrow: "Head-to-head",
+    comp_title: "Same money, different value",
+    comp_sub: "ChatGPT Plus is ~US$20/mo. MarketDaily Premium starts at NT$299 — half the cost, one focused job.",
+    comp_axis: "Difference", comp_col_chatgpt: "ChatGPT Plus", comp_col_md: "MarketDaily Premium",
+    comp_r1_axis: "Pushes at 7AM", comp_r1_a: "Won't act on its own", comp_r1_b: "Daily, on schedule, to inbox",
+    comp_r2_axis: "Remembers your holdings", comp_r2_a: "You re-paste every time", comp_r2_b: "Auto-filters news for your positions",
+    comp_r3_axis: "Real-time breaking-news alerts", comp_r3_a: "Won't wake you up", comp_r3_b: "LINE push + two-way AI chat",
+    comp_r4_axis: "Real-time market data", comp_r4_a: "Has cutoff, you must prompt", comp_r4_b: "Reuters / Bloomberg, 5 min fresh",
+    comp_r5_axis: "Clear trade signals", comp_r5_a: "Long-form analysis, you distill", comp_r5_b: "Buy/Sell/Hold + confidence % per stock",
+    comp_r6_axis: "Public weekly track record", comp_r6_a: "No track record", comp_r6_b: "Public track record page",
+    comp_r7_axis: "Needs prompt engineering", comp_r7_a: "Only works if you ask well", comp_r7_b: "Nothing to learn, 30 sec to read",
+    comp_r8_axis: "Monthly price (TWD)", comp_r8_note: "starting / half the cost",
+    why_eyebrow: "6 reasons to pick MarketDaily",
+    why_title: "Knowing ChatGPT doesn't mean you do the work",
+    why_sub: "That's why our early-access investors choose us even though they already have ChatGPT.",
+    a1_t: "Discipline beats information", a1_d: "You won't wake up and open ChatGPT to paste 8 tickers and ask what to watch today. But you'll open your inbox. We automate the thing you know you should do but won't.",
+    a2_t: "No prompt engineering", a2_d: "ChatGPT only works if you ask well. We did the question-design, framework, and priority work for you. 30 seconds to read, ready to act.",
+    a3_t: "Remembers your portfolio", a3_d: "ChatGPT makes you re-paste every time. We bind your preferences and filter news against your actual positions.",
+    a4_t: "Real-time push + LINE chat", a4_d: "Premium pushes to LINE the moment your holdings break. Free version arrives every 07:00. ChatGPT always waits.",
+    a5_t: "Weekly public track record", a5_d: '<span>ChatGPT has no track record. We do — see what AI said last week and how it played out, <a href="/track-record.html" style="color:#818cf8;text-decoration:underline;">always live</a>.</span>',
+    a6_t: "Half the price, fully focused", a6_d: "ChatGPT Plus is NT$640/mo as a generalist; MarketDaily NT$299+ is your specialist. Generalists go a mile wide; specialists go a mile deep.",
+    faq_eyebrow: "Honest concerns", faq_title: "We answered the things in your head",
+    faq_q1: "Is the free version actually enough?",
+    faq_a1: 'For many, yes. Free sends the daily AI brief at 07:00 — <strong>already personalized</strong> (filters by your positions, free cap 5 stocks), 30-sec TL;DR, top headlines, market sentiment. <strong>Premium adds</strong>: unlimited stocks, LINE breaking-news push, and two-way LINE Bot chat. Try free for a week first, upgrade if it clicks.',
+    faq_q2: "Can't I just tell ChatGPT to do this every morning?",
+    faq_a2: 'ChatGPT <strong>can\'t self-execute</strong>. No scheduler, no overnight worker. Even if you wire it up (cron + API key + prompt + news scraper + email...), <strong>you\'re manually rebuilding what we do</strong> — slower, costlier, and harder to maintain.',
+    faq_q3: "Does your AI hallucinate too?",
+    faq_a3: 'Yes — every AI does. So we do three things ChatGPT won\'t: <strong>(1)</strong> Only ingest major verified sources (Reuters, Bloomberg, FT, etc.) <strong>(2)</strong> Cross-check before publishing <strong>(3)</strong> Public weekly track record so you can see what was right or wrong. Transparency &gt; denial.',
+    faq_q4: "How hard is it to cancel?",
+    faq_a4: 'One click at the bottom of any email — effective immediately. No contacting support, no explaining yourself, no "wait, here\'s a retention offer" torture. We trust ourselves — if we can\'t hold you, that\'s on us.',
+    faq_q5: "If ChatGPT is so weak, why do people use it?",
+    faq_a5: 'Because ChatGPT <strong>is actually great</strong> — coding, writing, learning, translation. But "scan financial news every morning, know your positions, give signals" isn\'t its sweet spot. <strong>We don\'t fight where it\'s strong; we own where it can\'t reach.</strong> You can absolutely subscribe to both — 99% of our users do.',
+    cta_h: "Outsource the \"what should I ask AI today?\" decision",
+    cta_p: "Every morning at 7. 30 seconds. Free version needs no credit card. Cancel anytime.",
+    cta_btn: "Start free trial →",
+    foot_home: "Home", foot_dash: "My Account", foot_track: "Track Record", foot_priv: "Privacy", foot_terms: "Terms"
+  }
+};
+
+function applyLang(lang) {
+  const dict = TR[lang] || TR.zh;
+  document.querySelectorAll("[data-i18n]").forEach(el => {
+    const k = el.getAttribute("data-i18n");
+    if (dict[k] !== undefined) el.textContent = dict[k];
+  });
+  document.querySelectorAll("[data-i18n-html]").forEach(el => {
+    const k = el.getAttribute("data-i18n-html");
+    if (dict[k] !== undefined) el.innerHTML = dict[k];
+  });
+  document.documentElement.lang = (lang === "en") ? "en" : "zh-Hant";
+  document.getElementById("lang-btn").textContent = (lang === "en") ? "中文" : "EN";
+  localStorage.setItem("md-lang-v2", lang);
+}
+function toggleLang() {
+  const cur = localStorage.getItem("md-lang-v2") || "zh";
+  applyLang(cur === "zh" ? "en" : "zh");
+}
+function toggleFaq(btn) {
+  const item = btn.closest(".faq-item");
+  const isOpen = item.classList.contains("open");
+  document.querySelectorAll(".faq-item.open").forEach(el => el.classList.remove("open"));
+  if (!isOpen) item.classList.add("open");
+}
+
+applyLang(localStorage.getItem("md-lang-v2") || "zh");
+</script>
+
+<!-- Meta Pixel: 沿用首頁同一支 ID,所有 vs-chatgpt 訪客也算進同一 audience pool -->
+<script>window.META_PIXEL_ID = "1497334655104185";</script>
+<script src="meta-pixel.js"></script>
+<script>
+  // Fire ViewContent for this specific funnel page so Meta learns "high-intent visitor" cohort
+  (function fireViewContent() {
+    if (!window.fbq) { setTimeout(fireViewContent, 400); return; }
+    try {
+      fbq("track", "ViewContent", {
+        content_name: "vs-chatgpt",
+        content_category: "comparison_landing",
+      });
+    } catch (e) {}
+  })();
+  // Hero CTA + Final CTA click → AddToCart-style intent signal
+  document.addEventListener("click", function (e) {
+    const a = e.target.closest("a.hero-cta");
+    if (!a || !window.fbq) return;
+    try {
+      fbq("track", "InitiateCheckout", {
+        content_name: "vs-chatgpt-cta",
+        content_category: "free_signup_intent",
+      });
+    } catch (err) {}
+  });
+</script>
+
+</body>
+</html>
