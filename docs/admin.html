@@ -747,24 +747,26 @@ async function doLogin() {
   const err   = document.getElementById("auth-err");
   err.style.display = "none";
 
-  if (email !== ADMIN_EMAIL) { err.style.display = "block"; return; }
+  if (email !== ADMIN_EMAIL) { err.textContent = "此 email 不是管理員"; err.style.display = "block"; return; }
 
+  // 真正驗證密碼:打 requireAdmin 端點(check-subscriber 對 admin 不驗密碼,會放錯密碼進來,
+  // 導致進得去卻看不到資料 + 反覆失敗被鎖)。get-config 通過 = 密碼正確。
   try {
-    const res = await fetch(WORKER_URL + "/check-subscriber", {
+    const res = await fetch(WORKER_URL + "/admin/get-config", {
       method: "POST", headers: {"Content-Type":"application/json"},
       body: JSON.stringify({email, password: pw})
     });
-    const d = await res.json();
-    if (d.plan !== "admin") { err.style.display = "block"; return; }
+    if (!res.ok) { err.textContent = "密碼錯誤"; err.style.display = "block"; return; }
   } catch {
-    // offline mode — allow admin email through
-    if (email !== ADMIN_EMAIL) { err.style.display = "block"; return; }
+    err.textContent = "連線失敗,請重試"; err.style.display = "block"; return;
   }
 
   if (document.getElementById("auth-remember")?.checked) {
     localStorage.setItem("md-admin-email-saved", email);
+    localStorage.setItem("md-admin-pwd-saved", pw);   // 記住密碼在這台裝置 → 下次點進 /admin 自動登入
   } else {
     localStorage.removeItem("md-admin-email-saved");
+    localStorage.removeItem("md-admin-pwd-saved");
   }
   localStorage.setItem("md-admin-email", email);
   sessionStorage.setItem("md-admin-pwd", pw);
@@ -788,6 +790,9 @@ function bootAdmin(email) {
 
 function logout() {
   localStorage.removeItem("md-admin-email");
+  localStorage.removeItem("md-admin-email-saved");
+  localStorage.removeItem("md-admin-pwd-saved");
+  sessionStorage.removeItem("md-admin-pwd");
   location.reload();
 }
 
@@ -1045,8 +1050,10 @@ function toast(msg, isErr = false) {
 // ── Bootstrap ──
 (function() {
   const email = localStorage.getItem("md-admin-email");
-  const pwd = sessionStorage.getItem("md-admin-pwd");
-  // 必須 sessionStorage 有密碼才自動進後台:admin 端點(admin-stats 等)需密碼,
+  // 密碼來源:本次 session,或「記住密碼」存在 localStorage 的;有就回填 session 供端點使用。
+  const pwd = sessionStorage.getItem("md-admin-pwd") || localStorage.getItem("md-admin-pwd-saved") || "";
+  if (pwd) sessionStorage.setItem("md-admin-pwd", pwd);
+  // 必須有密碼才自動進後台:admin 端點(admin-stats 等)需密碼,
   // 否則自動進去但密碼空 → 一律 403 → 列表全空。沒密碼就回登入頁重打。
   if (email === ADMIN_EMAIL && pwd) {
     bootAdmin(email);
