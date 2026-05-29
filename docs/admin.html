@@ -1045,7 +1045,10 @@ function toast(msg, isErr = false) {
 // ── Bootstrap ──
 (function() {
   const email = localStorage.getItem("md-admin-email");
-  if (email === ADMIN_EMAIL) {
+  const pwd = sessionStorage.getItem("md-admin-pwd");
+  // 必須 sessionStorage 有密碼才自動進後台:admin 端點(admin-stats 等)需密碼,
+  // 否則自動進去但密碼空 → 一律 403 → 列表全空。沒密碼就回登入頁重打。
+  if (email === ADMIN_EMAIL && pwd) {
     bootAdmin(email);
   } else {
     document.getElementById("auth-screen").style.display = "flex";
@@ -1053,7 +1056,7 @@ function toast(msg, isErr = false) {
       const card = document.querySelector(".auth-card");
       if (card) card.classList.add("visible");
     }));
-    const savedAdminEmail = localStorage.getItem("md-admin-email-saved");
+    const savedAdminEmail = localStorage.getItem("md-admin-email-saved") || (email === ADMIN_EMAIL ? email : "");
     if (savedAdminEmail) {
       document.getElementById("auth-email").value = savedAdminEmail;
       document.getElementById("auth-remember").checked = true;
